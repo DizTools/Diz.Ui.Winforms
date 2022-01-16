@@ -9,6 +9,7 @@ namespace Diz.Ui.Winforms;
 {
     public void Compose(IServiceRegistry serviceRegistry)
     {
-        serviceRegistry.Register<IFormViewer, About>("About");
+        // note: string names here must match IViewFactory method names
+        serviceRegistry.Register<IFormViewer, About>("AboutView");
     }
 }
