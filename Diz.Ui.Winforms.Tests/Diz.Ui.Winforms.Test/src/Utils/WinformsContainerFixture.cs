@@ -4,7 +4,7 @@ using LightInject;
 
 namespace Diz.Ui.Winforms.Test.Utils;
 
-public class ContainerUiFixture : ContainerFixture
+public class ContainerWinformsFixture : ContainerFixture
 {
     protected override void Configure(IServiceRegistry serviceRegistry)
     {

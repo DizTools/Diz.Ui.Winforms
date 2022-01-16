@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Diz.Ui.Winforms.Test.Tests;
 
-public class TestServiceRegistrations : ContainerUiFixture
+public class TestServiceRegistrations : ContainerWinformsFixture
 {
     [Fact]
     public void TestUtilServices()
