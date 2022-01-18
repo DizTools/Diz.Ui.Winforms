@@ -2,8 +2,14 @@
 
     <PropertyGroup>
         <TargetFramework>net6.0-windows7.0</TargetFramework>
+        <UseWindowsForms>true</UseWindowsForms>
         <Nullable>enable</Nullable>
-        <IsPackable>false</IsPackable>
+        <IsPackable>true</IsPackable>
+        <LangVersion>latest</LangVersion>
+        <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+        <GitThisAssemblyMetadata>true</GitThisAssemblyMetadata>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+        <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
     </PropertyGroup>
 
     <ItemGroup>

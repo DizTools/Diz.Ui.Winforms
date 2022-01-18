@@ -11,6 +11,8 @@ public class TestServiceRegistrations : ContainerWinformsFixture
     public void TestUtilServices()
     {
         GetInstance<ICommonGui>().Should().NotBeNull();
+
+        GetInstance<IDizDocument>();
     }
     
     [Fact]
