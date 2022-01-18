@@ -71,8 +71,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Diz.Test\Diz.Test.csproj" />
-        <ProjectReference Include="..\..\..\DiztinGUIsh\DiztinGUIsh.csproj" />
+        <ProjectReference Include="..\..\Diz.Test\Diz.Test.csproj" />
+        <ProjectReference Include="..\..\DiztinGUIsh\DiztinGUIsh.csproj" />
+        <ProjectReference Include="..\..\Diz.Controllers\Diz.Controllers\Diz.Controllers.csproj" />
     </ItemGroup>
 
 </Project>
