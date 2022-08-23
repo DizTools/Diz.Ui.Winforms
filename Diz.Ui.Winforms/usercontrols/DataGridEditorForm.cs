@@ -1,35 +1,26 @@
-﻿using System;
-using System.ComponentModel;
-using System.IO;
+﻿using System.ComponentModel;
 using System.Reflection.Metadata;
-using System.Windows.Forms;
 using Diz.Controllers.controllers;
 using Diz.Controllers.interfaces;
-using Diz.Core;
 using Diz.Core.commands;
 using Diz.Core.export;
-using Diz.Core.Interfaces;
 using Diz.Core.model;
 using Diz.Core.util;
-using Diz.Cpu._65816;
 using Diz.LogWriter;
 using Diz.Ui.Winforms.util;
 using DiztinGUIsh.Properties;
-using DiztinGUIsh.util;
-using DiztinGUIsh.window.dialog;
-using LightInject;
 
-namespace DiztinGUIsh.window;
+namespace Diz.Ui.Winforms.usercontrols;
 
 public partial class DataGridEditorForm : Form, IDataGridEditorForm
 {
     // sub windows (we should break these out / decouple more from this class)
-    public AliasList AliasList { get; protected set; }
-    public VisualizerForm VisualForm { get; protected set; }
+    public ILabelEditorView AliasList { get; protected set; }
+    public IProjectView VisualForm { get; protected set; }
         
     private IMainFormController mainFormController;
-    public Project Project { get; protected set; }
-
+    public Project? Project { get; set; }
+    
     // not sure if this will be the final place this lives. OK for now. -Dom
     public IMainFormController MainFormController
     {
@@ -45,7 +36,7 @@ public partial class DataGridEditorForm : Form, IDataGridEditorForm
                 //    Project.Data.PropertyChanged += DataOnPropertyChanged;
             }
 
-            mainFormController.ProjectChanged += ProjectController_ProjectChanged;
+            // TODO mainFormController.ProjectChanged += ProjectController_ProjectChanged;
         }
     }
         
@@ -59,15 +50,13 @@ public partial class DataGridEditorForm : Form, IDataGridEditorForm
 
     private void timer1_Tick(object sender, System.EventArgs e)
     {
-        UpdatePercentageCalculatorCooldown();
+        // UpdatePercentageCalculatorCooldown();
     }
-    
-    
-    
+
     private void UpdateUi_TimerAndPercent()
     {
-        ScheduleUpdatePercentageUncovered();
-        UpdateWindowTitle();
+        // ScheduleUpdatePercentageUncovered();
+        // UpdateWindowTitle();
     }
 
     private void Init()
@@ -81,7 +70,8 @@ public partial class DataGridEditorForm : Form, IDataGridEditorForm
             
         dataGridEditorControl1.SelectedOffsetChanged += DataGridEditorControl1OnSelectedOffsetChanged;
 
-        AliasList = new AliasList(this);
+        AliasList = projectController.ViewFactory.GetLabelEditorView();
+        AliasList.ProjectController = ProjectController;
             
         UpdateUiFromSettings();
 

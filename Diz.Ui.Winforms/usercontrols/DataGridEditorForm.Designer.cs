@@ -1,6 +1,4 @@
-﻿using DiztinGUIsh.window.usercontrols;
-
-namespace DiztinGUIsh.window
+﻿namespace Diz.Ui.Winforms.usercontrols
 {
     partial class DataGridEditorForm
     {

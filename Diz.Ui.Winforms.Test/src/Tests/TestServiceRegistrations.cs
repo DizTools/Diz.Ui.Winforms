@@ -26,5 +26,6 @@ public class TestServiceRegistrations : ContainerWinformsFixture
         viewFactory.GetLabelEditorView().Should().NotBeNull();
         viewFactory.GetProgressBarView().Should().NotBeNull();
         viewFactory.GetMainGridWindowView().Should().NotBeNull();
+        viewFactory.GetVisualizerView().Should().NotBeNull();
     }
 }
