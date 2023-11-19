@@ -188,6 +188,11 @@
         "resolved": "2.4.3",
         "contentHash": "U2FC9Y8NyIxxU6MpFFdWWu1xwiqz/61v/Doou7kmVjpeIEMLWyiNNkzNlSE84kyJ0O1LKApuEj5z48Ow0Hi4OQ=="
       },
+      "CsvHelper": {
+        "type": "Transitive",
+        "resolved": "30.0.1",
+        "contentHash": "rcZtgbWR+As4G3Vpgx0AMNmShGuQLFjkHAPIIflzrfkJCx8/AOd4m96ZRmiU1Wi39qS5UVjV0P8qdgqOo5Cwyg=="
+      },
       "FastBitmapLib": {
         "type": "Transitive",
         "resolved": "2.1.0",
@@ -1695,100 +1700,101 @@
       "diz.controllers": {
         "type": "Project",
         "dependencies": {
-          "Diz.Core": "1.0.0",
-          "Diz.Import": "1.0.0",
-          "Diz.LogWriter": "1.0.0",
-          "LightInject": "6.4.0"
+          "Diz.Core": "[1.0.0, )",
+          "Diz.Import": "[1.0.0, )",
+          "Diz.LogWriter": "[1.0.0, )",
+          "LightInject": "[6.4.0, )"
         }
       },
       "diz.core": {
         "type": "Project",
         "dependencies": {
-          "Diz.Core.Interfaces": "1.0.0",
-          "ExtendedXmlSerializer": "3.7.6",
-          "FluentValidation": "10.3.6",
-          "IX.Observable": "0.7.3",
-          "JetBrains.Annotations": "2021.3.0",
-          "JetBrains.Profiler.SelfApi": "2.2.0",
-          "LightInject": "6.4.0",
-          "SharpZipLib": "1.3.3",
-          "System.Diagnostics.Tracing": "4.3.0",
-          "System.Resources.Extensions": "6.0.0",
-          "System.Text.Encoding.CodePages": "6.0.0"
+          "Diz.Core.Interfaces": "[1.0.0, )",
+          "ExtendedXmlSerializer": "[3.7.6, )",
+          "FluentValidation": "[10.3.6, )",
+          "IX.Observable": "[0.7.3, )",
+          "JetBrains.Annotations": "[2021.3.0, )",
+          "JetBrains.Profiler.SelfApi": "[2.2.0, )",
+          "LightInject": "[6.4.0, )",
+          "SharpZipLib": "[1.3.3, )",
+          "System.Diagnostics.Tracing": "[4.3.0, )",
+          "System.Resources.Extensions": "[6.0.0, )",
+          "System.Text.Encoding.CodePages": "[6.0.0, )"
         }
       },
       "diz.core.interfaces": {
         "type": "Project",
         "dependencies": {
-          "IX.Observable": "0.7.3"
+          "IX.Observable": "[0.7.3, )"
         }
       },
       "diz.cpu.65816": {
         "type": "Project",
         "dependencies": {
-          "Diz.Core": "1.0.0",
-          "Diz.Core.Interfaces": "1.0.0"
+          "Diz.Core": "[1.0.0, )",
+          "Diz.Core.Interfaces": "[1.0.0, )"
         }
       },
       "diz.import": {
         "type": "Project",
         "dependencies": {
-          "Diz.Core": "1.0.0",
-          "Diz.Cpu.65816": "1.0.0"
+          "Diz.Core": "[1.0.0, )",
+          "Diz.Cpu.65816": "[1.0.0, )"
         }
       },
       "diz.logwriter": {
         "type": "Project",
         "dependencies": {
-          "Diz.Core": "1.0.0",
-          "Diz.Cpu.65816": "1.0.0",
-          "LightInject": "6.4.0"
+          "CsvHelper": "[30.0.1, )",
+          "Diz.Core": "[1.0.0, )",
+          "Diz.Cpu.65816": "[1.0.0, )",
+          "LightInject": "[6.4.0, )"
         }
       },
       "diz.test": {
         "type": "Project",
         "dependencies": {
-          "BenchmarkDotNet": "0.13.1",
-          "Diz.Controllers": "1.0.0",
-          "Diz.Core": "1.0.0",
-          "Diz.Cpu.65816": "1.0.0",
-          "Diz.LogWriter": "1.0.0",
-          "ExtendedXmlSerializer": "3.7.6",
-          "FluentAssertions": "6.2.0",
-          "FluentAssertions.Analyzers": "0.13.0",
-          "FluentAssertions.ArgumentMatchers.Moq": "2.0.0",
-          "IX.Observable": "0.7.3",
-          "JetBrains.Annotations": "2021.3.0",
-          "LightInject": "6.4.0",
-          "Microsoft.NET.Test.Sdk": "17.0.0",
-          "Moq": "4.16.1",
-          "System.Resources.Extensions": "6.0.0",
-          "xunit": "2.4.1",
-          "xunit.abstractions": "2.0.3",
-          "xunit.analyzers": "0.10.0",
-          "xunit.assert": "2.4.1"
+          "BenchmarkDotNet": "[0.13.1, )",
+          "Diz.Controllers": "[1.0.0, )",
+          "Diz.Core": "[1.0.0, )",
+          "Diz.Cpu.65816": "[1.0.0, )",
+          "Diz.LogWriter": "[1.0.0, )",
+          "ExtendedXmlSerializer": "[3.7.6, )",
+          "FluentAssertions": "[6.2.0, )",
+          "FluentAssertions.Analyzers": "[0.13.0, )",
+          "FluentAssertions.ArgumentMatchers.Moq": "[2.0.0, )",
+          "IX.Observable": "[0.7.3, )",
+          "JetBrains.Annotations": "[2021.3.0, )",
+          "LightInject": "[6.4.0, )",
+          "Microsoft.NET.Test.Sdk": "[17.0.0, )",
+          "Moq": "[4.16.1, )",
+          "System.Resources.Extensions": "[6.0.0, )",
+          "xunit": "[2.4.1, )",
+          "xunit.abstractions": "[2.0.3, )",
+          "xunit.analyzers": "[0.10.0, )",
+          "xunit.assert": "[2.4.1, )"
         }
       },
       "diz.ui.winforms": {
         "type": "Project",
         "dependencies": {
-          "Diz.Controllers": "1.0.0",
-          "JetBrains.Annotations": "2021.3.0",
-          "LightInject": "6.4.0"
+          "Diz.Controllers": "[1.0.0, )",
+          "JetBrains.Annotations": "[2021.3.0, )",
+          "LightInject": "[6.4.0, )"
         }
       },
       "diztinguish": {
         "type": "Project",
         "dependencies": {
-          "ByteSize": "2.1.1",
-          "Diz.Controllers": "1.0.0",
-          "Diz.Core": "1.0.0",
-          "Diz.LogWriter": "1.0.0",
-          "Diz.Ui.Winforms": "1.0.0",
-          "FastBitmapLib": "2.1.0",
-          "JetBrains.Annotations": "2021.3.0",
-          "LightInject": "6.4.0",
-          "System.Resources.Extensions": "6.0.0"
+          "ByteSize": "[2.1.1, )",
+          "Diz.Controllers": "[1.0.0, )",
+          "Diz.Core": "[1.0.0, )",
+          "Diz.LogWriter": "[1.0.0, )",
+          "Diz.Ui.Winforms": "[1.0.0, )",
+          "FastBitmapLib": "[2.1.0, )",
+          "JetBrains.Annotations": "[2021.3.0, )",
+          "LightInject": "[6.4.0, )",
+          "System.Resources.Extensions": "[6.0.0, )"
         }
       }
     }
