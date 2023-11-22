@@ -20,7 +20,7 @@ public class DizWinformsAppSettingsProvider : IDizAppSettings
         get => Settings.LastOpenedFile;
         set
         {
-            if (!NotifyPropertyChangedExtensions.FieldIsEqual(Settings.LastOpenedFile, value)) 
+            if (NotifyPropertyChangedExtensions.FieldIsEqual(Settings.LastOpenedFile, value)) 
                 return;
             Settings.LastOpenedFile = value;
             OnSettingChanged();
@@ -32,7 +32,7 @@ public class DizWinformsAppSettingsProvider : IDizAppSettings
         get => Settings.OpenLastFileAutomatically;
         set
         {
-            if (!NotifyPropertyChangedExtensions.FieldIsEqual(Settings.OpenLastFileAutomatically, value)) 
+            if (NotifyPropertyChangedExtensions.FieldIsEqual(Settings.OpenLastFileAutomatically, value)) 
                 return;
             Settings.OpenLastFileAutomatically = value;
             OnSettingChanged();
@@ -44,7 +44,7 @@ public class DizWinformsAppSettingsProvider : IDizAppSettings
         get => Settings.LastOpenedFile;
         set
         {
-            if (!NotifyPropertyChangedExtensions.FieldIsEqual(Settings.LastOpenedFile, value)) 
+            if (NotifyPropertyChangedExtensions.FieldIsEqual(Settings.LastOpenedFile, value)) 
                 return;
             Settings.LastOpenedFile = value;
             OnSettingChanged();
