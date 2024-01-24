@@ -12,14 +12,14 @@ namespace DiztinGUIsh.window.dialog
             set => this.InvokeIfRequired(() => UpdateProgressBarStyle(value));
         }
         
-        public string TextOverride
+        public string? TextOverride
         {
             get => textOverride;
             set => this.InvokeIfRequired(() => UpdateTextOverride(value));
         }
         
         private bool isMarquee;
-        private string textOverride;
+        private string? textOverride;
 
         public ProgressDialog()
         {
@@ -36,7 +36,7 @@ namespace DiztinGUIsh.window.dialog
                 : ProgressBarStyle.Continuous;
         }
 
-        private void UpdateTextOverride(string value)
+        private void UpdateTextOverride(string? value)
         {
             textOverride = value;
             UpdateProgressText();
