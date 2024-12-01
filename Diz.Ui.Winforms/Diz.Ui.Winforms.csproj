@@ -46,6 +46,9 @@
         <Compile Update="dialogs\HarshAutoStep.cs">
           <SubType>Form</SubType>
         </Compile>
+        <Compile Update="dialogs\MarkManyDialog.cs">
+          <SubType>Form</SubType>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>
