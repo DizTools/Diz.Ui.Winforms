@@ -28,6 +28,9 @@
           <DependentUpon>Resources.resx</DependentUpon>
           <DesignTime>True</DesignTime>
         </Compile>
+        <Compile Update="dialogs\MisalignmentChecker.cs">
+          <SubType>Form</SubType>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>
