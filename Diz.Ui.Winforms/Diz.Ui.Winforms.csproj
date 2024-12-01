@@ -49,6 +49,12 @@
         <Compile Update="dialogs\MarkManyDialog.cs">
           <SubType>Form</SubType>
         </Compile>
+        <Compile Update="dialogs\InOutPointChecker.cs">
+          <SubType>Form</SubType>
+        </Compile>
+        <Compile Update="dialogs\ImportROMDialog.cs">
+          <SubType>Form</SubType>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>
