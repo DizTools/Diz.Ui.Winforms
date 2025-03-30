@@ -60,7 +60,7 @@
             // textROM
             // 
             this.textROM.Location = new System.Drawing.Point(103, 12);
-            this.textROM.MaxLength = 8;
+            this.textROM.MaxLength = 40;
             this.textROM.Name = "textROM";
             this.textROM.Size = new System.Drawing.Size(46, 20);
             this.textROM.TabIndex = 1;
@@ -72,7 +72,7 @@
             // textPC
             // 
             this.textPC.Location = new System.Drawing.Point(103, 38);
-            this.textPC.MaxLength = 8;
+            this.textPC.MaxLength = 40;
             this.textPC.Name = "textPC";
             this.textPC.Size = new System.Drawing.Size(46, 20);
             this.textPC.TabIndex = 3;
