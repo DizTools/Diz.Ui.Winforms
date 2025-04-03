@@ -8,6 +8,16 @@
         "resolved": "2.1.2",
         "contentHash": "dSiH9B0apNU5abV3OVUs3eTfHiidEAa8IMOLGW0eEl5tB8Ba1ngkGC7RT/RGy61ifGcPzCe7DMP78KB8pA5kNg=="
       },
+      "FastBitmapLib": {
+        "type": "Direct",
+        "requested": "[2.1.0, )",
+        "resolved": "2.1.0",
+        "contentHash": "FOk+mBCg8nenI3V4kJXK/QeHKKjbPTZdebx8CGoMHX9bO4wzlnTSasYCHtl29FYByn+AInl9Dj1ICt29wWaL0w==",
+        "dependencies": {
+          "System.Drawing.Common": "4.5.1",
+          "System.Runtime.CompilerServices.Unsafe": "4.5.2"
+        }
+      },
       "GitInfo": {
         "type": "Direct",
         "requested": "[3.3.3, )",
@@ -131,8 +141,8 @@
       },
       "Microsoft.NETCore.Platforms": {
         "type": "Transitive",
-        "resolved": "1.1.1",
-        "contentHash": "TMBuzAHpTenGbGgk0SMTwyEkyijY/Eae4ZGsFNYJvAr/LDn1ku3Etp3FPxChmDp5HHF3kzJuoaa08N0xjqAJfQ=="
+        "resolved": "2.0.0",
+        "contentHash": "VdLJOCXhZaEMY7Hm2GKiULmn7IEPFE4XC5LPSfBVCUIA8YLZVh846gtfBJalsPQF2PlzdD7ecX7DZEulJ402ZQ=="
       },
       "Microsoft.NETCore.Targets": {
         "type": "Transitive",
@@ -147,6 +157,14 @@
           "Microsoft.NETCore.Platforms": "1.1.0",
           "Microsoft.NETCore.Targets": "1.1.0",
           "System.Runtime": "4.3.0"
+        }
+      },
+      "Microsoft.Win32.SystemEvents": {
+        "type": "Transitive",
+        "resolved": "4.5.0",
+        "contentHash": "LuI1oG+24TUj1ZRQQjM5Ew73BKnZE5NZ/7eAdh1o8ST5dPhUnJvIkiIn2re3MwnkRy6ELRnvEbBxHP8uALKhJw==",
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "2.0.0"
         }
       },
       "NETStandard.Library": {
@@ -433,6 +451,15 @@
           "Microsoft.NETCore.Platforms": "1.1.0",
           "Microsoft.NETCore.Targets": "1.1.0",
           "System.Runtime": "4.3.0"
+        }
+      },
+      "System.Drawing.Common": {
+        "type": "Transitive",
+        "resolved": "4.5.1",
+        "contentHash": "GiyeGi/v4xYDz1vCNFwFvhz9k1XddOG7VD3jxRqzRBCbTHji+s3HxxbxtoymuK4OadEpgotI8zQ5+GEEH9sUEQ==",
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "2.0.0",
+          "Microsoft.Win32.SystemEvents": "4.5.0"
         }
       },
       "System.Globalization": {
@@ -756,6 +783,11 @@
           "Microsoft.NETCore.Platforms": "1.1.0",
           "Microsoft.NETCore.Targets": "1.1.0"
         }
+      },
+      "System.Runtime.CompilerServices.Unsafe": {
+        "type": "Transitive",
+        "resolved": "4.5.2",
+        "contentHash": "wprSFgext8cwqymChhrBLu62LMg/1u92bU+VOwyfBimSPVFXtsNqEWC92Pf9ofzJFlk4IHmJA75EDJn1b2goAQ=="
       },
       "System.Runtime.Extensions": {
         "type": "Transitive",

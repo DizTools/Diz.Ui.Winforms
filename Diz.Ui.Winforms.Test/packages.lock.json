@@ -1548,6 +1548,7 @@
         "dependencies": {
           "ByteSize": "[2.1.2, )",
           "Diz.Controllers": "[1.0.0, )",
+          "FastBitmapLib": "[2.1.0, )",
           "JetBrains.Annotations": "[2023.3.0, )",
           "LightInject": "[6.6.4, )"
         }
@@ -1559,7 +1560,6 @@
           "Diz.Core": "[1.0.0, )",
           "Diz.LogWriter": "[1.0.0, )",
           "Diz.Ui.Winforms": "[1.0.0, )",
-          "FastBitmapLib": "[2.1.0, )",
           "JetBrains.Annotations": "[2023.3.0, )",
           "LightInject": "[6.6.4, )",
           "System.Resources.Extensions": "[8.0.0, )"
