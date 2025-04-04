@@ -9,19 +9,16 @@ namespace Diz.Ui.Winforms.usercontrols.visualizer.graphics
     public partial class RomImage : UserControl
     {
         public RomVisual RomVisual { get; protected set; } = new();
-        public Project Project
+        public IProject Project
         {
             get => RomVisual.Project;
-            set
-            {
+            set =>
                 RomVisual = new RomVisual
                 {
                     Project = value
                 };
-                
-                // if there's a reason to track ROM byte changes, hook in here
-                // romVisual.MarkedDirty += RomVisual_MarkedDirty;
-            }
+            // if there's a reason to track ROM byte changes, hook in here
+            // romVisual.MarkedDirty += RomVisual_MarkedDirty;
         }
 
         public RomImage()

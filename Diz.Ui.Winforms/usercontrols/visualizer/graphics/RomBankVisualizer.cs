@@ -10,7 +10,7 @@ namespace Diz.Ui.Winforms.usercontrols.visualizer.graphics
 {
     public partial class RomBankVisualizer : UserControl
     {
-        public RomBankVisualizer(Project project, int startingRomOffset, int length, string bankName)
+        public RomBankVisualizer(IProject project, int startingRomOffset, int length, string bankName)
         {
             InitializeComponent();
 

@@ -15,7 +15,7 @@ namespace Diz.Ui.Winforms.util
 
         public Data Data => Project?.Data;
 
-        public Project Project
+        public IProject Project
         {
             get => project;
             set
@@ -25,7 +25,7 @@ namespace Diz.Ui.Winforms.util
             }
         }
 
-        private void SwitchProject(Project value)
+        private void SwitchProject(IProject value)
         {
             bitmap = null;
 
@@ -108,7 +108,7 @@ namespace Diz.Ui.Winforms.util
         private int lengthOverride = -1;
         private int width = 1024;
         private Bitmap bitmap;
-        private Project project;
+        private IProject project;
 
         private readonly object dirtyLock = new();
         private readonly Dictionary<int, RomByte> dirtyRomBytes = new();

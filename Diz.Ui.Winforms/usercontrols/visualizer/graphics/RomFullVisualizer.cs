@@ -9,11 +9,10 @@ namespace Diz.Ui.Winforms.usercontrols.visualizer.graphics
 {
     public partial class RomFullVisualizer : UserControl
     {
-        private Project project;
-        public Data Data => project?.Data;
-
         private ControlCollection FormControls => flowLayoutPanel1.Controls;
-        public Project Project
+        
+        private IProject project;
+        public IProject Project
         {
             get => project;
             set

@@ -1,4 +1,4 @@
-﻿namespace DiztinGUIsh.window.dialog
+﻿namespace Diz.Ui.Winforms.dialogs
 {
     partial class ProgressDialog
     {
