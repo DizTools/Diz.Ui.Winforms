@@ -28,6 +28,7 @@ public partial class MainWindow : Form, IMainGridWindowView
             
         Document.PropertyChanged += Document_PropertyChanged;
         ProjectController.ProjectChanged += ProjectController_ProjectChanged;
+        Closed += (sender, args) => OnFormClosed?.Invoke(sender, args);
 
         NavigationForm = new NavigationForm
         {
@@ -182,7 +183,7 @@ public partial class MainWindow : Form, IMainGridWindowView
         ShowExportResults(result);
     }
 
-    private void RememberNavigationPoint(int pcOffset, ISnesNavigation.HistoryArgs historyArgs)
+    private void RememberNavigationPoint(int pcOffset, ISnesNavigation.HistoryArgs? historyArgs)
     {
         var snesAddress = Project.Data.ConvertPCtoSnes(pcOffset);
         var history = Document.NavigationHistory;
@@ -220,6 +221,8 @@ public partial class MainWindow : Form, IMainGridWindowView
         if (--_cooldownForPercentUpdate == -1)
             UpdatePercent(forceRecalculate: true);
     }
+
+    public event EventHandler? OnFormClosed;
 
     public void BringFormToTop() => 
         Focus();

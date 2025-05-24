@@ -25,6 +25,8 @@ public partial class ProgressDialog : Form, IProgressView
 
     public ProgressDialog()
     {
+        Closed += (sender, args) => OnFormClosed?.Invoke(sender, args);
+        
         InitializeComponent();
         progressBar1.Value = 0;
         progressBar1.Maximum = 100;
@@ -67,6 +69,8 @@ public partial class ProgressDialog : Form, IProgressView
 
     public void SignalJobIsDone() => this.InvokeIfRequired(Close);
     public bool PromptDialog() => ShowDialog() == DialogResult.OK;
+    public event EventHandler? OnFormClosed;
+
     public void BringFormToTop() => 
         Focus();
 }

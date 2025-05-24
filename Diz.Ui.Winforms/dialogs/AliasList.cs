@@ -25,6 +25,8 @@ public partial class AliasList : Form, ILabelEditorView
     private int currentlyEditing = -1;
     public AliasList()
     {
+        Closed += (sender, args) => OnFormClosed?.Invoke(sender, args);
+        
         InitializeComponent();
     }
 
@@ -332,6 +334,8 @@ public partial class AliasList : Form, ILabelEditorView
     {
         // if needed, catch any changes to label content here
     }
+
+    public event EventHandler? OnFormClosed;
 
     public void BringFormToTop()
     {

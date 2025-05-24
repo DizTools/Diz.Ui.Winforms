@@ -457,7 +457,7 @@ public partial class MainWindow
         PaintCell(row, e.CellStyle, e.ColumnIndex, table.CurrentCell.RowIndex + ViewOffset);
     }
 
-    public void MarkHistoryPoint(int pcOffset, ISnesNavigation.HistoryArgs historyArgs, string position)
+    public void MarkHistoryPoint(int pcOffset, ISnesNavigation.HistoryArgs? historyArgs, string position)
     {
         if (historyArgs == null) 
             return;
@@ -470,10 +470,10 @@ public partial class MainWindow
     public void SelectOffsetWithOvershoot(int pcOffset, int overshootAmount = 0)
         => SelectOffset(pcOffset, -1, null, overshootAmount);
 
-    public void SelectOffset(int pcOffset, ISnesNavigation.HistoryArgs historyArgs = null)
+    public void SelectOffset(int pcOffset, ISnesNavigation.HistoryArgs? historyArgs = null)
         => SelectOffset(pcOffset, -1, historyArgs);
 
-    public void SelectOffset(int pcOffset, int column = -1, ISnesNavigation.HistoryArgs historyArgs = null, int overshootAmount=0)
+    public void SelectOffset(int pcOffset, int column = -1, ISnesNavigation.HistoryArgs? historyArgs = null, int overshootAmount=0)
     {
         if (pcOffset == -1)
             return;

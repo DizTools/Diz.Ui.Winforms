@@ -9,6 +9,8 @@ internal partial class About : Form, IFormViewer
 {
     public About()
     {
+        Closed += (sender, args) => OnFormClosed?.Invoke(sender, args);
+        
         InitializeComponent();
         Init();
     }
@@ -105,6 +107,8 @@ internal partial class About : Form, IFormViewer
     {
         Close();
     }
+
+    public event EventHandler? OnFormClosed;
 
     public void BringFormToTop() => 
         Focus();

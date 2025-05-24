@@ -40,6 +40,8 @@ public partial class LogCreatorSettingsEditorForm : Form, ILogCreatorSettingsEdi
 
     public LogCreatorSettingsEditorForm()
     {
+        Closed += (sender, args) => OnFormClosed?.Invoke(sender, args);
+        
         InitializeComponent();
     }
 
@@ -138,6 +140,8 @@ public partial class LogCreatorSettingsEditorForm : Form, ILogCreatorSettingsEdi
     
     private void txtExportPath_TextChanged(object sender, EventArgs e) => 
         Settings = Settings with {FileOrFolderOutPath = txtExportPath.Text};
+
+    public event EventHandler? OnFormClosed;
 
     public void BringFormToTop() => 
         Focus();
