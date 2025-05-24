@@ -3,7 +3,8 @@ using Diz.Ui.Winforms.util;
 
 namespace Diz.Ui.Winforms.dialogs;
 
-public class CommonGui : ICommonGui
+// ReSharper disable once ClassNeverInstantiated.Global
+public class WinFormsCommonGui : ICommonGui
 {
     public bool PromptToConfirmAction(string msg) => 
         GuiUtil.PromptToConfirmAction("Warning", msg, () => true);
