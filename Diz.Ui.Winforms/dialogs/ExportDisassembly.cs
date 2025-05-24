@@ -138,4 +138,7 @@ public partial class LogCreatorSettingsEditorForm : Form, ILogCreatorSettingsEdi
     
     private void txtExportPath_TextChanged(object sender, EventArgs e) => 
         Settings = Settings with {FileOrFolderOutPath = txtExportPath.Text};
+
+    public void BringFormToTop() => 
+        Focus();
 }

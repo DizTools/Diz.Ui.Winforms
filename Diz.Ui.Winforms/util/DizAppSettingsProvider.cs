@@ -7,11 +7,14 @@ using JetBrains.Annotations;
 
 namespace Diz.Ui.Winforms.util;
 
+// used for persistent settings storage
+// TODO: we should make a version of this that isn't dependent on winforms but is just for app-stuff
+
 [UsedImplicitly]
 public class DizAppSettingsProvider : IDizAppSettings
 {
     private static Settings Settings => 
-         Settings.Default;
+         Settings.Default; // currently, hard-linked on winforms
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

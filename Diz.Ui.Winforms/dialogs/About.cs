@@ -105,4 +105,7 @@ internal partial class About : Form, IFormViewer
     {
         Close();
     }
+
+    public void BringFormToTop() => 
+        Focus();
 }

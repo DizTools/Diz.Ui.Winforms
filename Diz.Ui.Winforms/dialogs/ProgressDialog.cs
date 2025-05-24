@@ -67,4 +67,6 @@ public partial class ProgressDialog : Form, IProgressView
 
     public void SignalJobIsDone() => this.InvokeIfRequired(Close);
     public bool PromptDialog() => ShowDialog() == DialogResult.OK;
+    public void BringFormToTop() => 
+        Focus();
 }

@@ -220,4 +220,7 @@ public partial class MainWindow : Form, IMainGridWindowView
         if (--_cooldownForPercentUpdate == -1)
             UpdatePercent(forceRecalculate: true);
     }
+
+    public void BringFormToTop() => 
+        Focus();
 }
