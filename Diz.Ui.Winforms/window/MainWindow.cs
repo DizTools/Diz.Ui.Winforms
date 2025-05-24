@@ -9,17 +9,21 @@ namespace Diz.Ui.Winforms.window;
 
 public partial class MainWindow : Form, IMainGridWindowView
 {
+    private readonly IViewFactory viewFactory;
+
     public MainWindow(
         IProjectController projectController,
         IDizAppSettings appSettings, 
-        IDizDocument document)
+        IDizDocument document,
+        IViewFactory viewFactory)
     {
         Document = document;
         this.appSettings = appSettings;
+        this.viewFactory = viewFactory;
         ProjectController = projectController;
         ProjectController.ProjectView = this;
 
-        aliasList = projectController.ViewFactory.GetLabelEditorView();
+        aliasList = viewFactory.GetLabelEditorView();
         aliasList.ProjectController = ProjectController;
             
         Document.PropertyChanged += Document_PropertyChanged;

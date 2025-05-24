@@ -27,7 +27,7 @@ public partial class MainWindow
         
     // sub windows
     private ILabelEditorView aliasList;
-    private VisualizerForm visualForm;
+    private VisualizerForm? visualForm;
 
     // TODO: add a handler so we get notified when CurrentViewOffset changes.
     // then, we split most of our functions up into

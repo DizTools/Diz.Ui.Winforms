@@ -57,7 +57,7 @@ public partial class MainWindow
         OpenExportDirectory();
 
     private void aboutToolStripMenuItem_Click(object sender, EventArgs e) =>
-        ProjectController.ViewFactory.GetAboutView().Show();
+        viewFactory.GetAboutView().Show();
         
     private void exitToolStripMenuItem_Click(object sender, EventArgs e) => 
         Application.Exit();
