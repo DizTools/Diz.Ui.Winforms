@@ -20,6 +20,6 @@ namespace Diz.Ui.Winforms;
         serviceRegistry.Register<ILogCreatorSettingsEditorView, LogCreatorSettingsEditorForm>("ExportDisassemblyView");
         serviceRegistry.Register<ILabelEditorView, AliasList>("LabelEditorView");
 
-        serviceRegistry.RegisterSingleton<IDizAppSettings, DizWinformsAppSettingsProvider>();
+        serviceRegistry.RegisterSingleton<IDizAppSettings, DizAppSettingsProvider>();
     }
 }

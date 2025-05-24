@@ -8,7 +8,7 @@ using JetBrains.Annotations;
 namespace Diz.Ui.Winforms.util;
 
 [UsedImplicitly]
-public class DizWinformsAppSettingsProvider : IDizAppSettings
+public class DizAppSettingsProvider : IDizAppSettings
 {
     private static Settings Settings => 
          Settings.Default;
