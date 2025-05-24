@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.ComponentModel;
+using System.Runtime.InteropServices;
 using Diz.Core.model;
 using Diz.Ui.Winforms.util;
 
@@ -8,7 +9,10 @@ namespace Diz.Ui.Winforms.usercontrols.visualizer.graphics
 {
     public partial class RomImage : UserControl
     {
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public RomVisual RomVisual { get; protected set; } = new();
+        
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IProject Project
         {
             get => RomVisual.Project;

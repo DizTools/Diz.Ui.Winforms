@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using Diz.Controllers.interfaces;
 using Diz.Core;
@@ -18,13 +19,17 @@ public partial class MarkManyView<TDataSource> : Form, IMarkManyView<TDataSource
     IRomByteFlagsGettable, 
     ISnesAddressConverter
 {
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public IMarkManyController<TDataSource>? Controller { get; set; }
+    
     private TDataSource? Data => Controller!.Data;
         
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     private int PropertyMaxIntVal => Property == MarkCommand.MarkManyProperty.DataBank 
         ? 0x100 
         : 0x10000;
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public MarkCommand.MarkManyProperty Property
     {
         get => (MarkCommand.MarkManyProperty) comboPropertyType.SelectedIndex;

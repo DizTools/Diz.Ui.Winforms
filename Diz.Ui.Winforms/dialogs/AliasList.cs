@@ -17,6 +17,7 @@ namespace Diz.Ui.Winforms.dialogs;
 [SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
 public partial class AliasList : Form, ILabelEditorView
 {
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public IProjectController? ProjectController { get; set; }
     private Data Data => ProjectController?.Project?.Data!;
 

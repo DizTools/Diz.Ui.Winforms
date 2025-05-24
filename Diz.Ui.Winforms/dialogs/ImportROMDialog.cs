@@ -7,6 +7,7 @@ using Diz.Core.util;
 using Diz.Cpu._65816.import;
 using Diz.Ui.Winforms.util;
 using JetBrains.Annotations;
+using System.ComponentModel;
 
 namespace Diz.Ui.Winforms.dialogs;
 
@@ -39,6 +40,7 @@ public partial class ImportRomDialog : Form, IImportRomDialogView
     private IImportRomDialogController? controller;
     private readonly List<VectorControls> vectorTableGui;
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public IImportRomDialogController Controller
     {
         get => controller!;    // TODO: fixme

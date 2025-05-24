@@ -9,13 +9,14 @@ namespace Diz.Ui.Winforms.dialogs;
 public partial class LogCreatorSettingsEditorForm : Form, ILogCreatorSettingsEditorView
 {
     private ILogCreatorSettingsEditorController? controller;
-
-    public LogWriterSettings Settings
+    
+    private LogWriterSettings Settings
     {
         get => Controller?.Settings ?? new LogWriterSettings();
-        private set { if (Controller != null) Controller.Settings = value; }
+        set { if (Controller != null) Controller.Settings = value; }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ILogCreatorSettingsEditorController? Controller
     {
         get => controller;

@@ -1,6 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Diagnostics;
 using Diz.Core.model;
-using Diz.Core.model.snes;
 using Diz.Cpu._65816;
 
 // shows a collection of bank controls, so you can visualize the entire ROM
@@ -12,6 +12,8 @@ namespace Diz.Ui.Winforms.usercontrols.visualizer.graphics
         private ControlCollection FormControls => flowLayoutPanel1.Controls;
         
         private IProject project;
+        
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IProject Project
         {
             get => project;

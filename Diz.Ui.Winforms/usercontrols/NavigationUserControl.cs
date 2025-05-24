@@ -8,8 +8,8 @@ namespace Diz.Ui.Winforms.usercontrols
     public partial class NavigationUserControl : UserControl
     {
         private IDizDocument document;
-        private ISnesNavigation snesNavigation;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IDizDocument Document
         {
             get => document;
@@ -39,14 +39,8 @@ namespace Diz.Ui.Winforms.usercontrols
             SelectDataGridRow(navigationEntryBindingSource.Count - 1);
         }
 
-        public ISnesNavigation SnesNavigation
-        {
-            get => snesNavigation;
-            set
-            {
-                snesNavigation = value;
-            }
-        }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public ISnesNavigation SnesNavigation { get; set; }
 
         public NavigationUserControl()
         {

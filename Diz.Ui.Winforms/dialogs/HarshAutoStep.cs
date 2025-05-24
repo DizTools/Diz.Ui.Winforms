@@ -2,13 +2,19 @@
 using System.Globalization;
 using Diz.Core.model.snes;
 using Diz.Core.util;
+using System.ComponentModel;
 
 namespace Diz.Ui.Winforms.dialogs;
 
 public partial class HarshAutoStep : Form
 {
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int StartRomOffset { get; private set; }
+    
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int EndRomOffset { get; private set; }
+    
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int Count { get; private set; }
         
     private readonly Data data;

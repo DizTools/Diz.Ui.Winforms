@@ -1,16 +1,19 @@
-﻿using Diz.Controllers.interfaces;
+﻿using System.ComponentModel;
+using Diz.Controllers.interfaces;
 using Diz.Ui.Winforms.util;
 
 namespace Diz.Ui.Winforms.dialogs;
 
 public partial class ProgressDialog : Form, IProgressView
 {
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsMarquee
     {
         get => isMarquee;
         set => this.InvokeIfRequired(() => UpdateProgressBarStyle(value));
     }
         
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string? TextOverride
     {
         get => textOverride;

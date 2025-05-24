@@ -1,4 +1,5 @@
-﻿using Diz.Controllers.controllers;
+﻿using System.ComponentModel;
+using Diz.Controllers.controllers;
 using Diz.Controllers.interfaces;
 
 namespace Diz.Ui.Winforms.dialogs;
@@ -8,6 +9,7 @@ public partial class NavigationForm : Form
     private IDizDocument document;
     private ISnesNavigation snesNavigation;
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public IDizDocument Document
     {
         get => document;
@@ -18,6 +20,7 @@ public partial class NavigationForm : Form
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ISnesNavigation SnesNavigation
     {
         get => snesNavigation;
