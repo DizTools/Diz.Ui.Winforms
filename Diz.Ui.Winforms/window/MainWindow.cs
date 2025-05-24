@@ -111,7 +111,7 @@ public partial class MainWindow : Form, IMainGridWindowView
     }
 
 
-    private void Document_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void Document_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(DizDocument.LastProjectFilename))
         {
