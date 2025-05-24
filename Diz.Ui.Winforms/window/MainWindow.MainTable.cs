@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 using Diz.Controllers.controllers;
-using Diz.Core.model;
+using Diz.Core.Interfaces;
 using Diz.Core.util;
 using Diz.Cpu._65816;
 

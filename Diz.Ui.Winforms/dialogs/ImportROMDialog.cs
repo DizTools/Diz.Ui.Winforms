@@ -2,12 +2,11 @@
 using System.Diagnostics.CodeAnalysis;
 using Diz.Controllers.controllers;
 using Diz.Controllers.interfaces;
-using Diz.Core.model;
 using Diz.Core.util;
 using Diz.Cpu._65816.import;
 using Diz.Ui.Winforms.util;
-using JetBrains.Annotations;
 using System.ComponentModel;
+using Diz.Core.Interfaces;
 
 namespace Diz.Ui.Winforms.dialogs;
 

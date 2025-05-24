@@ -2,7 +2,7 @@
 using Diz.Controllers.controllers;
 using Diz.Controllers.interfaces;
 using Diz.Core.commands;
-using Diz.Core.model;
+using Diz.Core.Interfaces;
 using Diz.Core.util;
 using Diz.Cpu._65816;
 using Diz.Ui.Winforms.dialogs;

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using Diz.Controllers.controllers;
 using Diz.Controllers.interfaces;
+using Diz.Core.Interfaces;
 using Diz.Core.model;
 using Diz.Core.util;
 using Diz.Ui.Winforms.dialogs;

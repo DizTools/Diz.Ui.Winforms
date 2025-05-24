@@ -1,4 +1,4 @@
-﻿using Diz.Core.model;
+﻿using Diz.Core.Interfaces;
 using Diz.Core.util;
 
 // shows all the legend items in a collection

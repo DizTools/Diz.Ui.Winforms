@@ -1,7 +1,7 @@
 ﻿#nullable enable
 
 using Diz.Core.commands;
-using Diz.Core.model;
+using Diz.Core.Interfaces;
 using Diz.Core.util;
 using Diz.Ui.Winforms.dialogs;
 

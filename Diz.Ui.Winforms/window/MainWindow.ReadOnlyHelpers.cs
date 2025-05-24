@@ -1,4 +1,5 @@
-﻿using Diz.Core.model;
+﻿using Diz.Core.Interfaces;
+using Diz.Core.model;
 using Diz.Cpu._65816;
 
 namespace Diz.Ui.Winforms.window;
