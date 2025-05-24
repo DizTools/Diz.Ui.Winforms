@@ -56,7 +56,7 @@ public partial class MainWindow
         try
         {
             // System.Diagnostics.Process.Start(Directory.GetCurrentDirectory() + "/help.html");
-            GuiUtil.OpenExternalProcess(helpUrl);
+            WinformsGuiUtil.OpenExternalProcess(helpUrl);
         }
         catch (Exception)
         {
@@ -65,7 +65,7 @@ public partial class MainWindow
     }
 
     private void githubToolStripMenuItem_Click(object sender, EventArgs e) =>
-        GuiUtil.OpenExternalProcess("https://github.com/Isofrieze/DiztinGUIsh");
+        WinformsGuiUtil.OpenExternalProcess("https://github.com/Isofrieze/DiztinGUIsh");
 
     private string PromptOpenBizhawkCDLFile()
     {
@@ -175,8 +175,8 @@ public partial class MainWindow
     public string AskToSelectNewRomFilename(string promptSubject, string promptText)
     {
         string initialDir = null; // TODO: Project.ProjectFileName
-        return GuiUtil.PromptToConfirmAction(promptSubject, promptText, 
-            () => GuiUtil.PromptToSelectFile(initialDir)
+        return WinformsGuiUtil.PromptToConfirmAction(promptSubject, promptText, 
+            () => WinformsGuiUtil.PromptToSelectFile(initialDir)
         );
     }
 

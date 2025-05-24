@@ -83,7 +83,7 @@ public partial class ImportRomDialog : Form, IImportRomDialogView
         // Debug.Assert(Controller.Builder.Input.AnalysisResults != null); // needed?
         
         // this is the better way to do this but... we need better hooks for knowing when stuff changes, it's a mess
-        GuiUtil.BindListControlToEnum<RomMapMode>(cmbRomMapMode, 
+        WinformsGuiUtil.BindListControlToEnum<RomMapMode>(cmbRomMapMode, 
             Controller.Builder, 
             nameof(ISnesRomImportSettingsBuilder.OptionSelectedRomMapMode));
         

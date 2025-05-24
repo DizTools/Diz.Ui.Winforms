@@ -6,7 +6,7 @@ using Diz.Core.util;
 
 namespace Diz.Ui.Winforms.util;
 
-public static class GuiUtil
+public static class WinformsGuiUtil
 {
     public static void OpenExternalProcess(string argsToLaunch)
     {

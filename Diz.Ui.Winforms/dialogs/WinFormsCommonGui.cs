@@ -7,7 +7,7 @@ namespace Diz.Ui.Winforms.dialogs;
 public class WinFormsCommonGui : ICommonGui
 {
     public bool PromptToConfirmAction(string msg) => 
-        GuiUtil.PromptToConfirmAction("Warning", msg, () => true);
+        WinformsGuiUtil.PromptToConfirmAction("Warning", msg, () => true);
 
     public void ShowError(string msg) => 
         MessageBox.Show(msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);

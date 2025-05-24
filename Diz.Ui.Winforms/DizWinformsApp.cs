@@ -10,7 +10,7 @@ public class DizWinformsApp(IViewFactory viewFactory) : IDizApp
     {
         // TODO: do less weird janky casting here.
         
-        GuiUtil.SetupDpiStuff();
+        WinformsGuiUtil.SetupDpiStuff();
         var mainWindow = viewFactory.GetMainGridWindowView();
 
         // TODO: fix

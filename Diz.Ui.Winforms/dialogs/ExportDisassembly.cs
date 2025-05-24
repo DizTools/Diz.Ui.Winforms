@@ -73,7 +73,7 @@ public partial class LogCreatorSettingsEditorForm : Form, ILogCreatorSettingsEdi
     }
     
     public bool PromptCreatePath(string path, string extraMsg = "") => 
-        GuiUtil.PromptToConfirmAction("Output Directory", 
+        WinformsGuiUtil.PromptToConfirmAction("Output Directory", 
             $"Output Directory does not exist.\nWould you like to create it now?\n{path}\n\n{extraMsg}",
             () => true);
 
