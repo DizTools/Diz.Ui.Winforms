@@ -1552,16 +1552,6 @@
           "JetBrains.Annotations": "[2023.3.0, )",
           "LightInject": "[6.6.4, )"
         }
-      },
-      "diztinguish": {
-        "type": "Project",
-        "dependencies": {
-          "Diz.Controllers": "[1.0.0, )",
-          "Diz.Ui.Winforms": "[1.0.0, )",
-          "JetBrains.Annotations": "[2023.3.0, )",
-          "LightInject": "[6.6.4, )",
-          "System.Resources.Extensions": "[8.0.0, )"
-        }
       }
     }
   }

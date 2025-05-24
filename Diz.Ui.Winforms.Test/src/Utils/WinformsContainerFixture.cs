@@ -1,5 +1,4 @@
 ﻿using Diz.Test.Utils;
-using DiztinGUIsh;
 using LightInject;
 
 namespace Diz.Ui.Winforms.Test.Utils;
@@ -10,6 +9,6 @@ public class ContainerWinformsFixture : ContainerFixture
     {
         base.Configure(serviceRegistry);
 
-        DizAppServices.RegisterDizUiServices(serviceRegistry);
+        // TODO // DizAppServices.RegisterDizUiServices(serviceRegistry);
     }
 }
