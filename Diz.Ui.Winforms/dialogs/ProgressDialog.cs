@@ -67,6 +67,8 @@ public partial class ProgressDialog : Form, IProgressView
         lblStatusText.Text = $@"{percentDone}%";
     }
 
+    public bool IsVisible() => Visible;
+
     public void SignalJobIsDone() => this.InvokeIfRequired(Close);
     public bool PromptDialog() => ShowDialog() == DialogResult.OK;
     public event EventHandler? OnFormClosed;
