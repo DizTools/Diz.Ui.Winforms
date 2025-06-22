@@ -41,16 +41,30 @@ public partial class MainWindow
     {
         if (!EnsureProjectFileExistsOnDisk())
             return;
-            
-        ProjectController?.ExportAssemblyWithCurrentSettings();
-    }
 
+        RunOperationWithUiHidden(() => 
+            ProjectController.ExportAssemblyWithCurrentSettings()
+        );
+    }
+    
     private void toolStrip_exportDisassemblyEditSettingsFirst_Click(object sender, EventArgs e)
     {
         if (!EnsureProjectFileExistsOnDisk())
             return;
             
-        ProjectController?.ConfirmSettingsThenExportAssembly();
+        RunOperationWithUiHidden(() => 
+            ProjectController.ConfirmSettingsThenExportAssembly()
+        );
+    }
+
+    private bool RunOperationWithUiHidden(Func<bool> action)
+    {
+        // hide the UI so it doesn't try and update while we're doing intense stuff (like exporting)
+        // this could mess up internal operations and iterate through collections being modified/etc.
+        Hide();
+        var result = action();
+        Show();
+        return result;
     }
 
     private void toolStrip_openExportDirectory_Click(object sender, EventArgs e) =>
