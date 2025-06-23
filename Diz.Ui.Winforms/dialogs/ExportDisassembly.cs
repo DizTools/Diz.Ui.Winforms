@@ -58,7 +58,8 @@ public partial class LogCreatorSettingsEditorForm : Form, ILogCreatorSettingsEdi
         chkIncludeUnusedLabels.Checked = Settings.IncludeUnusedLabels;
         chkPrintLabelSpecificComments.Checked = Settings.PrintLabelSpecificComments;
         txtExportPath.Text = Settings.FileOrFolderOutPath;
-        
+        chkGeneratePlusMinusLabels.Checked = Settings.GeneratePlusMinusLabels;
+
         var validFormat = LogCreatorLineFormatter.Validate(Settings.Format);
         
         disassembleButton.Enabled = validFormat;
@@ -140,6 +141,9 @@ public partial class LogCreatorSettingsEditorForm : Form, ILogCreatorSettingsEdi
     
     private void txtExportPath_TextChanged(object sender, EventArgs e) => 
         Settings = Settings with {FileOrFolderOutPath = txtExportPath.Text};
+        
+    private void chkGeneratePlusMinusLabels_CheckedChanged(object sender, EventArgs e) =>
+        Settings = Settings with { GeneratePlusMinusLabels = chkGeneratePlusMinusLabels.Checked };
 
     public event EventHandler? OnFormClosed;
 
