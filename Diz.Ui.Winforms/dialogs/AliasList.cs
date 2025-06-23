@@ -26,7 +26,7 @@ public partial class AliasList : Form, ILabelEditorView
     public AliasList()
     {
         Closed += (sender, args) => OnFormClosed?.Invoke(sender, args);
-        
+
         InitializeComponent();
     }
 
@@ -52,7 +52,7 @@ public partial class AliasList : Form, ILabelEditorView
 
     private void jump_Click(object sender, EventArgs e)
     {
-        if (!int.TryParse((string) dataGridView1.SelectedRows[0].Cells[0].Value, NumberStyles.HexNumber, null,
+        if (!int.TryParse(dataGridView1.SelectedRows[0].Cells[0].Value as string, NumberStyles.HexNumber, null,
                 out var val)) return;
 
         var offset = Data.ConvertSnesToPc(val);
@@ -68,26 +68,27 @@ public partial class AliasList : Form, ILabelEditorView
     public string PromptForCsvFilename()
     {
         var result = openFileDialog1.ShowDialog();
-        return result != DialogResult.OK || openFileDialog1.FileName == "" 
-            ? "" 
+        return result != DialogResult.OK || openFileDialog1.FileName == ""
+            ? ""
             : openFileDialog1.FileName;
     }
 
-    private void export_Click(object sender, EventArgs e)
+    private void exportCSVToolStripMenuItem_Click(object sender, EventArgs e)
     {
         var result = saveFileDialog1.ShowDialog();
-        if (result != DialogResult.OK || saveFileDialog1.FileName == "") 
+        if (result != DialogResult.OK || saveFileDialog1.FileName == "")
             return;
-            
+
         var fileName = saveFileDialog1.FileName;
-            
+
         try
         {
             using var sw = new StreamWriter(fileName);
-            
+
             // TODO: use a better CSV output tool for this. this probably doesn't escape strings properly/etc
             WriteLabelsToCsv(sw);
-        } catch (Exception)
+        }
+        catch (Exception)
         {
             MessageBox.Show("An error occurred while saving the file.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
@@ -109,13 +110,13 @@ public partial class AliasList : Form, ILabelEditorView
 
     private void dataGridView1_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
     {
-        var cellValue = e.Row != null ? (string)dataGridView1.Rows[e.Row.Index].Cells[0].Value : "";
+        var cellValue = e.Row != null ? (dataGridView1.Rows[e.Row.Index].Cells[0].Value as string) : "";
         if (string.IsNullOrEmpty(cellValue))
             return;
 
-        if (!int.TryParse(cellValue, NumberStyles.HexNumber, null, out var val)) 
+        if (!int.TryParse(cellValue, NumberStyles.HexNumber, null, out var val))
             return;
-            
+
         locked = true;
         Data.Labels.RemoveLabel(val);
         locked = false;
@@ -136,12 +137,12 @@ public partial class AliasList : Form, ILabelEditorView
     {
         if (dataGridView1.Rows[e.RowIndex].IsNewRow)
             return;
-            
-        var existingSnesAddressStr = (string)dataGridView1.Rows[e.RowIndex].Cells[0].Value;
-        var existingName = (string)dataGridView1.Rows[e.RowIndex].Cells[1].Value;
-        var existingComment = (string)dataGridView1.Rows[e.RowIndex].Cells[2].Value;
+
+        var existingSnesAddressStr = dataGridView1.Rows[e.RowIndex].Cells[0].Value as string;
+        var existingName = dataGridView1.Rows[e.RowIndex].Cells[1].Value as string;
+        var existingComment = dataGridView1.Rows[e.RowIndex].Cells[2].Value as string;
         int.TryParse(existingSnesAddressStr, NumberStyles.HexNumber, null, out var existingSnesAddress);
-            
+
         var newLabel = new Label
         {
             Name = existingName,
@@ -154,49 +155,49 @@ public partial class AliasList : Form, ILabelEditorView
         switch (e.ColumnIndex)
         {
             case 0: // label's address
-            {
-                if (!int.TryParse(e.FormattedValue?.ToString() ?? "", NumberStyles.HexNumber, null, out newSnesAddress))
                 {
-                    e.Cancel = true;
-                    toolStripStatusLabel1.Text = "Must enter a valid hex address.";
-                    break;
-                }
-                        
-                if (existingSnesAddress == -1 && Data.Labels?.GetLabel(newSnesAddress) != null)
-                {
-                    e.Cancel = true;
-                    toolStripStatusLabel1.Text = "This address already has a label.";
-                    break;
-                }
+                    if (!int.TryParse(e.FormattedValue?.ToString() ?? "", NumberStyles.HexNumber, null, out newSnesAddress))
+                    {
+                        e.Cancel = true;
+                        toolStripStatusLabel1.Text = "Must enter a valid hex address.";
+                        break;
+                    }
 
-                if (dataGridView1.EditingControl != null)
-                {
-                    dataGridView1.EditingControl.Text = Util.ToHexString6(newSnesAddress);
+                    if (existingSnesAddress == -1 && Data.Labels?.GetLabel(newSnesAddress) != null)
+                    {
+                        e.Cancel = true;
+                        toolStripStatusLabel1.Text = "This address already has a label.";
+                        break;
+                    }
+
+                    if (dataGridView1.EditingControl != null)
+                    {
+                        dataGridView1.EditingControl.Text = Util.ToHexString6(newSnesAddress);
+                    }
+                    break;
                 }
-                break;
-            }
             case 1: // label name
-            {
-                newSnesAddress = existingSnesAddress;
-                newLabel.Name = e.FormattedValue?.ToString() ?? "";
-                // todo (validate for valid label characters)
-                break;
-            }
+                {
+                    newSnesAddress = existingSnesAddress;
+                    newLabel.Name = e.FormattedValue?.ToString() ?? "";
+                    // todo (validate for valid label characters)
+                    break;
+                }
             case 2: // label comment
-            {
-                newSnesAddress = existingSnesAddress;
-                newLabel.Comment = e.FormattedValue?.ToString() ?? "";
-                // todo (validate for valid comment characters, if any)
-                break;
-            }
+                {
+                    newSnesAddress = existingSnesAddress;
+                    newLabel.Comment = e.FormattedValue?.ToString() ?? "";
+                    // todo (validate for valid comment characters, if any)
+                    break;
+                }
         }
 
         locked = true;
         if (currentlyEditing >= 0)
         {
-            if (newSnesAddress >= 0) 
+            if (newSnesAddress >= 0)
                 Data.Labels?.RemoveLabel(existingSnesAddress);
-                
+
             Data.Labels?.AddLabel(newSnesAddress, newLabel, true);
         }
         locked = false;
@@ -206,7 +207,7 @@ public partial class AliasList : Form, ILabelEditorView
 
     public void AddRow(int address, Label alias)
     {
-        if (locked) 
+        if (locked)
             return;
         RawAdd(address, alias);
         dataGridView1.Invalidate();
@@ -219,13 +220,13 @@ public partial class AliasList : Form, ILabelEditorView
 
     public void RemoveRow(int address)
     {
-        if (locked) 
+        if (locked)
             return;
 
         for (var index = 0; index < dataGridView1.Rows.Count; index++)
         {
-            if ((string) dataGridView1.Rows[index].Cells[0].Value !=
-                Util.ToHexString6(address)) continue;
+            if (dataGridView1.Rows[index].Cells[0].Value as string != Util.ToHexString6(address))
+                continue;
 
             dataGridView1.Rows.RemoveAt(index);
             dataGridView1.Invalidate();
@@ -239,39 +240,39 @@ public partial class AliasList : Form, ILabelEditorView
         dataGridView1.Invalidate();
     }
 
-    private void importAppend_Click(object sender, EventArgs e)
+    private void importCSVAppendToolStripMenuItem_Click(object sender, EventArgs e)
     {
         const string msg = "Info: Items in CSV will:\n" +
-                           "1) CSV items will be added if their address doesn't already exist in this list\n" +
-                           "2) CSV items will replace anything with the same address as items in the list\n" +
-                           "3) any unmatched addresses in the list will be left alone\n" +
-                           "\n" +
-                           "Continue?\n";
-            
+                   "1) CSV items will be added if their address doesn't already exist in this list\n" +
+                   "2) CSV items will replace anything with the same address as items in the list\n" +
+                   "3) any unmatched addresses in the list will be left alone\n" +
+                   "\n" +
+                   "Continue?\n";
+
         if (!PromptWarning(msg))
             return;
 
         ProjectController!.ImportLabelsCsv(this, false);
     }
 
-    private void btnImportReplace_Click(object sender, EventArgs e)
+    private void importCSVToolStripMenuItem_Click(object sender, EventArgs e)
     {
         if (!PromptWarning("Info: All list items will be deleted and replaced with the CSV file.\n" +
-                           "\n" +
-                           "Continue?\n"))
+                   "\n" +
+                   "Continue?\n"))
             return;
 
         ProjectController!.ImportLabelsCsv(this, true);
     }
-        
-    public static bool PromptWarning(string msg) => 
+
+    public static bool PromptWarning(string msg) =>
         MessageBox.Show(msg, "Warning", MessageBoxButtons.OKCancel) == DialogResult.OK;
 
     public void RebindProject()
     {
-        if (Data.Labels != null) 
+        if (Data.Labels != null)
             Data.Labels.OnLabelChanged += LabelsOnOnLabelChanged;
-            
+
         RepopulateFromData();
 
         // todo: eventually use databinding/datasource, probably.
@@ -284,7 +285,7 @@ public partial class AliasList : Form, ILabelEditorView
     {
         if (locked)
             return;
-            
+
         ClearAndInvalidateDataGrid();
 
         if (Data == null)
@@ -295,7 +296,7 @@ public partial class AliasList : Form, ILabelEditorView
         {
             RawAdd(snesAddress, label);
         }
-            
+
         dataGridView1.Invalidate();
     }
 
@@ -341,4 +342,5 @@ public partial class AliasList : Form, ILabelEditorView
     {
         Focus();
     }
+
 }
