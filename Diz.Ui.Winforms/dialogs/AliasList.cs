@@ -9,6 +9,7 @@ using Diz.Controllers.interfaces;
 using Diz.Core.Interfaces;
 using Diz.Core.model.snes;
 using Diz.Core.util;
+using Diz.Cpu._65816;
 using Label = Diz.Core.model.Label;
 
 namespace Diz.Ui.Winforms.dialogs;
@@ -44,16 +45,12 @@ public partial class AliasList : Form, ILabelEditorView
         Hide();
     }
 
-    private void AliasList_Resize(object sender, EventArgs e)
+    private void AliasList_Resize(object sender, EventArgs e) {}
+    
+    private void btnJmp_Click(object sender, EventArgs e)
     {
-        var h = Height - 68 - 22;
-        dataGridView1.Height = h;
-    }
-
-    private void jump_Click(object sender, EventArgs e)
-    {
-        if (!int.TryParse(dataGridView1.SelectedRows[0].Cells[0].Value as string, NumberStyles.HexNumber, null,
-                out var val)) return;
+        if (!int.TryParse(dataGridView1.SelectedRows[0].Cells[0].Value as string, NumberStyles.HexNumber, null, out var val))
+            return;
 
         var offset = Data.ConvertSnesToPc(val);
         if (offset >= 0)
@@ -281,6 +278,19 @@ public partial class AliasList : Form, ILabelEditorView
         // tmp disabled // Data.Labels.CollectionChanged += Labels_CollectionChanged;
     }
 
+    public string CurrentSearchTerm => txtSearch.Text;
+
+    private void txtSearch_TextChanged(object sender, EventArgs e)
+    {
+        RepopulateFromData();
+    }
+
+    private void btnClearSearch_Click(object sender, EventArgs e)
+    {
+        txtSearch.Text = "";
+        RepopulateFromData();
+    }
+
     public void RepopulateFromData()
     {
         if (locked)
@@ -288,11 +298,17 @@ public partial class AliasList : Form, ILabelEditorView
 
         ClearAndInvalidateDataGrid();
 
-        if (Data == null)
-            return;
+        var searchTerm = CurrentSearchTerm.ToUpper();
+        var filteredLabels = Data.Labels.Labels
+            .Where(
+                x =>
+                    Util.ToHexString6(x.Key).ToUpper().Contains(searchTerm) ||        // remember: search the HEX STRING or it gets weird :)
+                    x.Value.Name.ToUpper().Contains(searchTerm) ||
+                    x.Value.Comment.ToUpper().Contains(searchTerm)
+            );
 
         // TODO: replace with winforms databinding eventually
-        foreach (var (snesAddress, label) in Data.Labels.Labels)
+        foreach (var (snesAddress, label) in filteredLabels)
         {
             RawAdd(snesAddress, label);
         }
@@ -343,4 +359,69 @@ public partial class AliasList : Form, ILabelEditorView
         Focus();
     }
 
+    private void btnNewFromCurrentIA_Click(object sender, EventArgs e)
+    {
+        var snesData = Data.GetSnesApi();
+        if (snesData == null || ProjectController == null)
+            return;
+        
+        // whatever IA is selected on the main form, let's start editing a new label with that.
+        var selectedOffset = ProjectController.ProjectView.SelectedOffset;
+        if (selectedOffset == -1)
+        {
+            MessageBox.Show("No offset selected in main form.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
+
+        var snesIa = snesData.GetIntermediateAddress(selectedOffset, resolve: true);
+        if (snesIa == -1)
+        {
+            MessageBox.Show("You have selected a row in the main grid that has no IA (Intermediate Address). Can't proceed", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
+
+        // finally clear our search
+        if (txtSearch.Text != "")
+        {
+            txtSearch.Clear();
+            RepopulateFromData();
+        }
+
+        // now ready to start editing:
+        var rowFound = false;
+        var rowIndex = -1;
+
+        for (var i = 0; i < dataGridView1.Rows.Count; i++)
+        {
+            if (dataGridView1.Rows[i].Cells[0].Value as string != Util.ToHexString6(snesIa)) 
+                continue;
+            
+            rowFound = true;
+            rowIndex = i;
+            break;
+        }
+    
+        if (!rowFound)
+        {
+            // Add a new row with the address and start editing it
+            var newLabel = new Label { Name = "New Label" };
+            AddRow(snesIa, newLabel);
+        
+            // Find the newly added row (should be the last one with our address)
+            for (var i = 0; i < dataGridView1.Rows.Count; i++)
+            {
+                if (dataGridView1.Rows[i].Cells[0].Value as string != Util.ToHexString6(snesIa)) 
+                    continue;
+                
+                rowIndex = i;
+                break;
+            }
+
+            if (rowIndex < 0) 
+                return;
+        }
+        
+        dataGridView1.CurrentCell = dataGridView1.Rows[rowIndex].Cells[1]; // Select the name cell for editing
+        dataGridView1.BeginEdit(true);
+    }
 }
