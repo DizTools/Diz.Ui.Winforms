@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using Diz.Controllers.interfaces;
 using Diz.Core.util;
-using DiztinGUIsh.Properties;
+using Diz.Ui.Winforms.Properties;
 using JetBrains.Annotations;
 
 namespace Diz.Ui.Winforms.util;
@@ -38,18 +38,6 @@ public class DizAppSettingsProvider : IDizAppSettings
             if (NotifyPropertyChangedExtensions.FieldIsEqual(Settings.OpenLastFileAutomatically, value)) 
                 return;
             Settings.OpenLastFileAutomatically = value;
-            OnSettingChanged();
-        }
-    }
-    
-    public string LastOpenedFile
-    {
-        get => Settings.LastOpenedFile;
-        set
-        {
-            if (NotifyPropertyChangedExtensions.FieldIsEqual(Settings.LastOpenedFile, value)) 
-                return;
-            Settings.LastOpenedFile = value;
             OnSettingChanged();
         }
     }
