@@ -37,12 +37,12 @@ public partial class MainWindow
 
     private void UpdateUiFromSettings()
     {
-        var lastOpenedFilePresent = appSettings.LastOpenedFile != "";
+        var lastOpenedFilePresent = appSettings.LastProjectFilename != "";
 
         toolStripOpenLast.Enabled = lastOpenedFilePresent;
         toolStripOpenLast.Text = "Open Last File";
         if (lastOpenedFilePresent)
-            toolStripOpenLast.Text += $" ({Path.GetFileNameWithoutExtension(appSettings.LastOpenedFile)})";
+            toolStripOpenLast.Text += $" ({Path.GetFileNameWithoutExtension(appSettings.LastProjectFilename)})";
 
         openLastProjectAutomaticallyToolStripMenuItem.Checked = appSettings.OpenLastFileAutomatically;
     }
