@@ -41,8 +41,8 @@ public partial class MainWindow
     // Data offset of the "view" i.e. the top of the table
     private int ViewOffset
     {
-        get => Project?.CurrentViewOffset ?? 0;
-        set => Project.CurrentViewOffset = value;
+        get => Project?.ProjectUserSettings.CurrentViewOffset ?? 0;
+        set => Project.ProjectUserSettings.CurrentViewOffset = value;
     }
 
     private bool importerMenuItemsEnabled;
