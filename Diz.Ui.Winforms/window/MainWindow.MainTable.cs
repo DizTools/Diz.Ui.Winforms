@@ -10,7 +10,7 @@ namespace Diz.Ui.Winforms.window;
 // It's a complicated little beast.
 public partial class MainWindow
 {
-    // Data offset of the selected row
+    // Get the PC offset IN THE ROM for the selected row in the GRID
     public int SelectedOffset => table.CurrentCell.RowIndex + ViewOffset;
 
     private int rowsToShow;
@@ -97,11 +97,11 @@ public partial class MainWindow
     
     private void BeginEditingColumn(ColumnType columnType)
     {
-        table.CurrentCell = GetCellByColumnType(columnType);
+        table.CurrentCell = GetCellInSelectedRowByColumnType(columnType);
         table.BeginEdit(true);
     }
 
-    private DataGridViewCell GetCellByColumnType(ColumnType columnType) => 
+    private DataGridViewCell GetCellInSelectedRowByColumnType(ColumnType columnType) => 
         table.Rows[table.CurrentCell.RowIndex].Cells[(int) columnType];
 
     private void ScrollVertically(int offset, int amount)
@@ -206,6 +206,18 @@ public partial class MainWindow
                 table.BeginEdit(true);
                 break;
             case Keys.Delete:
+                if (table.CurrentCell.ColumnIndex == (int)ColumnType.Label)
+                {
+                    // if editing a label, delete this label (don't just set to empty or we'll end up with blank labels)
+                    var labels = snesData.Data.Labels;
+                    var snesAddressOfSelectedRow = Project.Data.ConvertPCtoSnes(SelectedOffset);
+
+                    if (labels.GetLabel(snesAddressOfSelectedRow) != null)
+                        labels.RemoveLabel(snesAddressOfSelectedRow);
+                    return;
+                }
+                
+                // for everything else BUT labels, this is fine:
                 table.CurrentCell.Value = null;
                 break;
         }
