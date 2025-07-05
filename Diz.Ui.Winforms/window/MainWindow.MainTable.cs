@@ -256,7 +256,7 @@ public partial class MainWindow
                 break;
             case ColumnType.Instruction:
                 var len = snesData.GetInstructionLength(row);
-                e.Value = row + len <= Project.Data.GetRomSize() ? snesData.GetInstruction(row) : "";
+                e.Value = row + len <= Project.Data.GetRomSize() ? snesData.GetInstructionStr(row) : "";
                 break;
             case ColumnType.IA:
                 var ia = snesData.GetIntermediateAddressOrPointer(row);
