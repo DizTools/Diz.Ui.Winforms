@@ -314,6 +314,9 @@ public partial class AliasList : Form, ILabelEditorView
         }
 
         dataGridView1.Invalidate();
+
+        // sort by SNES address by default. user can override this by clicking on buttons/etc
+        dataGridView1.Sort(dataGridView1.Columns[0], ListSortDirection.Ascending);
     }
 
     public void ShowLineItemError(string msg, int errLine)
