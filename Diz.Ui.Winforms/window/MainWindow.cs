@@ -2,6 +2,7 @@
 using Diz.Controllers.controllers;
 using Diz.Controllers.interfaces;
 using Diz.Controllers.util;
+using Diz.Core.Interfaces;
 using Diz.LogWriter;
 using Diz.Ui.Winforms.dialogs;
 
@@ -15,13 +16,15 @@ public partial class MainWindow : Form, IMainGridWindowView
         IProjectController projectController,
         IDizAppSettings appSettings, 
         IDizDocument document,
-        IViewFactory viewFactory)
+        IViewFactory viewFactory,
+        IAppVersionInfo appVersionInfo)
     {
         Document = document;
         this.appSettings = appSettings;
         this.viewFactory = viewFactory;
         ProjectController = projectController;
         ProjectController.ProjectView = this;
+        this.appVersionInfo = appVersionInfo;
 
         aliasList = viewFactory.GetLabelEditorView();
         aliasList.ProjectController = ProjectController;

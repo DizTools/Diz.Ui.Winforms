@@ -427,8 +427,6 @@ public partial class MainWindow
         moveWithStepToolStripMenuItem.Checked = moveWithStep;
     }
 
-    private readonly IDizAppSettings appSettings; 
-
     private void ToggleOpenLastProjectEnabled()
     {
         appSettings.OpenLastFileAutomatically = openLastProjectAutomaticallyToolStripMenuItem.Checked;

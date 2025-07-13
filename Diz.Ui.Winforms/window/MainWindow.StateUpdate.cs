@@ -32,7 +32,7 @@ public partial class MainWindow
         Text =
             (Project.Session?.UnsavedChanges ?? true ? "*" : "") +
             (string.IsNullOrEmpty(Project.ProjectFileName) ? "New Project" : Project.ProjectFileName) +
-            " - DiztinGUIsh";
+            $" - DIZ {appVersionInfo.GetVersionInfo(IAppVersionInfo.AppVersionInfoType.Version)}";
     }
 
     private void UpdateUiFromSettings()

@@ -49,4 +49,7 @@ public partial class MainWindow
 
     private Util.NumberBase displayBase = Util.NumberBase.Hexadecimal;
     private FlagType markFlag = FlagType.Data8Bit;
+    
+    private readonly IDizAppSettings appSettings;
+    private readonly IAppVersionInfo appVersionInfo;
 }
