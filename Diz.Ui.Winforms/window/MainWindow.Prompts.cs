@@ -52,7 +52,7 @@ public partial class MainWindow
 
     private void viewHelpToolStripMenuItem_Click(object sender, EventArgs e)
     {
-        var helpUrl = "https://github.com/IsoFrieze/DiztinGUIsh/blob/master/Diz.App.Winforms/dist/HELP.md";
+        var helpUrl = "https://github.com/IsoFrieze/DiztinGUIsh/blob/master/Diz.App.Winforms/dist/docs/HELP.md";
         try
         {
             // System.Diagnostics.Process.Start(Directory.GetCurrentDirectory() + "/help.html");
