@@ -383,6 +383,12 @@ public partial class AliasList : Form, ILabelEditorView
             MessageBox.Show("You have selected a row in the main grid that has no IA (Intermediate Address). Can't proceed", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return;
         }
+        
+        // optional: convert mirrored WRAM labels into un-mirrored address.
+        // will change i.e. $00xxxx addresses to $7Exxxx
+        var normalizedSnesAddress = RomUtil.GetSnesAddressFromWramAddress(RomUtil.GetWramAddressFromSnesAddress(snesIa));
+        if (normalizedSnesAddress != -1)
+            snesIa = normalizedSnesAddress;
 
         // finally clear our search
         if (txtSearch.Text != "")
