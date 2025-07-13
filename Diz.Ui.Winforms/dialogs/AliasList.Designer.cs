@@ -53,6 +53,8 @@ partial class AliasList
         label1 = new Label();
         txtSearch = new TextBox();
         btnClearSearch = new Button();
+        toolStripSeparator1 = new ToolStripSeparator();
+        normalizeWRAMLabelsToolStripMenuItem = new ToolStripMenuItem();
         ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
         menuStrip1.SuspendLayout();
         tableLayoutPanel1.SuspendLayout();
@@ -143,7 +145,7 @@ partial class AliasList
         // 
         // dataToolStripMenuItem
         // 
-        dataToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { importCSVAppendToolStripMenuItem, importCSVToolStripMenuItem, exportCSVToolStripMenuItem });
+        dataToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { importCSVAppendToolStripMenuItem, importCSVToolStripMenuItem, exportCSVToolStripMenuItem, toolStripSeparator1, normalizeWRAMLabelsToolStripMenuItem });
         dataToolStripMenuItem.Name = "dataToolStripMenuItem";
         dataToolStripMenuItem.Size = new Size(43, 20);
         dataToolStripMenuItem.Text = "Data";
@@ -151,21 +153,21 @@ partial class AliasList
         // importCSVAppendToolStripMenuItem
         // 
         importCSVAppendToolStripMenuItem.Name = "importCSVAppendToolStripMenuItem";
-        importCSVAppendToolStripMenuItem.Size = new Size(199, 22);
+        importCSVAppendToolStripMenuItem.Size = new Size(204, 22);
         importCSVAppendToolStripMenuItem.Text = "Import CSV (Append) ...";
         importCSVAppendToolStripMenuItem.Click += importCSVAppendToolStripMenuItem_Click;
         // 
         // importCSVToolStripMenuItem
         // 
         importCSVToolStripMenuItem.Name = "importCSVToolStripMenuItem";
-        importCSVToolStripMenuItem.Size = new Size(199, 22);
+        importCSVToolStripMenuItem.Size = new Size(204, 22);
         importCSVToolStripMenuItem.Text = "Import CSV (Replace) ...";
         importCSVToolStripMenuItem.Click += importCSVToolStripMenuItem_Click;
         // 
         // exportCSVToolStripMenuItem
         // 
         exportCSVToolStripMenuItem.Name = "exportCSVToolStripMenuItem";
-        exportCSVToolStripMenuItem.Size = new Size(199, 22);
+        exportCSVToolStripMenuItem.Size = new Size(204, 22);
         exportCSVToolStripMenuItem.Text = "Export CSV ...";
         exportCSVToolStripMenuItem.Click += exportCSVToolStripMenuItem_Click;
         // 
@@ -270,6 +272,18 @@ partial class AliasList
         btnClearSearch.UseVisualStyleBackColor = true;
         btnClearSearch.Click += btnClearSearch_Click;
         // 
+        // toolStripSeparator1
+        // 
+        toolStripSeparator1.Name = "toolStripSeparator1";
+        toolStripSeparator1.Size = new Size(201, 6);
+        // 
+        // normalizeWRAMLabelsToolStripMenuItem
+        // 
+        normalizeWRAMLabelsToolStripMenuItem.Name = "normalizeWRAMLabelsToolStripMenuItem";
+        normalizeWRAMLabelsToolStripMenuItem.Size = new Size(204, 22);
+        normalizeWRAMLabelsToolStripMenuItem.Text = "Normalize WRAM Labels";
+        normalizeWRAMLabelsToolStripMenuItem.Click += normalizeWRAMLabelsToolStripMenuItem_Click;
+        // 
         // AliasList
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
@@ -323,4 +337,6 @@ partial class AliasList
     private Button btnNewFromCurrentIA;
     private TextBox txtSearch;
     private Button btnClearSearch;
+    private ToolStripSeparator toolStripSeparator1;
+    private ToolStripMenuItem normalizeWRAMLabelsToolStripMenuItem;
 }

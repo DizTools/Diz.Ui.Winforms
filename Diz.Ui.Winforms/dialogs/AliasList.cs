@@ -24,6 +24,7 @@ public partial class AliasList : Form, ILabelEditorView
 
     private bool locked;
     private int currentlyEditing = -1;
+    
     public AliasList()
     {
         Closed += (sender, args) => OnFormClosed?.Invoke(sender, args);
@@ -45,8 +46,8 @@ public partial class AliasList : Form, ILabelEditorView
         Hide();
     }
 
-    private void AliasList_Resize(object sender, EventArgs e) {}
-    
+    private void AliasList_Resize(object sender, EventArgs e) { }
+
     private void btnJmp_Click(object sender, EventArgs e)
     {
         if (!int.TryParse(dataGridView1.SelectedRows[0].Cells[0].Value as string, NumberStyles.HexNumber, null, out var val))
@@ -367,7 +368,7 @@ public partial class AliasList : Form, ILabelEditorView
         var snesData = Data.GetSnesApi();
         if (snesData == null || ProjectController == null)
             return;
-        
+
         // whatever IA is selected on the main form, let's start editing a new label with that.
         var selectedOffset = ProjectController.ProjectView.SelectedOffset;
         if (selectedOffset == -1)
@@ -396,35 +397,43 @@ public partial class AliasList : Form, ILabelEditorView
 
         for (var i = 0; i < dataGridView1.Rows.Count; i++)
         {
-            if (dataGridView1.Rows[i].Cells[0].Value as string != Util.ToHexString6(snesIa)) 
+            if (dataGridView1.Rows[i].Cells[0].Value as string != Util.ToHexString6(snesIa))
                 continue;
-            
+
             rowFound = true;
             rowIndex = i;
             break;
         }
-    
+
         if (!rowFound)
         {
             // Add a new row with the address and start editing it
             var newLabel = new Label { Name = "New Label" };
             AddRow(snesIa, newLabel);
-        
+
             // Find the newly added row (should be the last one with our address)
             for (var i = 0; i < dataGridView1.Rows.Count; i++)
             {
-                if (dataGridView1.Rows[i].Cells[0].Value as string != Util.ToHexString6(snesIa)) 
+                if (dataGridView1.Rows[i].Cells[0].Value as string != Util.ToHexString6(snesIa))
                     continue;
-                
+
                 rowIndex = i;
                 break;
             }
 
-            if (rowIndex < 0) 
+            if (rowIndex < 0)
                 return;
         }
-        
+
         dataGridView1.CurrentCell = dataGridView1.Rows[rowIndex].Cells[1]; // Select the name cell for editing
         dataGridView1.BeginEdit(true);
+    }
+
+    private void normalizeWRAMLabelsToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+        locked = true; // optimization, don't auto-repopulate with every little change
+        ProjectController?.NormalizeWramLabels();
+        locked = false;
+        RepopulateFromData();
     }
 }
