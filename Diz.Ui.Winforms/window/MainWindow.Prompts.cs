@@ -33,12 +33,15 @@ public partial class MainWindow
 
     private static void ShowExportResults(LogCreatorOutput.OutputResult result)
     {
-        if (result.ErrorCount > 0)
+        if (result.ErrorMsg != "")
+            MessageBox.Show($"Internal exporter error in Diz: {result.ErrorMsg}", "Internal Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        else if (result.ErrorCount > 0)
             MessageBox.Show("Disassembly files exported, but contains errors (but... it will probably still assemble correctly. try it). See generated errors.txt for further details.", "Warning",
                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
         else
-            MessageBox.Show("Disassembly files exported successfully!", "Complete", MessageBoxButtons.OK,
-                MessageBoxIcon.Asterisk);
+            MessageBox.Show("Disassembly files exported successfully!", "Complete", 
+                MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
     }
 
     private bool PromptForOpenProjectFilename()

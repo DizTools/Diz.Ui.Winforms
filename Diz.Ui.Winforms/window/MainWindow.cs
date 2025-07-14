@@ -181,10 +181,8 @@ public partial class MainWindow : Form, IMainGridWindowView
         UpdateWindowTitle();
     }
 
-    public void OnExportFinished(LogCreatorOutput.OutputResult result)
-    {
+    public void OnExportFinished(LogCreatorOutput.OutputResult result) => 
         ShowExportResults(result);
-    }
 
     private void RememberNavigationPoint(int pcOffset, ISnesNavigation.HistoryArgs? historyArgs)
     {
