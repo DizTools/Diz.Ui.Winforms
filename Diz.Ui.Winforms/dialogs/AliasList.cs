@@ -394,8 +394,25 @@ public partial class AliasList : Form, ILabelEditorView
         dataGridView1.Columns[0].SortMode = DataGridViewColumnSortMode.Automatic;
         dataGridView1.Columns[1].SortMode = DataGridViewColumnSortMode.Automatic;
         dataGridView1.Columns[2].SortMode = DataGridViewColumnSortMode.Automatic;
-
     }
+    
+    private static bool LabelMatchesSearchTerms(KeyValuePair<int, IAnnotationLabel> labelEntry, string[] searchTerms)
+    {
+        if (searchTerms.Length == 0)
+            return true;
+        
+        var addressText = Util.ToHexString6(labelEntry.Key);
+        var nameText = labelEntry.Value.Name;
+        var commentText = labelEntry.Value.Comment;
+    
+        // Combine all searchable text into one string for easier matching
+        var allText = $"{addressText} {nameText} {commentText}";
+
+        // All search terms must be found somewhere in the combined text
+        return searchTerms.All(term => 
+            allText.Contains(term, StringComparison.CurrentCultureIgnoreCase));
+    }
+
     
     public void RepopulateFromData()
     {
@@ -426,13 +443,9 @@ public partial class AliasList : Form, ILabelEditorView
         dataTable.Clear();
 
         var searchTerm = CurrentSearchTerm;
+        var searchTerms = searchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var filteredLabels = Data.Labels.Labels
-            .Where(
-                x =>
-                    Util.ToHexString6(x.Key).Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) ||
-                    x.Value.Name.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) ||
-                    x.Value.Comment.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase)
-            );
+            .Where(x => LabelMatchesSearchTerms(x, searchTerms));
         
         foreach (var (snesAddress, label) in filteredLabels)
         {
