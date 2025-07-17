@@ -77,7 +77,7 @@ partial class AliasList
         dataGridView1.BorderStyle = BorderStyle.None;
         dataGridView1.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
         dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dataGridView1.Columns.AddRange(new DataGridViewColumn[] { Address, Alias, Comment });
+
         dataGridViewCellStyle4.Alignment = DataGridViewContentAlignment.MiddleLeft;
         dataGridViewCellStyle4.BackColor = SystemColors.Window;
         dataGridViewCellStyle4.Font = new Font("Consolas", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
@@ -106,33 +106,7 @@ partial class AliasList
         dataGridView1.CellBeginEdit += dataGridView1_CellBeginEdit;
         dataGridView1.CellValidating += dataGridView1_CellValidating;
         dataGridView1.UserDeletingRow += dataGridView1_UserDeletingRow;
-        // 
-        // Address
-        // 
-        dataGridViewCellStyle1.Font = new Font("Consolas", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-        Address.DefaultCellStyle = dataGridViewCellStyle1;
-        Address.HeaderText = "SnesAddr";
-        Address.MaxInputLength = 6;
-        Address.Name = "Address";
-        Address.Width = 80;
-        // 
-        // Alias
-        // 
-        dataGridViewCellStyle2.Font = new Font("Arial Narrow", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-        Alias.DefaultCellStyle = dataGridViewCellStyle2;
-        Alias.HeaderText = "Name";
-        Alias.MaxInputLength = 60;
-        Alias.Name = "Alias";
-        Alias.Width = 200;
-        // 
-        // Comment
-        // 
-        dataGridViewCellStyle3.Font = new Font("Consolas", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-        Comment.DefaultCellStyle = dataGridViewCellStyle3;
-        Comment.HeaderText = "Comment";
-        Comment.MaxInputLength = 800;
-        Comment.Name = "Comment";
-        Comment.Width = 1000;
+        
         // 
         // menuStrip1
         // 

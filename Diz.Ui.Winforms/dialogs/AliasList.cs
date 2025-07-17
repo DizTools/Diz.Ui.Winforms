@@ -1,7 +1,5 @@
-﻿#nullable enable
-
-using System.Collections.Specialized;
-using System.ComponentModel;
+﻿using System.ComponentModel;
+using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Diz.Controllers.controllers;
@@ -10,6 +8,7 @@ using Diz.Core.Interfaces;
 using Diz.Core.model.snes;
 using Diz.Core.util;
 using Diz.Cpu._65816;
+using Diz.Ui.Winforms.util;
 using Label = Diz.Core.model.Label;
 
 namespace Diz.Ui.Winforms.dialogs;
@@ -17,19 +16,36 @@ namespace Diz.Ui.Winforms.dialogs;
 [SuppressMessage("ReSharper", "UnusedType.Global")]
 [SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
 public partial class AliasList : Form, ILabelEditorView
-{
+{ 
+    private string CurrentSearchTerm => txtSearch?.Text ?? "";
+    
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public IProjectController? ProjectController { get; set; }
-    private Data Data => ProjectController?.Project?.Data!;
-
+    
+    private Data? Data => ProjectController?.Project?.Data;
     private bool locked;
     private int currentlyEditing = -1;
+    private DataTable? dataTable;
     
     public AliasList()
     {
-        Closed += (sender, args) => OnFormClosed?.Invoke(sender, args);
-
         InitializeComponent();
+        
+        Closed += OnClosed;
+        Load += AliasList_Load;
+        Shown += OnShown;
+    }
+
+    private void OnClosed(object? sender, EventArgs args) => OnFormClosed?.Invoke(sender, args);
+    private void OnShown(object? sender, EventArgs e)
+    {
+        SafeEndEdit();
+    }
+
+    private void AliasList_Load(object? sender, EventArgs e)
+    {
+        SafeEndEdit();
+        RepopulateFromData();
     }
 
     private void LabelsOnOnLabelChanged(object? sender, EventArgs e)
@@ -50,17 +66,20 @@ public partial class AliasList : Form, ILabelEditorView
 
     private void btnJmp_Click(object sender, EventArgs e)
     {
+        if (ProjectController == null || Data == null)
+            return;
+        
         if (!int.TryParse(dataGridView1.SelectedRows[0].Cells[0].Value as string, NumberStyles.HexNumber, null, out var val))
             return;
 
         var offset = Data.ConvertSnesToPc(val);
-        if (offset >= 0)
-        {
-            ProjectController!.SelectOffset(
-                offset,
-                new ISnesNavigation.HistoryArgs { Description = "Jump To Label" }
-            );
-        }
+        if (offset < 0) 
+            return;
+        
+        ProjectController.SelectOffset(
+            offset,
+            new ISnesNavigation.HistoryArgs { Description = "Jump To Label" }
+        );
     }
 
     public string PromptForCsvFilename()
@@ -92,11 +111,14 @@ public partial class AliasList : Form, ILabelEditorView
         }
     }
 
-    private void WriteLabelsToCsv(TextWriter sw)
+    private void WriteLabelsToCsv(TextWriter textWriter)
     {
+        if (Data?.Labels?.Labels == null)
+            return;
+        
         foreach (var (snesOffset, label) in Data.Labels.Labels)
         {
-            OutputCsvLine(sw, snesOffset, label);
+            OutputCsvLine(textWriter, snesOffset, label);
         }
     }
 
@@ -108,7 +130,13 @@ public partial class AliasList : Form, ILabelEditorView
 
     private void dataGridView1_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
     {
-        var cellValue = e.Row != null ? (dataGridView1.Rows[e.Row.Index].Cells[0].Value as string) : "";
+        if (Data?.Labels == null)
+            return;
+        
+        // When using DataTable, we need to get the value from the underlying DataRowView
+        var rowView = e.Row?.DataBoundItem as DataRowView;
+        var cellValue = rowView?["Address"] as string;
+    
         if (string.IsNullOrEmpty(cellValue))
             return;
 
@@ -119,6 +147,7 @@ public partial class AliasList : Form, ILabelEditorView
         Data.Labels.RemoveLabel(val);
         locked = false;
     }
+
 
     private void dataGridView1_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
     {
@@ -133,18 +162,27 @@ public partial class AliasList : Form, ILabelEditorView
 
     private void dataGridView1_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
     {
+        if (Data?.Labels == null)
+            return;
+        
         if (dataGridView1.Rows[e.RowIndex].IsNewRow)
             return;
+        
+        var dataBoundItem = (DataRowView?)dataGridView1.Rows[e.RowIndex].DataBoundItem;
+        if (dataBoundItem == null)
+            return;
+        
+        var dataRow = dataBoundItem.Row;
+        var existingSnesAddressStr = dataRow["Address"] as string;
+        var existingName = dataRow["Name"] as string;
+        var existingComment = dataRow["Comment"] as string;
 
-        var existingSnesAddressStr = dataGridView1.Rows[e.RowIndex].Cells[0].Value as string;
-        var existingName = dataGridView1.Rows[e.RowIndex].Cells[1].Value as string;
-        var existingComment = dataGridView1.Rows[e.RowIndex].Cells[2].Value as string;
         int.TryParse(existingSnesAddressStr, NumberStyles.HexNumber, null, out var existingSnesAddress);
 
         var newLabel = new Label
         {
-            Name = existingName,
-            Comment = existingComment
+            Name = existingName ?? "",
+            Comment = existingComment ?? ""
         };
 
         toolStripStatusLabel1.Text = "";
@@ -152,94 +190,107 @@ public partial class AliasList : Form, ILabelEditorView
 
         switch (e.ColumnIndex)
         {
+            // TODO: don't use indices, use the string column name.
             case 0: // label's address
+            {
+                if (!int.TryParse(e.FormattedValue?.ToString() ?? "", NumberStyles.HexNumber, null, out newSnesAddress))
                 {
-                    if (!int.TryParse(e.FormattedValue?.ToString() ?? "", NumberStyles.HexNumber, null, out newSnesAddress))
-                    {
-                        e.Cancel = true;
-                        toolStripStatusLabel1.Text = "Must enter a valid hex address.";
-                        break;
-                    }
-
-                    if (existingSnesAddress == -1 && Data.Labels?.GetLabel(newSnesAddress) != null)
-                    {
-                        e.Cancel = true;
-                        toolStripStatusLabel1.Text = "This address already has a label.";
-                        break;
-                    }
-
-                    if (dataGridView1.EditingControl != null)
-                    {
-                        dataGridView1.EditingControl.Text = Util.ToHexString6(newSnesAddress);
-                    }
+                    e.Cancel = true;
+                    toolStripStatusLabel1.Text = "Must enter a valid hex address.";
                     break;
                 }
+
+                if (existingSnesAddress == -1 && Data.Labels.GetLabel(newSnesAddress) != null)
+                {
+                    e.Cancel = true;
+                    toolStripStatusLabel1.Text = "This address already has a label.";
+                    break;
+                }
+
+                if (dataGridView1.EditingControl != null)
+                {
+                    dataGridView1.EditingControl.Text = Util.ToHexString6(newSnesAddress);
+                }
+
+                break;
+            }
             case 1: // label name
-                {
-                    newSnesAddress = existingSnesAddress;
-                    newLabel.Name = e.FormattedValue?.ToString() ?? "";
-                    // todo (validate for valid label characters)
-                    break;
-                }
+            {
+                newSnesAddress = existingSnesAddress;
+                newLabel.Name = e.FormattedValue?.ToString() ?? "";
+                // todo (validate for valid label characters)
+                break;
+            }
             case 2: // label comment
-                {
-                    newSnesAddress = existingSnesAddress;
-                    newLabel.Comment = e.FormattedValue?.ToString() ?? "";
-                    // todo (validate for valid comment characters, if any)
-                    break;
-                }
+            {
+                newSnesAddress = existingSnesAddress;
+                newLabel.Comment = e.FormattedValue?.ToString() ?? "";
+                // todo (validate for valid comment characters, if any)
+                break;
+            }
         }
 
         locked = true;
         if (currentlyEditing >= 0)
         {
             if (newSnesAddress >= 0)
-                Data.Labels?.RemoveLabel(existingSnesAddress);
+                Data.Labels.RemoveLabel(existingSnesAddress);
 
-            Data.Labels?.AddLabel(newSnesAddress, newLabel, true);
+            Data.Labels.AddLabel(newSnesAddress, newLabel, true);
         }
+
         locked = false;
 
         currentlyEditing = -1;
     }
 
-    public void AddRow(int address, Label alias)
+
+    public void AddRow(int snesAddress, Label label)
     {
         if (locked)
             return;
-        RawAdd(address, alias);
+        
+        RawAdd(snesAddress, label);
         dataGridView1.Invalidate();
     }
 
-    private void RawAdd(int address, IReadOnlyLabel alias)
+    private void RawAdd(int snesAddress, IReadOnlyLabel label)
     {
-        dataGridView1.Rows.Add(Util.ToHexString6(address), alias.Name, alias.Comment);
+        if (dataTable == null)
+            InitializeDataTable();
+
+        dataTable?.Rows.Add(Util.ToHexString6(snesAddress), label.Name, label.Comment);
     }
 
     public void RemoveRow(int address)
     {
-        if (locked)
+        if (locked || dataTable == null)
             return;
 
-        for (var index = 0; index < dataGridView1.Rows.Count; index++)
+        var addressStr = Util.ToHexString6(address);
+    
+        // Find and remove the row
+        for (var index = dataTable.Rows.Count - 1; index >= 0; index--)
         {
-            if (dataGridView1.Rows[index].Cells[0].Value as string != Util.ToHexString6(address))
+            if (dataTable.Rows[index]["Address"] as string != addressStr) 
                 continue;
-
-            dataGridView1.Rows.RemoveAt(index);
-            dataGridView1.Invalidate();
+            
+            dataTable.Rows.RemoveAt(index);
             break;
         }
     }
-
+    
     public void ClearAndInvalidateDataGrid()
     {
-        dataGridView1.Rows.Clear();
+        dataTable?.Clear();
         dataGridView1.Invalidate();
     }
 
     private void importCSVAppendToolStripMenuItem_Click(object sender, EventArgs e)
     {
+        if (ProjectController == null)
+            return;
+        
         const string msg = "Info: Items in CSV will:\n" +
                    "1) CSV items will be added if their address doesn't already exist in this list\n" +
                    "2) CSV items will replace anything with the same address as items in the list\n" +
@@ -250,27 +301,31 @@ public partial class AliasList : Form, ILabelEditorView
         if (!PromptWarning(msg))
             return;
 
-        ProjectController!.ImportLabelsCsv(this, false);
+        ProjectController.ImportLabelsCsv(this, false);
     }
 
     private void importCSVToolStripMenuItem_Click(object sender, EventArgs e)
     {
+        if (ProjectController == null)
+            return;
+        
         if (!PromptWarning("Info: All list items will be deleted and replaced with the CSV file.\n" +
                    "\n" +
                    "Continue?\n"))
             return;
 
-        ProjectController!.ImportLabelsCsv(this, true);
+        ProjectController.ImportLabelsCsv(this, true);
     }
 
-    public static bool PromptWarning(string msg) =>
+    private static bool PromptWarning(string msg) =>
         MessageBox.Show(msg, "Warning", MessageBoxButtons.OKCancel) == DialogResult.OK;
 
     public void RebindProject()
     {
-        if (Data.Labels != null)
+        if (Data?.Labels != null)
             Data.Labels.OnLabelChanged += LabelsOnOnLabelChanged;
 
+        SafeEndEdit();
         RepopulateFromData();
 
         // todo: eventually use databinding/datasource, probably.
@@ -279,45 +334,123 @@ public partial class AliasList : Form, ILabelEditorView
         // tmp disabled // Data.Labels.CollectionChanged += Labels_CollectionChanged;
     }
 
-    public string CurrentSearchTerm => txtSearch.Text;
-
     private void txtSearch_TextChanged(object sender, EventArgs e)
     {
+        SafeEndEdit();
         RepopulateFromData();
     }
 
     private void btnClearSearch_Click(object sender, EventArgs e)
     {
-        txtSearch.Text = "";
-        RepopulateFromData();
+        SafeEndEdit();
+        txtSearch.Text = "";    // this will kick off RepopulateFromData() via event
+    }
+    
+    private void SafeEndEdit()
+    {
+        // not thrilled about this implementation, but necessary to prevent silent native crashes like:
+        // System.InvalidOperationException: Operation did not succeed because the program cannot commit or quit a cell value change
+        
+        try {
+            if (dataGridView1.IsCurrentCellInEditMode)
+                dataGridView1.EndEdit();
+        } catch (Exception ex) {
+            // If we can't end the edit normally, try to cancel it
+            try {
+                dataGridView1.CancelEdit();
+            } catch {
+                System.Diagnostics.Debug.WriteLine($"LabelView: Could not end/cancel edit (bad/weird situation now): {ex.Message}");
+            }
+        }
     }
 
+    
+    private void InitializeDataTable()
+    {
+        dataTable = new DataTable();
+        dataTable.Columns.Add("Address", typeof(string));
+        dataTable.Columns.Add("Name", typeof(string));
+        dataTable.Columns.Add("Comment", typeof(string));
+        
+        // or, we can get weird crashes. happens at startup when we're editing a row on the grid by default.
+        SafeEndEdit();
+
+        dataGridView1.DataSource = dataTable;
+        
+        // Configure columns AFTER binding
+        if (dataGridView1.Columns.Count < 3) 
+            return; // big problem.
+        
+        dataGridView1.Columns[0].HeaderText = "Address";
+        dataGridView1.Columns[0].Width = 80;
+        
+        dataGridView1.Columns[1].HeaderText = "Name";
+        dataGridView1.Columns[1].Width = 200;
+        
+        dataGridView1.Columns[2].HeaderText = "Comment";
+        dataGridView1.Columns[2].Width = 1000;
+
+        // Enable sorting
+        dataGridView1.Columns[0].SortMode = DataGridViewColumnSortMode.Automatic;
+        dataGridView1.Columns[1].SortMode = DataGridViewColumnSortMode.Automatic;
+        dataGridView1.Columns[2].SortMode = DataGridViewColumnSortMode.Automatic;
+
+    }
+    
     public void RepopulateFromData()
     {
         if (locked)
             return;
+        
+        // Safety check - make sure we have data before proceeding
+        if (ProjectController == null || Data?.Labels?.Labels == null)
+            return;
 
-        ClearAndInvalidateDataGrid();
+        if (dataTable == null)
+        {
+            InitializeDataTable();
+            if (dataTable == null)
+                return;
+        }
+        
+        // optional: CPU optimization:
+        // prevent layout calculations as we go, resume them all at once at the very end.
+        WinformsGuiUtil.SuspendDrawing(dataGridView1);
+        dataGridView1.Enabled = false;
+        dataGridView1.Visible = false;
+        var lastScrollbars = dataGridView1.ScrollBars; 
+        dataGridView1.ScrollBars = ScrollBars.None;
+        dataGridView1.SuspendLayout(); // barely does anything.
+        SuspendLayout();
 
-        var searchTerm = CurrentSearchTerm.ToUpper();
+        dataTable.Clear();
+
+        var searchTerm = CurrentSearchTerm;
         var filteredLabels = Data.Labels.Labels
             .Where(
                 x =>
-                    Util.ToHexString6(x.Key).ToUpper().Contains(searchTerm) ||        // remember: search the HEX STRING or it gets weird :)
-                    x.Value.Name.ToUpper().Contains(searchTerm) ||
-                    x.Value.Comment.ToUpper().Contains(searchTerm)
+                    Util.ToHexString6(x.Key).Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) ||
+                    x.Value.Name.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) ||
+                    x.Value.Comment.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase)
             );
-
-        // TODO: replace with winforms databinding eventually
+        
         foreach (var (snesAddress, label) in filteredLabels)
         {
             RawAdd(snesAddress, label);
         }
+        
+        var dataView = dataTable.DefaultView;
+        dataView.Sort = "Address ASC";
+        
+        // optional: CPU optimization:
+        // recalculate all layout changes ONCE at the end (vs each time it changes)
+        dataGridView1.ScrollBars = lastScrollbars;
+        dataGridView1.Enabled = true;
+        dataGridView1.Visible = true;
+        ResumeLayout(performLayout: true);
+        dataGridView1.ResumeLayout(performLayout: true);
 
-        dataGridView1.Invalidate();
-
-        // sort by SNES address by default. user can override this by clicking on buttons/etc
-        dataGridView1.Sort(dataGridView1.Columns[0], ListSortDirection.Ascending);
+        WinformsGuiUtil.ResumeDrawing(dataGridView1);
     }
 
     public void ShowLineItemError(string msg, int errLine)
@@ -329,32 +462,31 @@ public partial class AliasList : Form, ILabelEditorView
     }
 
     // TODO: get this back online again
-
-    private void Labels_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-    {
-        if (e.NewItems != null)
-        {
-            foreach (KeyValuePair<int, Label> item in e.NewItems)
-            {
-                AddRow(item.Key, item.Value);
-            }
-        }
-
-        if (e.OldItems != null)
-        {
-            foreach (KeyValuePair<int, Label> item in e.OldItems)
-            {
-                RemoveRow(item.Key);
-            }
-        }
-    }
-
-    // TODO: get this back online again
-
-    private void Labels_PropertyChanged(object sender, PropertyChangedEventArgs e)
-    {
-        // if needed, catch any changes to label content here
-    }
+    // private void Labels_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+    // {
+    //     if (e.NewItems != null)
+    //     {
+    //         foreach (KeyValuePair<int, Label> item in e.NewItems)
+    //         {
+    //             AddRow(item.Key, item.Value);
+    //         }
+    //     }
+    //
+    //     if (e.OldItems == null) 
+    //         return;
+    //     
+    //     foreach (KeyValuePair<int, Label> item in e.OldItems)
+    //     {
+    //         RemoveRow(item.Key);
+    //     }
+    // }
+    //
+    // // TODO: get this back online again
+    //
+    // private void Labels_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    // {
+    //     // if needed, catch any changes to label content here
+    // }
 
     public event EventHandler? OnFormClosed;
 
@@ -365,8 +497,8 @@ public partial class AliasList : Form, ILabelEditorView
 
     private void btnNewFromCurrentIA_Click(object sender, EventArgs e)
     {
-        var snesData = Data.GetSnesApi();
-        if (snesData == null || ProjectController == null)
+        var snesData = Data?.GetSnesApi();
+        if (snesData == null || ProjectController == null || dataTable == null)
             return;
 
         // whatever IA is selected on the main form, let's start editing a new label with that.
@@ -383,7 +515,7 @@ public partial class AliasList : Form, ILabelEditorView
             MessageBox.Show("You have selected a row in the main grid that has no IA (Intermediate Address). Can't proceed", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return;
         }
-        
+    
         // optional: convert mirrored WRAM labels into un-mirrored address.
         // will change i.e. $00xxxx addresses to $7Exxxx
         var normalizedSnesAddress = RomUtil.GetSnesAddressFromWramAddress(RomUtil.GetWramAddressFromSnesAddress(snesIa));
@@ -400,10 +532,11 @@ public partial class AliasList : Form, ILabelEditorView
         // now ready to start editing:
         var rowFound = false;
         var rowIndex = -1;
-
-        for (var i = 0; i < dataGridView1.Rows.Count; i++)
+        var addressStr = Util.ToHexString6(snesIa);
+        
+        for (var i = 0; i < dataTable.Rows.Count; i++)
         {
-            if (dataGridView1.Rows[i].Cells[0].Value as string != Util.ToHexString6(snesIa))
+            if (dataTable.Rows[i]["Address"] as string != addressStr)
                 continue;
 
             rowFound = true;
@@ -418,9 +551,9 @@ public partial class AliasList : Form, ILabelEditorView
             AddRow(snesIa, newLabel);
 
             // Find the newly added row (should be the last one with our address)
-            for (var i = 0; i < dataGridView1.Rows.Count; i++)
+            for (var i = 0; i < dataTable.Rows.Count; i++)
             {
-                if (dataGridView1.Rows[i].Cells[0].Value as string != Util.ToHexString6(snesIa))
+                if (dataTable.Rows[i]["Address"] as string != addressStr)
                     continue;
 
                 rowIndex = i;
@@ -431,7 +564,7 @@ public partial class AliasList : Form, ILabelEditorView
                 return;
         }
 
-        dataGridView1.CurrentCell = dataGridView1.Rows[rowIndex].Cells[1]; // Select the name cell for editing
+        dataGridView1.CurrentCell = dataGridView1.Rows[rowIndex].Cells[1];  // Select the name cell for editing
         dataGridView1.BeginEdit(true);
     }
 
