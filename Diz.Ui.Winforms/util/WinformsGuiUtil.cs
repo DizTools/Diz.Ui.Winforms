@@ -138,4 +138,15 @@ public static class WinformsGuiUtil
 
     // ReSharper disable once InconsistentNaming
     public const int WM_SETREDRAW = 11;
+    
+    public static void SuspendDrawing( Control parent )
+    {
+        SendMessage(parent.Handle, WM_SETREDRAW, false, 0);
+    }
+
+    public static void ResumeDrawing( Control parent )
+    {
+        SendMessage(parent.Handle, WM_SETREDRAW, true, 0);
+        parent.Refresh();
+    }
 }
