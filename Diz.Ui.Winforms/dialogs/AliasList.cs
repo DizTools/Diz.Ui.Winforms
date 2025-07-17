@@ -395,24 +395,30 @@ public partial class AliasList : Form, ILabelEditorView
         dataGridView1.Columns[1].SortMode = DataGridViewColumnSortMode.Automatic;
         dataGridView1.Columns[2].SortMode = DataGridViewColumnSortMode.Automatic;
     }
-    
-    private static bool LabelMatchesSearchTerms(KeyValuePair<int, IAnnotationLabel> labelEntry, string[] searchTerms)
+
+    public void Optimization_SuspendDrawing(bool suspend)
     {
-        if (searchTerms.Length == 0)
-            return true;
+        // optional: CPU optimization:
+        // prevent layout calculations and repainting while we're doing large data modifications
+        // greatly speeds things up, but this is all hacky as hell.
         
-        var addressText = Util.ToHexString6(labelEntry.Key);
-        var nameText = labelEntry.Value.Name;
-        var commentText = labelEntry.Value.Comment;
-    
-        // Combine all searchable text into one string for easier matching
-        var allText = $"{addressText} {nameText} {commentText}";
-
-        // All search terms must be found somewhere in the combined text
-        return searchTerms.All(term => 
-            allText.Contains(term, StringComparison.CurrentCultureIgnoreCase));
+        if (suspend)
+        {
+            WinformsGuiUtil.SuspendDrawing(dataGridView1);
+            dataGridView1.Enabled = false;
+            dataGridView1.Visible = false;
+            dataGridView1.SuspendLayout();
+            SuspendLayout();
+        }
+        else
+        {
+            dataGridView1.Enabled = true;
+            dataGridView1.Visible = true;
+            ResumeLayout(performLayout: true);
+            dataGridView1.ResumeLayout(performLayout: true);
+            WinformsGuiUtil.ResumeDrawing(dataGridView1);
+        }
     }
-
     
     public void RepopulateFromData()
     {
@@ -429,23 +435,14 @@ public partial class AliasList : Form, ILabelEditorView
             if (dataTable == null)
                 return;
         }
-        
-        // optional: CPU optimization:
-        // prevent layout calculations as we go, resume them all at once at the very end.
-        WinformsGuiUtil.SuspendDrawing(dataGridView1);
-        dataGridView1.Enabled = false;
-        dataGridView1.Visible = false;
-        var lastScrollbars = dataGridView1.ScrollBars; 
-        dataGridView1.ScrollBars = ScrollBars.None;
-        dataGridView1.SuspendLayout(); // barely does anything.
-        SuspendLayout();
+
+        Optimization_SuspendDrawing(true);
 
         dataTable.Clear();
 
-        var searchTerm = CurrentSearchTerm;
-        var searchTerms = searchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var labelSearchConditions = new LabelSearchTerms(CurrentSearchTerm);
         var filteredLabels = Data.Labels.Labels
-            .Where(x => LabelMatchesSearchTerms(x, searchTerms));
+            .Where(x => labelSearchConditions.DoesLabelMatch(x.Key, x.Value));
         
         foreach (var (snesAddress, label) in filteredLabels)
         {
@@ -454,16 +451,8 @@ public partial class AliasList : Form, ILabelEditorView
         
         var dataView = dataTable.DefaultView;
         dataView.Sort = "Address ASC";
-        
-        // optional: CPU optimization:
-        // recalculate all layout changes ONCE at the end (vs each time it changes)
-        dataGridView1.ScrollBars = lastScrollbars;
-        dataGridView1.Enabled = true;
-        dataGridView1.Visible = true;
-        ResumeLayout(performLayout: true);
-        dataGridView1.ResumeLayout(performLayout: true);
 
-        WinformsGuiUtil.ResumeDrawing(dataGridView1);
+        Optimization_SuspendDrawing(false); // restore
     }
 
     public void ShowLineItemError(string msg, int errLine)
