@@ -63,6 +63,9 @@
         <Compile Update="dialogs\VisualizerForm.cs">
           <SubType>Form</SubType>
         </Compile>
+        <Compile Update="usercontrols\LabelsView.cs">
+          <SubType>Form</SubType>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>

@@ -404,8 +404,8 @@ public partial class MainWindow
 
     private void ShowCommentList()
     {
-        aliasList.Show();
-        aliasList.BringFormToTop();
+        labelsView.Show();
+        labelsView.BringFormToTop();
     }
 
     private void ShowProjectSettings()

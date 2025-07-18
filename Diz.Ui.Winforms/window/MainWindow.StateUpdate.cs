@@ -12,7 +12,7 @@ public partial class MainWindow
 {
     private void RebindProject()
     {
-        aliasList?.RebindProject();
+        labelsView?.RebindProject();
             
         if (Project?.Data.Labels != null) 
             Project.Data.Labels.OnLabelChanged += LabelsOnOnLabelChanged;
