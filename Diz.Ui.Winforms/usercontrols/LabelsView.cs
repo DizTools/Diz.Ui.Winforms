@@ -513,17 +513,21 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
         var snesIa = snesData.GetIntermediateAddress(selectedOffset, resolve: true);
         if (snesIa == -1)
         {
-            MessageBox.Show("You have selected a row in the main grid that has no IA (Intermediate Address). Can't proceed", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(
+                "You have selected a row in the main grid that has no IA (Intermediate Address). Can't proceed",
+                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return;
         }
-    
+
         // optional: convert mirrored WRAM labels into un-mirrored address.
         // will change i.e. $00xxxx addresses to $7Exxxx
-        var normalizedSnesAddress = RomUtil.GetSnesAddressFromWramAddress(RomUtil.GetWramAddressFromSnesAddress(snesIa));
+        var normalizedSnesAddress =
+            RomUtil.GetSnesAddressFromWramAddress(RomUtil.GetWramAddressFromSnesAddress(snesIa));
         if (normalizedSnesAddress != -1)
             snesIa = normalizedSnesAddress;
 
         // finally clear our search
+        // for the code below to work, there must be NO FILTER or we could miss rows
         if (txtSearch.Text != "")
         {
             txtSearch.Clear();
@@ -534,10 +538,15 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
         var rowFound = false;
         var rowIndex = -1;
         var addressStr = Util.ToHexString6(snesIa);
-        
-        for (var i = 0; i < dataTable.Rows.Count; i++)
+
+        // Search through DataGridView rows instead of DataTable rows
+        for (var i = 0; i < dataGridView1.Rows.Count; i++)
         {
-            if (dataTable.Rows[i]["Address"] as string != addressStr)
+            if (dataGridView1.Rows[i].IsNewRow)
+                continue;
+
+            var cellValue = dataGridView1.Rows[i].Cells[0].Value as string;
+            if (cellValue != addressStr)
                 continue;
 
             rowFound = true;
@@ -551,10 +560,14 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
             var newLabel = new Label { Name = "New Label" };
             AddRow(snesIa, newLabel);
 
-            // Find the newly added row (should be the last one with our address)
-            for (var i = 0; i < dataTable.Rows.Count; i++)
+            // Find the newly added row in the DataGridView (not DataTable)
+            for (var i = 0; i < dataGridView1.Rows.Count; i++)
             {
-                if (dataTable.Rows[i]["Address"] as string != addressStr)
+                if (dataGridView1.Rows[i].IsNewRow)
+                    continue;
+
+                var cellValue = dataGridView1.Rows[i].Cells[0].Value as string;
+                if (cellValue != addressStr)
                     continue;
 
                 rowIndex = i;
@@ -565,10 +578,9 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
                 return;
         }
 
-        dataGridView1.CurrentCell = dataGridView1.Rows[rowIndex].Cells[1];  // Select the name cell for editing
+        dataGridView1.CurrentCell = dataGridView1.Rows[rowIndex].Cells[1]; // Select the name cell for editing
         dataGridView1.BeginEdit(true);
     }
-
     private void normalizeWRAMLabelsToolStripMenuItem_Click(object sender, EventArgs e)
     {
         locked = true; // optimization, don't auto-repopulate with every little change
