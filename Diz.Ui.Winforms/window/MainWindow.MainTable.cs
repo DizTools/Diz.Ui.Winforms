@@ -125,7 +125,7 @@ public partial class MainWindow
 
         var offset = SelectedOffset;
 
-        Console.WriteLine(e.KeyCode);
+        // Console.WriteLine(e.KeyCode);
 
         var snesData = Project.Data.GetSnesApi();
         if (snesData == null)
