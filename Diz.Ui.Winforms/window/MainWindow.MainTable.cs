@@ -135,76 +135,99 @@ public partial class MainWindow
         {
             case Keys.F3:
                 GoToNextUnreachedBranchPoint(offset);
+                e.Handled = true;
                 break;
             
-            case Keys.Home: case Keys.PageUp: case Keys.Up:
-            case Keys.End: case Keys.PageDown: case Keys.Down:
+            // case Keys.Home: case Keys.End: // I don't like these because they mess with text editing, disabling.
+            case Keys.PageUp: case Keys.PageDown: 
+            case Keys.Up: case Keys.Down:
                 ScrollVertically(offset, e.KeyCode switch
                 {
                     Keys.Up => 1,
-                    Keys.PageUp => 16,
-                    Keys.Home => 256,
                     Keys.Down => -1,
+                    Keys.PageUp => 16,
                     Keys.PageDown => -16,
+                    Keys.Home => 256,
                     Keys.End => -256,
                     _ => 0,
                 });
+                e.Handled = true;
                 break;
             case Keys.Left:
                 MoveNextColumn(-1);
+                e.Handled = true;
                 break;
             case Keys.Right:
                 MoveNextColumn(1);
+                e.Handled = true;
                 break;
             case Keys.S:
                 Step(offset);
+                e.Handled = true;
                 break;
             case Keys.I:
                 StepIn(offset);
+                e.Handled = true;
                 break;
             case Keys.A:
                 AutoStepSafe(offset);
+                e.Handled = true;
                 break;
             case Keys.T:
                 GoToIntermediateAddress(offset);
+                e.Handled = true;
                 break;
             case Keys.U:
                 GoToUnreached(true, true);
+                e.Handled = true;
                 break;
             case Keys.H:
                 GoToUnreached(false, false);
+                e.Handled = true;
                 break;
             case Keys.N:
                 GoToUnreached(false, true);
+                e.Handled = true;
                 break;
             
             case Keys.K:
                 Mark(offset);
+                e.Handled = true;
                 break;
             
             case Keys.L:
                 BeginEditingColumn(ColumnType.Label);
+                e.Handled = true;
                 break;
             case Keys.B:
                 BeginEditingColumn(ColumnType.DataBank);
+                e.Handled = true;
                 break;
             case Keys.D:
                 BeginEditingColumn(ColumnType.DirectPage);
+                e.Handled = true;
                 break;
-            case Keys.C:
-                BeginEditingColumn(ColumnType.Comment);
-                break;
+            
+            // I don't like this because it messes with CTRL+C
+            // case Keys.C:
+            //     BeginEditingColumn(ColumnType.Comment);
+            //     e.Handled = true;
+            //     break;
             
             case Keys.M:
                 snesData.SetMFlag(offset, !snesData.GetMFlag(offset));
+                e.Handled = true;
                 break;
             case Keys.X:
                 snesData.SetXFlag(offset, !snesData.GetXFlag(offset));
+                e.Handled = true;
                 break;
             
             case Keys.Enter:
                 table.BeginEdit(true);
+                e.Handled = true;
                 break;
+            
             case Keys.Delete:
                 if (table.CurrentCell.ColumnIndex == (int)ColumnType.Label)
                 {
@@ -219,10 +242,10 @@ public partial class MainWindow
                 
                 // for everything else BUT labels, this is fine:
                 table.CurrentCell.Value = null;
+                e.Handled = true;
                 break;
         }
-
-        e.Handled = true;
+        
         InvalidateTable();
     }
 
