@@ -56,20 +56,43 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
         Hide();
     }
 
+    // returns: -1 if not found
+    private int GetSnesAddressOfCurrentlySelectedLabel()
+    {
+        if (dataGridView1.SelectedCells.Count == 0)
+            return -1;
+        
+        var selectedRowSnesAddrObj = dataGridView1?.SelectedCells[0]?.OwningRow?.Cells[0].Value;
+        if (selectedRowSnesAddrObj == null)
+            return -1;
+        
+        var selectedRowSnesAddrTxt = selectedRowSnesAddrObj as string;
+        return int.TryParse(selectedRowSnesAddrTxt, NumberStyles.HexNumber, null,
+            out var val)
+            ? val
+            : -1;
+    }
+
+    private int GetRomOffsetOfCurrentlySelectedLabel()
+    {
+        var selectedSnesAddress = GetSnesAddressOfCurrentlySelectedLabel();
+        if (selectedSnesAddress < 0)
+            return -1;
+
+        return Data?.ConvertSnesToPc(selectedSnesAddress) ?? -1;
+    }
+
     private void btnJmp_Click(object sender, EventArgs e)
     {
-        if (ProjectController == null || Data == null)
-            return;
-        
-        if (!int.TryParse(dataGridView1.SelectedRows[0].Cells[0].Value as string, NumberStyles.HexNumber, null, out var val))
+        if (ProjectController == null)
             return;
 
-        var offset = Data.ConvertSnesToPc(val);
-        if (offset < 0) 
+        var romOffsetOfSelection = GetRomOffsetOfCurrentlySelectedLabel();
+        if (romOffsetOfSelection == -1)
             return;
         
         ProjectController.SelectOffset(
-            offset,
+            romOffsetOfSelection,
             new ISnesNavigation.HistoryArgs { Description = "Jump To Label" }
         );
     }
@@ -581,5 +604,25 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
         ProjectController?.NormalizeWramLabels();
         locked = false;
         RepopulateFromData();
+    }
+
+    private void table_KeyDown(object sender, KeyEventArgs e)
+    {
+        switch (e.KeyCode)
+        {
+            // might be better to use the built-in delete but...
+            case Keys.Delete:
+                if (dataGridView1.IsCurrentCellInEditMode)
+                    break;
+
+                var snesAddressOfSelectedLabel = GetSnesAddressOfCurrentlySelectedLabel();
+                if (snesAddressOfSelectedLabel == -1)
+                    break;
+                
+                Data?.Labels.RemoveLabel(snesAddressOfSelectedLabel);
+                
+                e.Handled = true;
+                break;
+        }
     }
 }

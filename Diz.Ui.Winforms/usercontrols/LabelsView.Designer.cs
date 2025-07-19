@@ -95,7 +95,7 @@ partial class LabelsViewControl
         dataGridView1.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
         dataGridView1.RowTemplate.Height = 15;
         dataGridView1.ScrollBars = ScrollBars.Vertical;
-        dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        dataGridView1.SelectionMode = DataGridViewSelectionMode.CellSelect;
         dataGridView1.ShowCellErrors = false;
         dataGridView1.ShowCellToolTips = false;
         dataGridView1.ShowEditingIcon = false;
@@ -103,6 +103,7 @@ partial class LabelsViewControl
         dataGridView1.Size = new Size(757, 466);
         dataGridView1.TabIndex = 3;
         dataGridView1.TabStop = false;
+        dataGridView1.KeyDown += new KeyEventHandler(table_KeyDown);
         dataGridView1.CellBeginEdit += dataGridView1_CellBeginEdit;
         dataGridView1.CellValidating += dataGridView1_CellValidating;
         dataGridView1.UserDeletingRow += dataGridView1_UserDeletingRow;
