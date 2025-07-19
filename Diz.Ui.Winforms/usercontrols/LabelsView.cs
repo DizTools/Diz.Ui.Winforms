@@ -87,7 +87,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
         WinformsGuiUtil.ShowLineItemError(exMessage, errLine);
     }
 
-    public void SetProjectCOntroller(IProjectController? projectController)
+    public void SetProjectController(IProjectController? projectController)
     {
         ProjectController = projectController;
     }
@@ -496,21 +496,26 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
         Focus();
     }
 
-    private void btnNewFromCurrentIA_Click(object sender, EventArgs e)
-    {
-        var snesData = Data?.GetSnesApi();
-        if (snesData == null || ProjectController == null || dataTable == null)
-            return;
+    private void btnNewFromCurrentIA_Click(object sender, EventArgs e) => 
+        FocusOrCreateLabelAtSelectedRomOffsetIa();
 
-        // whatever IA is selected on the main form, let's start editing a new label with that.
-        var selectedOffset = ProjectController.ProjectView.SelectedOffset;
+    public void FocusOrCreateLabelAtSelectedRomOffsetIa()
+    {
+        var selectedOffset = ProjectController?.ProjectView.SelectedOffset ?? -1;
         if (selectedOffset == -1)
         {
-            MessageBox.Show("No offset selected in main form.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show("No offset selected in main form, or no project loaded.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return;
         }
+     
+        // whatever IA is selected on the main form, let's start editing a new label with that.
+        FocusOrCreateLabelAtRomOffsetIa(selectedOffset);
+    }
 
-        var snesIa = snesData.GetIntermediateAddress(selectedOffset, resolve: true);
+    public void FocusOrCreateLabelAtRomOffsetIa(int selectedOffset)
+    {
+        var snesData = Data?.GetSnesApi();
+        var snesIa = snesData?.GetIntermediateAddress(selectedOffset, resolve: true) ?? -1;
         if (snesIa == -1)
         {
             MessageBox.Show(
@@ -519,12 +524,14 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
             return;
         }
 
+        FocusOrCreateLabelAtSnesAddress(snesIa);
+    }
+
+    public void FocusOrCreateLabelAtSnesAddress(int snesAddress)
+    {
         // optional: convert mirrored WRAM labels into un-mirrored address.
         // will change i.e. $00xxxx addresses to $7Exxxx
-        var normalizedSnesAddress =
-            RomUtil.GetSnesAddressFromWramAddress(RomUtil.GetWramAddressFromSnesAddress(snesIa));
-        if (normalizedSnesAddress != -1)
-            snesIa = normalizedSnesAddress;
+        snesAddress = RomUtil.NormalizeSnesWramAddress(snesAddress);
 
         // finally clear our search
         // for the code below to work, there must be NO FILTER or we could miss rows
@@ -534,53 +541,40 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
             RepopulateFromData();
         }
 
-        // now ready to start editing:
-        var rowFound = false;
-        var rowIndex = -1;
-        var addressStr = Util.ToHexString6(snesIa);
+        // does it already exist?
+        var row = FindRowWithSnesAddress(snesAddress);
+        
+        if (row == -1)
+        {
+            // if not, create it
+            AddRow(snesAddress, new Label { Name = "New Label" });
+            row = FindRowWithSnesAddress(snesAddress);
+        }
 
-        // Search through DataGridView rows instead of DataTable rows
+        dataGridView1.CurrentCell = dataGridView1.Rows[row].Cells[1]; // Select the name cell for editing
+        dataGridView1.BeginEdit(true);
+    }
+
+    private int FindRowWithSnesAddress(int snesAddress)
+    {
+        var snesAddressHexStr = Util.ToHexString6(snesAddress);
+
+        // Search through DataGridView rows instead of DataTable rows, to bypass all filtering/etc.
         for (var i = 0; i < dataGridView1.Rows.Count; i++)
         {
             if (dataGridView1.Rows[i].IsNewRow)
                 continue;
 
             var cellValue = dataGridView1.Rows[i].Cells[0].Value as string;
-            if (cellValue != addressStr)
+            if (cellValue != snesAddressHexStr)
                 continue;
 
-            rowFound = true;
-            rowIndex = i;
-            break;
+            return i;
         }
 
-        if (!rowFound)
-        {
-            // Add a new row with the address and start editing it
-            var newLabel = new Label { Name = "New Label" };
-            AddRow(snesIa, newLabel);
-
-            // Find the newly added row in the DataGridView (not DataTable)
-            for (var i = 0; i < dataGridView1.Rows.Count; i++)
-            {
-                if (dataGridView1.Rows[i].IsNewRow)
-                    continue;
-
-                var cellValue = dataGridView1.Rows[i].Cells[0].Value as string;
-                if (cellValue != addressStr)
-                    continue;
-
-                rowIndex = i;
-                break;
-            }
-
-            if (rowIndex < 0)
-                return;
-        }
-
-        dataGridView1.CurrentCell = dataGridView1.Rows[rowIndex].Cells[1]; // Select the name cell for editing
-        dataGridView1.BeginEdit(true);
+        return -1;
     }
+
     private void normalizeWRAMLabelsToolStripMenuItem_Click(object sender, EventArgs e)
     {
         locked = true; // optimization, don't auto-repopulate with every little change

@@ -27,7 +27,7 @@ public partial class MainWindow : Form, IMainGridWindowView
         this.appVersionInfo = appVersionInfo;
 
         labelsView = viewFactory.GetLabelEditorView();
-        labelsView.SetProjectCOntroller(ProjectController);
+        labelsView.SetProjectController(ProjectController);
             
         Document.PropertyChanged += Document_PropertyChanged;
         ProjectController.ProjectChanged += ProjectController_ProjectChanged;
@@ -53,7 +53,7 @@ public partial class MainWindow : Form, IMainGridWindowView
     }
 
 
-    void AddDynamicMenuItems()
+    private void AddDynamicMenuItems()
     {
         // a lot of the Diz UI is hardcoded in the visual studio designer.
         // we want to move away from that and have the menu items dynamically populate
@@ -88,7 +88,7 @@ public partial class MainWindow : Form, IMainGridWindowView
 
             var newMenuItem = new ToolStripMenuItem
             {
-                Size = new System.Drawing.Size(253, 22),
+                Size = new Size(253, 22),
                 Name = method.Name,
                 ShortcutKeys = attribute.ShortcutKeys,
                 Text = attribute.Name,

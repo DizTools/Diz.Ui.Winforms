@@ -177,7 +177,6 @@ public partial class MainWindow
         UiFixMisalignedInstructions();
 
     private void moveWithStepToolStripMenuItem_Click(object sender, EventArgs e) => ToggleMoveWithStep();
-    private void labelListToolStripMenuItem_Click(object sender, EventArgs e) => ShowCommentList();
 
     private void projectSettingsToolStripMenuItem_Click(object sender, EventArgs e) => ShowProjectSettings();
 

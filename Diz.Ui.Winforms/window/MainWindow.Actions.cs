@@ -402,10 +402,19 @@ public partial class MainWindow
         visualForm.Show();
     }
 
-    private void ShowCommentList()
+    [UsedImplicitly, MenuItem(menu: "Tools", name: "Label Editor", shortcutKeys: Keys.Control | Keys.L)]
+    private void ShowLabelsEditor()
     {
         labelsView.Show();
         labelsView.BringFormToTop();
+    }
+    
+    [UsedImplicitly, MenuItem(menu: "Edit", name: "Create Label at IA", shortcutKeys: Keys.Alt | Keys.L)]
+    private void CreateLabelFromIa()
+    {
+        // either creates or goes to a label at the current IA.
+        labelsView.FocusOrCreateLabelAtRomOffsetIa(SelectedOffset);
+        ShowLabelsEditor();
     }
 
     private void ShowProjectSettings()

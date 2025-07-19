@@ -145,7 +145,6 @@ public partial class MainWindow
 
     private void EnableSubWindows()
     {
-        labelListToolStripMenuItem.Enabled = true;
         projectSettingsToolStripMenuItem.Enabled = true;
     }
 

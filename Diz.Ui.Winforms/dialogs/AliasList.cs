@@ -27,12 +27,15 @@ public partial class AliasList : Form, ILabelEditorView
         Focus();
     }
 
-    // get rid of these if we can:
+    // get rid of these 2 if we can:
     public string PromptForCsvFilename() => labelsViewControl1.PromptForCsvFilename();
     public void ShowLineItemError(string exMessage, int errLine) => labelsViewControl1.ShowLineItemError(exMessage, errLine);
     
-    // probably have to keep these
-    public void SetProjectCOntroller(IProjectController? projectController) => labelsViewControl1.SetProjectCOntroller(projectController);
+    
+    public void SetProjectController(IProjectController? projectController) => labelsViewControl1.SetProjectController(projectController);
     public void RepopulateFromData() => labelsViewControl1.RepopulateFromData();
     public void RebindProject() => labelsViewControl1.RebindProject();
+    public void FocusOrCreateLabelAtSelectedRomOffsetIa() => labelsViewControl1.FocusOrCreateLabelAtSelectedRomOffsetIa();
+    public void FocusOrCreateLabelAtRomOffsetIa(int selectedOffset) => labelsViewControl1.FocusOrCreateLabelAtRomOffsetIa(selectedOffset);
+    public void FocusOrCreateLabelAtSnesAddress(int snesAddress) => labelsViewControl1.FocusOrCreateLabelAtSnesAddress(snesAddress);
 }

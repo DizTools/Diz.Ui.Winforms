@@ -135,7 +135,6 @@ partial class MainWindow
         this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         this.moveWithStepToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         this.openLastProjectAutomaticallyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-        this.labelListToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         this.projectSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         this.importCaptureToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         this.importTraceLogBinary = new System.Windows.Forms.ToolStripMenuItem();
@@ -954,7 +953,6 @@ partial class MainWindow
             this.graphicsWindowToolStripMenuItem,
             this.constantsToolStripMenuItem,
             this.optionsToolStripMenuItem,
-            this.labelListToolStripMenuItem,
             this.projectSettingsToolStripMenuItem,
             this.importCaptureToolStripMenuItem});
         this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
@@ -1038,14 +1036,6 @@ partial class MainWindow
         this.openLastProjectAutomaticallyToolStripMenuItem.Size = new System.Drawing.Size(244, 22);
         this.openLastProjectAutomaticallyToolStripMenuItem.Text = "Open Last Project Automatically";
         this.openLastProjectAutomaticallyToolStripMenuItem.Click += new System.EventHandler(this.openLastProjectAutomaticallyToolStripMenuItem_Click);
-        // 
-        // labelListToolStripMenuItem
-        // 
-        this.labelListToolStripMenuItem.Enabled = false;
-        this.labelListToolStripMenuItem.Name = "labelListToolStripMenuItem";
-        this.labelListToolStripMenuItem.Size = new System.Drawing.Size(213, 22);
-        this.labelListToolStripMenuItem.Text = "Label List";
-        this.labelListToolStripMenuItem.Click += new System.EventHandler(this.labelListToolStripMenuItem_Click);
         // 
         // projectSettingsToolStripMenuItem
         // 
@@ -1261,7 +1251,6 @@ partial class MainWindow
     private System.Windows.Forms.ToolStripMenuItem moveWithStepToolStripMenuItem;
     private System.Windows.Forms.OpenFileDialog openUsageMapFile;
     public System.Windows.Forms.OpenFileDialog openTraceLogDialog;
-    private System.Windows.Forms.ToolStripMenuItem labelListToolStripMenuItem;
     private System.Windows.Forms.ToolStripMenuItem projectSettingsToolStripMenuItem;
     private System.Windows.Forms.OpenFileDialog openCDLDialog;
     private System.Windows.Forms.ToolStripMenuItem toolStripOpenLast;
