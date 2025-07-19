@@ -39,7 +39,7 @@ public partial class MainWindow
         ViewOffset = targetOffset;
         
         UpdateDataGridView();
-        var targetRomOffset = table.CurrentCell.RowIndex + ViewOffset;
+        var targetRomOffset = SelectedOffset;
         var clampedRow = GetClosestVisibleRowForRomOffset(targetRomOffset);
         SetRow(clampedRow);
         InvalidateTable();
@@ -123,7 +123,7 @@ public partial class MainWindow
         if (Project?.Data == null || Project.Data.GetRomSize() <= 0) 
             return;
 
-        var offset = table.CurrentCell.RowIndex + ViewOffset;
+        var offset = SelectedOffset;
 
         Console.WriteLine(e.KeyCode);
 
@@ -466,7 +466,7 @@ public partial class MainWindow
         if (row < 0 || row >= Project.Data.GetRomSize()) 
             return;
         
-        PaintCell(row, e.CellStyle, e.ColumnIndex, table.CurrentCell.RowIndex + ViewOffset);
+        PaintCell(row, e.CellStyle, e.ColumnIndex, SelectedOffset);
     }
 
     public void MarkHistoryPoint(int pcOffset, ISnesNavigation.HistoryArgs? historyArgs, string position)
