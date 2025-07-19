@@ -412,9 +412,10 @@ public partial class MainWindow
     [UsedImplicitly, MenuItem(menu: "Edit", name: "Create Label at IA", shortcutKeys: Keys.Alt | Keys.L)]
     private void CreateLabelFromIa()
     {
+        ShowLabelsEditor();
+        
         // either creates or goes to a label at the current IA.
         labelsView.FocusOrCreateLabelAtRomOffsetIa(SelectedOffset);
-        ShowLabelsEditor();
     }
 
     private void ShowProjectSettings()
