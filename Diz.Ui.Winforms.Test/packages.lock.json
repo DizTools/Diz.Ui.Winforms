@@ -10,9 +10,9 @@
       },
       "ExtendedXmlSerializer": {
         "type": "Direct",
-        "requested": "[3.7.11, )",
-        "resolved": "3.7.11",
-        "contentHash": "cZt94XoDbHwJAZdU7cNOfi0cDt+dnOxN9X28iZGi0yOa0Yq/ZBwZkHq3VDwgUgsV8vlNlg2UWQqUhhqKURTv8g==",
+        "requested": "[3.9.6, )",
+        "resolved": "3.9.6",
+        "contentHash": "kwnF5RjDwzle4cpUN4AWOCBAbntCkLQez5SIl2cY6hamWL33vEYu5Pp35BKkg/oklXnvaYobzJrFezRi9dl9tA==",
         "dependencies": {
           "LightInject": "6.6.1",
           "NReco.LambdaParser": "1.0.12",
@@ -148,11 +148,6 @@
         "resolved": "0.13.12",
         "contentHash": "4zmFOOJqW1GrEP/t5XKgh97LH9r6zixGy2IA0JAaoTNNnZ8kPBt9u/XagsGNyV0e7rglOpFcWc6wI5EjefKpKA=="
       },
-      "ByteSize": {
-        "type": "Transitive",
-        "resolved": "2.1.2",
-        "contentHash": "dSiH9B0apNU5abV3OVUs3eTfHiidEAa8IMOLGW0eEl5tB8Ba1ngkGC7RT/RGy61ifGcPzCe7DMP78KB8pA5kNg=="
-      },
       "Castle.Core": {
         "type": "Transitive",
         "resolved": "5.1.1",
@@ -170,15 +165,6 @@
         "type": "Transitive",
         "resolved": "30.0.3",
         "contentHash": "OK4xEoPKFZYZ2Km+ZTGRxuLo33u+ipKVCC9ICCGn5JRiAmPLRsCPZ/shL3HKGPwS33MQSPcPHigI4HnX3Q47yg=="
-      },
-      "FastBitmapLib": {
-        "type": "Transitive",
-        "resolved": "2.1.0",
-        "contentHash": "FOk+mBCg8nenI3V4kJXK/QeHKKjbPTZdebx8CGoMHX9bO4wzlnTSasYCHtl29FYByn+AInl9Dj1ICt29wWaL0w==",
-        "dependencies": {
-          "System.Drawing.Common": "4.5.1",
-          "System.Runtime.CompilerServices.Unsafe": "4.5.2"
-        }
       },
       "FluentValidation": {
         "type": "Transitive",
@@ -431,14 +417,6 @@
         "dependencies": {
           "System.Security.AccessControl": "5.0.0",
           "System.Security.Principal.Windows": "5.0.0"
-        }
-      },
-      "Microsoft.Win32.SystemEvents": {
-        "type": "Transitive",
-        "resolved": "4.5.0",
-        "contentHash": "LuI1oG+24TUj1ZRQQjM5Ew73BKnZE5NZ/7eAdh1o8ST5dPhUnJvIkiIn2re3MwnkRy6ELRnvEbBxHP8uALKhJw==",
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "2.0.0"
         }
       },
       "NETStandard.Library": {
@@ -761,15 +739,6 @@
           "Microsoft.NETCore.Platforms": "1.1.0",
           "Microsoft.NETCore.Targets": "1.1.0",
           "System.Runtime": "4.3.0"
-        }
-      },
-      "System.Drawing.Common": {
-        "type": "Transitive",
-        "resolved": "4.5.1",
-        "contentHash": "GiyeGi/v4xYDz1vCNFwFvhz9k1XddOG7VD3jxRqzRBCbTHji+s3HxxbxtoymuK4OadEpgotI8zQ5+GEEH9sUEQ==",
-        "dependencies": {
-          "Microsoft.NETCore.Platforms": "2.0.0",
-          "Microsoft.Win32.SystemEvents": "4.5.0"
         }
       },
       "System.Globalization": {
@@ -1479,7 +1448,7 @@
         "type": "Project",
         "dependencies": {
           "Diz.Core.Interfaces": "[1.0.0, )",
-          "ExtendedXmlSerializer": "[3.7.11, )",
+          "ExtendedXmlSerializer": "[3.9.6, )",
           "FluentValidation": "[11.9.0, )",
           "IX.Observable": "[1.0.1, )",
           "JetBrains.Annotations": "[2023.3.0, )",
@@ -1528,7 +1497,7 @@
           "Diz.Core": "[1.0.0, )",
           "Diz.Cpu.65816": "[1.0.0, )",
           "Diz.LogWriter": "[1.0.0, )",
-          "ExtendedXmlSerializer": "[3.7.11, )",
+          "ExtendedXmlSerializer": "[3.9.6, )",
           "FluentAssertions": "[6.12.0, )",
           "FluentAssertions.ArgumentMatchers.Moq": "[3.1.0, )",
           "IX.Observable": "[1.0.1, )",
@@ -1541,16 +1510,6 @@
           "xunit.abstractions": "[2.0.3, )",
           "xunit.analyzers": "[1.10.0, )",
           "xunit.assert": "[2.6.6, )"
-        }
-      },
-      "diz.ui.winforms": {
-        "type": "Project",
-        "dependencies": {
-          "ByteSize": "[2.1.2, )",
-          "Diz.Controllers": "[1.0.0, )",
-          "FastBitmapLib": "[2.1.0, )",
-          "JetBrains.Annotations": "[2023.3.0, )",
-          "LightInject": "[6.6.4, )"
         }
       }
     }
