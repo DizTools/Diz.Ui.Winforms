@@ -28,10 +28,7 @@ partial class LabelsViewControl
     /// </summary>
     private void InitializeComponent()
     {
-        DataGridViewCellStyle dataGridViewCellStyle4 = new DataGridViewCellStyle();
         DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
-        DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
-        DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
         openFileDialog1 = new OpenFileDialog();
         saveFileDialog1 = new SaveFileDialog();
         dataGridView1 = new DataGridView();
@@ -43,6 +40,8 @@ partial class LabelsViewControl
         importCSVAppendToolStripMenuItem = new ToolStripMenuItem();
         importCSVToolStripMenuItem = new ToolStripMenuItem();
         exportCSVToolStripMenuItem = new ToolStripMenuItem();
+        toolStripSeparator1 = new ToolStripSeparator();
+        normalizeWRAMLabelsToolStripMenuItem = new ToolStripMenuItem();
         tableLayoutPanel1 = new TableLayoutPanel();
         toolStrip1 = new ToolStrip();
         toolStripStatusLabel1 = new ToolStripLabel();
@@ -53,13 +52,21 @@ partial class LabelsViewControl
         label1 = new Label();
         txtSearch = new TextBox();
         btnClearSearch = new Button();
-        toolStripSeparator1 = new ToolStripSeparator();
-        normalizeWRAMLabelsToolStripMenuItem = new ToolStripMenuItem();
+        tableLayoutPanel2 = new TableLayoutPanel();
+        panel1 = new Panel();
+        label3 = new Label();
+        dataGridContexts = new DataGridView();
+        textBox1 = new TextBox();
+        label2 = new Label();
+        lblPanelName = new Label();
         ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
         menuStrip1.SuspendLayout();
         tableLayoutPanel1.SuspendLayout();
         toolStrip1.SuspendLayout();
         flowLayoutPanel1.SuspendLayout();
+        tableLayoutPanel2.SuspendLayout();
+        panel1.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)dataGridContexts).BeginInit();
         SuspendLayout();
         // 
         // openFileDialog1
@@ -77,15 +84,14 @@ partial class LabelsViewControl
         dataGridView1.BorderStyle = BorderStyle.None;
         dataGridView1.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
         dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-
-        dataGridViewCellStyle4.Alignment = DataGridViewContentAlignment.MiddleLeft;
-        dataGridViewCellStyle4.BackColor = SystemColors.Window;
-        dataGridViewCellStyle4.Font = new Font("Consolas", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-        dataGridViewCellStyle4.ForeColor = SystemColors.ControlText;
-        dataGridViewCellStyle4.SelectionBackColor = Color.CornflowerBlue;
-        dataGridViewCellStyle4.SelectionForeColor = SystemColors.HighlightText;
-        dataGridViewCellStyle4.WrapMode = DataGridViewTriState.False;
-        dataGridView1.DefaultCellStyle = dataGridViewCellStyle4;
+        dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
+        dataGridViewCellStyle1.BackColor = SystemColors.Window;
+        dataGridViewCellStyle1.Font = new Font("Consolas", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+        dataGridViewCellStyle1.ForeColor = SystemColors.ControlText;
+        dataGridViewCellStyle1.SelectionBackColor = Color.CornflowerBlue;
+        dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
+        dataGridViewCellStyle1.WrapMode = DataGridViewTriState.False;
+        dataGridView1.DefaultCellStyle = dataGridViewCellStyle1;
         dataGridView1.Dock = DockStyle.Fill;
         dataGridView1.Location = new Point(0, 0);
         dataGridView1.Margin = new Padding(0);
@@ -100,21 +106,32 @@ partial class LabelsViewControl
         dataGridView1.ShowCellToolTips = false;
         dataGridView1.ShowEditingIcon = false;
         dataGridView1.ShowRowErrors = false;
-        dataGridView1.Size = new Size(757, 466);
+        dataGridView1.Size = new Size(708, 446);
         dataGridView1.TabIndex = 3;
         dataGridView1.TabStop = false;
-        dataGridView1.KeyDown += new KeyEventHandler(table_KeyDown);
         dataGridView1.CellBeginEdit += dataGridView1_CellBeginEdit;
         dataGridView1.CellValidating += dataGridView1_CellValidating;
         dataGridView1.UserDeletingRow += dataGridView1_UserDeletingRow;
-        
+        dataGridView1.KeyDown += table_KeyDown;
+        // 
+        // Address
+        // 
+        Address.Name = "Address";
+        // 
+        // Alias
+        // 
+        Alias.Name = "Alias";
+        // 
+        // Comment
+        // 
+        Comment.Name = "Comment";
         // 
         // menuStrip1
         // 
         menuStrip1.Items.AddRange(new ToolStripItem[] { dataToolStripMenuItem });
         menuStrip1.Location = new Point(0, 0);
         menuStrip1.Name = "menuStrip1";
-        menuStrip1.Size = new Size(757, 24);
+        menuStrip1.Size = new Size(1072, 24);
         menuStrip1.TabIndex = 7;
         menuStrip1.Text = "menuStrip1";
         // 
@@ -146,55 +163,66 @@ partial class LabelsViewControl
         exportCSVToolStripMenuItem.Text = "Export CSV ...";
         exportCSVToolStripMenuItem.Click += exportCSVToolStripMenuItem_Click;
         // 
+        // toolStripSeparator1
+        // 
+        toolStripSeparator1.Name = "toolStripSeparator1";
+        toolStripSeparator1.Size = new Size(201, 6);
+        // 
+        // normalizeWRAMLabelsToolStripMenuItem
+        // 
+        normalizeWRAMLabelsToolStripMenuItem.Name = "normalizeWRAMLabelsToolStripMenuItem";
+        normalizeWRAMLabelsToolStripMenuItem.Size = new Size(204, 22);
+        normalizeWRAMLabelsToolStripMenuItem.Text = "Normalize WRAM Labels";
+        normalizeWRAMLabelsToolStripMenuItem.Click += normalizeWRAMLabelsToolStripMenuItem_Click;
+        // 
         // tableLayoutPanel1
         // 
         tableLayoutPanel1.ColumnCount = 1;
-        tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+        tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         tableLayoutPanel1.Controls.Add(dataGridView1, 0, 0);
         tableLayoutPanel1.Controls.Add(toolStrip1, 0, 2);
         tableLayoutPanel1.Controls.Add(flowLayoutPanel1, 0, 1);
-        tableLayoutPanel1.Dock = DockStyle.Fill;
-        tableLayoutPanel1.Location = new Point(0, 24);
+        tableLayoutPanel1.Location = new Point(3, 3);
         tableLayoutPanel1.Name = "tableLayoutPanel1";
         tableLayoutPanel1.RowCount = 3;
-        tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 91.98397F));
-        tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 8.016032F));
+        tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        tableLayoutPanel1.RowStyles.Add(new RowStyle());
         tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-        tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-        tableLayoutPanel1.Size = new Size(757, 527);
+        tableLayoutPanel1.Size = new Size(708, 504);
         tableLayoutPanel1.TabIndex = 8;
         // 
         // toolStrip1
         // 
         toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripStatusLabel1, toolStripLabel1 });
-        toolStrip1.Location = new Point(0, 506);
+        toolStrip1.Location = new Point(0, 484);
         toolStrip1.Name = "toolStrip1";
-        toolStrip1.Size = new Size(757, 21);
+        toolStrip1.Size = new Size(708, 20);
         toolStrip1.TabIndex = 4;
         toolStrip1.Text = "toolStrip1";
         // 
         // toolStripStatusLabel1
         // 
         toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-        toolStripStatusLabel1.Size = new Size(118, 18);
+        toolStripStatusLabel1.Size = new Size(118, 17);
         toolStripStatusLabel1.Text = "toolStripStatusLabel1";
         // 
         // toolStripLabel1
         // 
         toolStripLabel1.Name = "toolStripLabel1";
-        toolStripLabel1.Size = new Size(0, 18);
+        toolStripLabel1.Size = new Size(0, 17);
         // 
         // flowLayoutPanel1
         // 
+        flowLayoutPanel1.AutoSize = true;
         flowLayoutPanel1.Controls.Add(btnJmp);
         flowLayoutPanel1.Controls.Add(btnNewFromCurrentIA);
         flowLayoutPanel1.Controls.Add(label1);
         flowLayoutPanel1.Controls.Add(txtSearch);
         flowLayoutPanel1.Controls.Add(btnClearSearch);
         flowLayoutPanel1.Dock = DockStyle.Fill;
-        flowLayoutPanel1.Location = new Point(3, 469);
+        flowLayoutPanel1.Location = new Point(3, 449);
         flowLayoutPanel1.Name = "flowLayoutPanel1";
-        flowLayoutPanel1.Size = new Size(751, 34);
+        flowLayoutPanel1.Size = new Size(702, 32);
         flowLayoutPanel1.TabIndex = 5;
         // 
         // btnJmp
@@ -232,13 +260,13 @@ partial class LabelsViewControl
         // 
         txtSearch.Location = new Point(292, 3);
         txtSearch.Name = "txtSearch";
-        txtSearch.Size = new Size(344, 23);
+        txtSearch.Size = new Size(299, 23);
         txtSearch.TabIndex = 3;
         txtSearch.TextChanged += txtSearch_TextChanged;
         // 
         // btnClearSearch
         // 
-        btnClearSearch.Location = new Point(643, 3);
+        btnClearSearch.Location = new Point(598, 3);
         btnClearSearch.Margin = new Padding(4, 3, 4, 3);
         btnClearSearch.Name = "btnClearSearch";
         btnClearSearch.Size = new Size(92, 26);
@@ -247,29 +275,87 @@ partial class LabelsViewControl
         btnClearSearch.UseVisualStyleBackColor = true;
         btnClearSearch.Click += btnClearSearch_Click;
         // 
-        // toolStripSeparator1
+        // tableLayoutPanel2
         // 
-        toolStripSeparator1.Name = "toolStripSeparator1";
-        toolStripSeparator1.Size = new Size(201, 6);
+        tableLayoutPanel2.ColumnCount = 2;
+        tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 66.6666641F));
+        tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.3333321F));
+        tableLayoutPanel2.Controls.Add(tableLayoutPanel1, 0, 0);
+        tableLayoutPanel2.Controls.Add(panel1, 1, 0);
+        tableLayoutPanel2.Dock = DockStyle.Fill;
+        tableLayoutPanel2.Location = new Point(0, 24);
+        tableLayoutPanel2.Name = "tableLayoutPanel2";
+        tableLayoutPanel2.RowCount = 1;
+        tableLayoutPanel2.RowStyles.Add(new RowStyle());
+        tableLayoutPanel2.Size = new Size(1072, 510);
+        tableLayoutPanel2.TabIndex = 9;
         // 
-        // normalizeWRAMLabelsToolStripMenuItem
+        // panel1
         // 
-        normalizeWRAMLabelsToolStripMenuItem.Name = "normalizeWRAMLabelsToolStripMenuItem";
-        normalizeWRAMLabelsToolStripMenuItem.Size = new Size(204, 22);
-        normalizeWRAMLabelsToolStripMenuItem.Text = "Normalize WRAM Labels";
-        normalizeWRAMLabelsToolStripMenuItem.Click += normalizeWRAMLabelsToolStripMenuItem_Click;
+        panel1.Controls.Add(label3);
+        panel1.Controls.Add(dataGridContexts);
+        panel1.Controls.Add(textBox1);
+        panel1.Controls.Add(label2);
+        panel1.Controls.Add(lblPanelName);
+        panel1.Dock = DockStyle.Fill;
+        panel1.Location = new Point(717, 3);
+        panel1.Name = "panel1";
+        panel1.Size = new Size(352, 504);
+        panel1.TabIndex = 9;
         // 
-        // AliasList
+        // label3
+        // 
+        label3.AutoSize = true;
+        label3.Location = new Point(3, 121);
+        label3.Name = "label3";
+        label3.Size = new Size(105, 15);
+        label3.TabIndex = 4;
+        label3.Text = "Alternate Contexts";
+        // 
+        // dataGridContexts
+        // 
+        dataGridContexts.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+        dataGridContexts.Location = new Point(3, 139);
+        dataGridContexts.Name = "dataGridContexts";
+        dataGridContexts.Size = new Size(346, 365);
+        dataGridContexts.TabIndex = 3;
+        // 
+        // textBox1
+        // 
+        textBox1.Location = new Point(3, 43);
+        textBox1.Name = "textBox1";
+        textBox1.Size = new Size(352, 23);
+        textBox1.TabIndex = 2;
+        // 
+        // label2
+        // 
+        label2.AutoSize = true;
+        label2.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+        label2.Location = new Point(3, 0);
+        label2.Name = "label2";
+        label2.Size = new Size(48, 15);
+        label2.TabIndex = 1;
+        label2.Text = "Details:";
+        // 
+        // lblPanelName
+        // 
+        lblPanelName.AutoSize = true;
+        lblPanelName.Location = new Point(3, 25);
+        lblPanelName.Name = "lblPanelName";
+        lblPanelName.Size = new Size(70, 15);
+        lblPanelName.TabIndex = 0;
+        lblPanelName.Text = "Label Name";
+        // 
+        // LabelsViewControl
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(757, 551);
-        Controls.Add(tableLayoutPanel1);
+        Controls.Add(tableLayoutPanel2);
         Controls.Add(menuStrip1);
         Margin = new Padding(4, 3, 4, 3);
         MinimumSize = new Size(250, 282);
-        Name = "AliasList";
-        Text = "Label List";
+        Name = "LabelsViewControl";
+        Size = new Size(1072, 534);
         ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
         menuStrip1.ResumeLayout(false);
         menuStrip1.PerformLayout();
@@ -279,6 +365,10 @@ partial class LabelsViewControl
         toolStrip1.PerformLayout();
         flowLayoutPanel1.ResumeLayout(false);
         flowLayoutPanel1.PerformLayout();
+        tableLayoutPanel2.ResumeLayout(false);
+        panel1.ResumeLayout(false);
+        panel1.PerformLayout();
+        ((System.ComponentModel.ISupportInitialize)dataGridContexts).EndInit();
         ResumeLayout(false);
         PerformLayout();
 
@@ -308,4 +398,11 @@ partial class LabelsViewControl
     private Button btnClearSearch;
     private ToolStripSeparator toolStripSeparator1;
     private ToolStripMenuItem normalizeWRAMLabelsToolStripMenuItem;
+    private TableLayoutPanel tableLayoutPanel2;
+    private Panel panel1;
+    private Label label2;
+    private Label lblPanelName;
+    private Label label3;
+    private DataGridView dataGridContexts;
+    private TextBox textBox1;
 }
