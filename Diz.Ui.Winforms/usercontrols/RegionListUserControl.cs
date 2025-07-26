@@ -1,6 +1,8 @@
 ﻿using Diz.Controllers.interfaces;
 using Diz.Core.Interfaces;
 using System.ComponentModel;
+using System.Globalization;
+using Diz.Core.util;
 
 namespace Diz.Ui.Winforms.usercontrols;
 
@@ -27,66 +29,113 @@ public partial class RegionListUserControl : UserControl, IRegionListView
         SetupColumns();
     }
 
-    private void SetupColumns()
+private void SetupColumns()
+{
+    // Only add columns if they don't already exist
+    if (regionGridView.Columns.Count > 0)
+        return;
+    
+    var startAddressColumn = new DataGridViewTextBoxColumn
     {
-        // Only add columns if they don't already exist
-        if (regionGridView.Columns.Count > 0)
-            return;
-        
-        regionGridView.Columns.AddRange(new DataGridViewColumn[]
+        Name = "StartSnesAddress",
+        DataPropertyName = "StartSnesAddress",
+        HeaderText = "Start Address",
+        Width = 100
+    };
+    
+    var endAddressColumn = new DataGridViewTextBoxColumn
+    {
+        Name = "EndSnesAddress", 
+        DataPropertyName = "EndSnesAddress",
+        HeaderText = "End Address",
+        Width = 100
+    };
+    
+    regionGridView.Columns.AddRange(new DataGridViewColumn[]
+    {
+        startAddressColumn,
+        endAddressColumn,
+        new DataGridViewTextBoxColumn
         {
-            new DataGridViewTextBoxColumn
-            {
-                Name = "StartSnesAddress",
-                DataPropertyName = "StartSnesAddress",
-                HeaderText = "Start Address",
-                Width = 100
-            },
-            new DataGridViewTextBoxColumn
-            {
-                Name = "EndSnesAddress", 
-                DataPropertyName = "EndSnesAddress",
-                HeaderText = "End Address",
-                Width = 100
-            },
-            new DataGridViewTextBoxColumn
-            {
-                Name = "RegionName",
-                DataPropertyName = "RegionName", 
-                HeaderText = "Region Name",
-                Width = 150
-            },
-            new DataGridViewTextBoxColumn
-            {
-                Name = "ContextToApply",
-                DataPropertyName = "ContextToApply",
-                HeaderText = "Context",
-                Width = 120
-            },
-            new DataGridViewTextBoxColumn
-            {
-                Name = "Priority",
-                DataPropertyName = "Priority",
-                HeaderText = "Priority", 
-                Width = 80
-            },
-            new DataGridViewButtonColumn
-            {
-                Name = "Actions",
-                HeaderText = "Actions",
-                Text = "Delete",
-                UseColumnTextForButtonValue = true,
-                Width = 80
-            }
-        });
-    }
+            Name = "RegionName",
+            DataPropertyName = "RegionName", 
+            HeaderText = "Region Name",
+            Width = 150
+        },
+        new DataGridViewTextBoxColumn
+        {
+            Name = "ContextToApply",
+            DataPropertyName = "ContextToApply",
+            HeaderText = "Context",
+            Width = 120
+        },
+        new DataGridViewTextBoxColumn
+        {
+            Name = "Priority",
+            DataPropertyName = "Priority",
+            HeaderText = "Priority", 
+            Width = 80
+        },
+        new DataGridViewButtonColumn
+        {
+            Name = "Actions",
+            HeaderText = "Actions",
+            Text = "Delete",
+            UseColumnTextForButtonValue = true,
+            Width = 80
+        }
+    });
+}
 
-    private void AttachEventHandlers()
+private void AttachEventHandlers()
+{
+    regionGridView.CellContentClick += RegionGridView_CellContentClick;
+    regionGridView.UserDeletingRow += RegionGridView_UserDeletingRow;
+    regionGridView.RowValidating += RegionGridView_RowValidating;
+    
+    // Add these event handlers for hex conversion
+    regionGridView.CellFormatting += RegionGridView_CellFormatting;
+    regionGridView.CellParsing += RegionGridView_CellParsing;
+}
+
+private void RegionGridView_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
+{
+    // Convert int to hex string for display
+    if ((regionGridView.Columns[e.ColumnIndex].Name == "StartSnesAddress" || 
+         regionGridView.Columns[e.ColumnIndex].Name == "EndSnesAddress") && 
+        e.Value is int intValue)
     {
-        regionGridView.CellContentClick += RegionGridView_CellContentClick;
-        regionGridView.UserDeletingRow += RegionGridView_UserDeletingRow;
-        regionGridView.RowValidating += RegionGridView_RowValidating;
+        e.Value = Util.NumberToBaseString(intValue, Util.NumberBase.Hexadecimal, 6, showPrefix: false);
+        e.FormattingApplied = true;
     }
+}
+
+private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingEventArgs e)
+{
+    // Convert hex or decimal string back to int for storage
+    if ((regionGridView.Columns[e.ColumnIndex].Name == "StartSnesAddress" || 
+         regionGridView.Columns[e.ColumnIndex].Name == "EndSnesAddress") && 
+        e.Value is string stringValue)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(stringValue))
+            {
+                e.Value = 0;
+            }
+            else if (ByteUtil.TryParseNum_Stripped(ref stringValue, NumberStyles.HexNumber, out var result))
+            {
+                e.Value = result;
+                e.ParsingApplied = true;
+            }
+        }
+        catch (Exception)
+        {
+            // If parsing fails, keep original value and let validation handle it
+            e.ParsingApplied = false;
+        }
+    }
+}
     
     public void BringFormToTop() => Show();
 
@@ -115,7 +164,7 @@ public partial class RegionListUserControl : UserControl, IRegionListView
         regionGridView.Refresh();
     }
 
-    private void BindingSource_AddingNew(object sender, AddingNewEventArgs e)
+    private void BindingSource_AddingNew(object? sender, AddingNewEventArgs e)
     {
         // Create a new region when user tries to add a row
         e.NewObject = projectController?.Project?.Data?.CreateNewRegion();
