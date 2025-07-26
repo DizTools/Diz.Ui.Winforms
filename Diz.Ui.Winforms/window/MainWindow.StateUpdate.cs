@@ -12,7 +12,8 @@ public partial class MainWindow
 {
     private void RebindProject()
     {
-        labelsView?.RebindProject();
+        labelsView.RebindProject();
+        regionsView.RebindProject();
             
         if (Project?.Data.Labels != null) 
             Project.Data.Labels.OnLabelChanged += LabelsOnOnLabelChanged;
