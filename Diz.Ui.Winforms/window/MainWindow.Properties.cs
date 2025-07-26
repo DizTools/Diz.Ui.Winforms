@@ -27,7 +27,8 @@ public partial class MainWindow
         ProgressBarJob.RunAndWaitForCompletion;
         
     // sub windows
-    private ILabelEditorView labelsView;
+    private readonly ILabelEditorView labelsView;
+    private readonly IRegionListView regionsView;
     private VisualizerForm? visualForm;
 
     // TODO: add a handler so we get notified when CurrentViewOffset changes.

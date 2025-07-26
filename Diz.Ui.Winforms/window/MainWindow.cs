@@ -28,6 +28,9 @@ public partial class MainWindow : Form, IMainGridWindowView
 
         labelsView = viewFactory.GetLabelEditorView();
         labelsView.SetProjectController(ProjectController);
+
+        regionsView = viewFactory.GetRegionEditorView();
+        regionsView.SetProjectController(ProjectController);
             
         Document.PropertyChanged += Document_PropertyChanged;
         ProjectController.ProjectChanged += ProjectController_ProjectChanged;

@@ -20,6 +20,7 @@ namespace Diz.Ui.Winforms;
         serviceRegistry.Register<IProgressView, ProgressDialog>("ProgressBarView");
         serviceRegistry.Register<ILogCreatorSettingsEditorView, LogCreatorSettingsEditorForm>("ExportDisassemblyView");
         serviceRegistry.Register<ILabelEditorView, AliasList>("LabelEditorView");
+        serviceRegistry.Register<IRegionListView, RegionList>("RegionEditorView");
         
         serviceRegistry.RegisterSingleton<IDizAppSettings, DizAppSettingsProvider>(); // TODO: probably move this out of this project into app.common
     }

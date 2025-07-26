@@ -442,4 +442,11 @@ public partial class MainWindow
         appSettings.OpenLastFileAutomatically = openLastProjectAutomaticallyToolStripMenuItem.Checked;
         UpdateUiFromSettings();
     }
+
+    [UsedImplicitly, MenuItem(menu: "Tools", name: "Region List")]
+    private void ShowRegionList()
+    {
+        regionsView.Show();
+        regionsView.BringFormToTop();
+    }
 }
