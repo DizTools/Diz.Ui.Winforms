@@ -56,7 +56,7 @@ public partial class GotoDialog : Form
     {
         var style = formatAsHex ? NumberStyles.HexNumber : NumberStyles.Number;
 
-        if (!ByteUtil.StripFormattedAddress(ref txtChanged, style, out var address) || address < 0) 
+        if (!ByteUtil.TryParseNum_Stripped(ref txtChanged, style, out var address) || address < 0) 
             return;
 
         onSuccess(
