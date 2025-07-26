@@ -106,8 +106,8 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         var selectedSnesAddress = GetSnesAddressOfCurrentlySelectedLabel();
         if (selectedSnesAddress >= 0 && Data?.Labels != null)
         {
-            var selectedLabel = Data.Labels.GetLabel(selectedSnesAddress);
-            SelectedLabel = selectedLabel;
+            var selectedLabel1 = Data.Labels.GetLabel(selectedSnesAddress);
+            SelectedLabel = selectedLabel1;
         }
         else
         {
