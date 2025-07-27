@@ -441,15 +441,20 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
 
         var dataRow = dataBoundItem.Row;
         var existingSnesAddressStr = dataRow["Address"] as string;
-        var existingName = dataRow["Name"] as string;
-        var existingComment = dataRow["Comment"] as string;
 
         int.TryParse(existingSnesAddressStr, NumberStyles.HexNumber, null, out var existingSnesAddress);
-
+        
+        var existingName = dataRow["Name"] as string;
+        var existingComment = dataRow["Comment"] as string;
+        
+        // we need to copy some of the older data to the new label if it exists
+        var existingLabelAtOldAddress = existingSnesAddress != -1 ? Data.Labels.GetLabel(existingSnesAddress) : null;
+        
         var newLabel = new Label
         {
             Name = existingName ?? "",
-            Comment = existingComment ?? ""
+            Comment = existingComment ?? "",
+            ContextMappings = existingLabelAtOldAddress?.ContextMappings ?? [],
         };
 
         toolStripStatusLabel1.Text = "";
