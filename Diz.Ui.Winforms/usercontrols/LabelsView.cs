@@ -199,27 +199,31 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         // Find the corresponding row in the DataTable and update it
         foreach (DataRow row in dataTable.Rows)
         {
-            if (row["Address"] as string == addressStr)
+            if (row["Address"] as string != addressStr) 
+                continue;
+            
+            switch (e.PropertyName)
             {
-                switch (e.PropertyName)
-                {
-                    case nameof(IAnnotationLabel.Name):
-                        row["Name"] = SelectedLabel.Name;
-                        break;
-                    case nameof(IAnnotationLabel.Comment):
-                        row["Comment"] = SelectedLabel.Comment;
-                        break;
-                }
-            
-                // Force the DataGridView to refresh this row
-                var rowIndex = dataTable.Rows.IndexOf(row);
-                if (rowIndex >= 0 && rowIndex < dataGridView1.Rows.Count)
-                {
-                    dataGridView1.InvalidateRow(rowIndex);
-                }
-            
-                break;
+                case nameof(IAnnotationLabel.Name):
+                    row["Name"] = SelectedLabel?.Name ?? "";
+                    break;
+                case nameof(IAnnotationLabel.Comment):
+                    row["Comment"] = SelectedLabel?.Comment ?? "";
+                    break;
+                case nameof(IAnnotationLabel.ContextMappings):
+                    // Update the context column when context mappings change
+                    row["Context"] = FormatContextMappings(SelectedLabel?.ContextMappings ?? []);
+                    break;
+        }
+        
+        // Force the DataGridView to refresh this row
+        var rowIndex = dataTable.Rows.IndexOf(row);
+            if (rowIndex >= 0 && rowIndex < dataGridView1.Rows.Count)
+            {
+                dataGridView1.InvalidateRow(rowIndex);
             }
+            
+            break;
         }
     }
 
@@ -251,6 +255,9 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
                     SelectedLabel.ContextMappings.Add(mapping);
                 }
             }
+        
+            // Update the Context column in the main grid when context mappings change
+            UpdateContextColumnForSelectedLabel();
         }
         catch (Exception ex)
         {
@@ -262,7 +269,36 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         }
     }
 
-    private void DataGridContexts_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
+    private void UpdateContextColumnForSelectedLabel()
+    {
+        if (SelectedLabel == null || dataTable == null)
+            return;
+        
+        var snesAddress = GetSnesAddressOfCurrentlySelectedLabel();
+        if (snesAddress < 0)
+            return;
+
+        var addressStr = Util.ToHexString6(snesAddress);
+        
+        // Find and update the row
+        foreach (DataRow row in dataTable.Rows)
+        {
+            if (row["Address"] as string == addressStr)
+            {
+                row["Context"] = FormatContextMappings(SelectedLabel.ContextMappings);
+            
+                // Force refresh
+                var rowIndex = dataTable.Rows.IndexOf(row);
+                if (rowIndex >= 0 && rowIndex < dataGridView1.Rows.Count)
+                {
+                    dataGridView1.InvalidateRow(rowIndex);
+                }
+                break;
+            }
+        }
+    }
+
+    private void DataGridContexts_UserDeletingRow(object? sender, DataGridViewRowCancelEventArgs e)
     {
         // Let the binding list handle the deletion automatically
         // The ListChanged event will sync back to the model
@@ -530,7 +566,23 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         if (dataTable == null)
             InitializeDataTable();
 
-        dataTable?.Rows.Add(Util.ToHexString6(snesAddress), label.Name, label.Comment);
+        // Format the context mappings as a string
+        var contextString = FormatContextMappings(label.ContextMappings);
+        
+        dataTable?.Rows.Add(Util.ToHexString6(snesAddress), label.Name, label.Comment, contextString);
+    }
+
+    private string FormatContextMappings(IEnumerable<IReadOnlyContextMapping> contextMappings)
+    {
+        if (contextMappings == null)
+            return "";
+        
+        var formattedMappings = contextMappings
+            .Where(mapping => !string.IsNullOrWhiteSpace(mapping.Context))
+            .Select(mapping => $"{mapping.Context}: {mapping.NameOverride}")
+            .ToArray();
+        
+        return string.Join(", ", formattedMappings);
     }
 
     public void RemoveRow(int address)
@@ -647,6 +699,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         dataTable.Columns.Add("Address", typeof(string));
         dataTable.Columns.Add("Name", typeof(string));
         dataTable.Columns.Add("Comment", typeof(string));
+        dataTable.Columns.Add("Context", typeof(string)); // Add the new Context column
 
         // or, we can get weird crashes. happens at startup when we're editing a row on the grid by default.
         SafeEndEdit();
@@ -654,7 +707,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         dataGridView1.DataSource = dataTable;
 
         // Configure columns AFTER binding
-        if (dataGridView1.Columns.Count < 3)
+        if (dataGridView1.Columns.Count < 4) // Updated from 3 to 4
             return; // big problem.
 
         dataGridView1.Columns[0].HeaderText = "Address";
@@ -666,10 +719,15 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         dataGridView1.Columns[2].HeaderText = "Comment";
         dataGridView1.Columns[2].Width = 1000;
 
+        dataGridView1.Columns[3].HeaderText = "Context";
+        dataGridView1.Columns[3].Width = 300;
+        dataGridView1.Columns[3].ReadOnly = true; // Make it non-editable
+
         // Enable sorting
         dataGridView1.Columns[0].SortMode = DataGridViewColumnSortMode.Automatic;
         dataGridView1.Columns[1].SortMode = DataGridViewColumnSortMode.Automatic;
         dataGridView1.Columns[2].SortMode = DataGridViewColumnSortMode.Automatic;
+        dataGridView1.Columns[3].SortMode = DataGridViewColumnSortMode.Automatic;
     }
 
     public void Optimization_SuspendDrawing(bool suspend)
