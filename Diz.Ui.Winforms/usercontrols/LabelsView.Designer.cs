@@ -28,7 +28,7 @@ partial class LabelsViewControl
     /// </summary>
     private void InitializeComponent()
     {
-        DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+        DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
         openFileDialog1 = new OpenFileDialog();
         saveFileDialog1 = new SaveFileDialog();
         dataGridView1 = new DataGridView();
@@ -54,11 +54,13 @@ partial class LabelsViewControl
         btnClearSearch = new Button();
         tableLayoutPanel2 = new TableLayoutPanel();
         panel1 = new Panel();
-        label3 = new Label();
+        groupBox1 = new GroupBox();
         dataGridContexts = new DataGridView();
-        textBox1 = new TextBox();
-        label2 = new Label();
+        txtDetailsLabelPrimaryName = new TextBox();
         lblPanelName = new Label();
+        label3 = new Label();
+        txtDetailsLabelComment = new TextBox();
+        label2 = new Label();
         ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
         menuStrip1.SuspendLayout();
         tableLayoutPanel1.SuspendLayout();
@@ -66,6 +68,7 @@ partial class LabelsViewControl
         flowLayoutPanel1.SuspendLayout();
         tableLayoutPanel2.SuspendLayout();
         panel1.SuspendLayout();
+        groupBox1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dataGridContexts).BeginInit();
         SuspendLayout();
         // 
@@ -84,14 +87,14 @@ partial class LabelsViewControl
         dataGridView1.BorderStyle = BorderStyle.None;
         dataGridView1.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
         dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
-        dataGridViewCellStyle1.BackColor = SystemColors.Window;
-        dataGridViewCellStyle1.Font = new Font("Consolas", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-        dataGridViewCellStyle1.ForeColor = SystemColors.ControlText;
-        dataGridViewCellStyle1.SelectionBackColor = Color.CornflowerBlue;
-        dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
-        dataGridViewCellStyle1.WrapMode = DataGridViewTriState.False;
-        dataGridView1.DefaultCellStyle = dataGridViewCellStyle1;
+        dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
+        dataGridViewCellStyle2.BackColor = SystemColors.Window;
+        dataGridViewCellStyle2.Font = new Font("Consolas", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+        dataGridViewCellStyle2.ForeColor = SystemColors.ControlText;
+        dataGridViewCellStyle2.SelectionBackColor = Color.CornflowerBlue;
+        dataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText;
+        dataGridViewCellStyle2.WrapMode = DataGridViewTriState.False;
+        dataGridView1.DefaultCellStyle = dataGridViewCellStyle2;
         dataGridView1.Dock = DockStyle.Fill;
         dataGridView1.Location = new Point(0, 0);
         dataGridView1.Margin = new Padding(0);
@@ -106,7 +109,7 @@ partial class LabelsViewControl
         dataGridView1.ShowCellToolTips = false;
         dataGridView1.ShowEditingIcon = false;
         dataGridView1.ShowRowErrors = false;
-        dataGridView1.Size = new Size(708, 446);
+        dataGridView1.Size = new Size(742, 447);
         dataGridView1.TabIndex = 3;
         dataGridView1.TabStop = false;
         dataGridView1.CellBeginEdit += dataGridView1_CellBeginEdit;
@@ -131,7 +134,7 @@ partial class LabelsViewControl
         menuStrip1.Items.AddRange(new ToolStripItem[] { dataToolStripMenuItem });
         menuStrip1.Location = new Point(0, 0);
         menuStrip1.Name = "menuStrip1";
-        menuStrip1.Size = new Size(1072, 24);
+        menuStrip1.Size = new Size(1125, 24);
         menuStrip1.TabIndex = 7;
         menuStrip1.Text = "menuStrip1";
         // 
@@ -141,6 +144,7 @@ partial class LabelsViewControl
         dataToolStripMenuItem.Name = "dataToolStripMenuItem";
         dataToolStripMenuItem.Size = new Size(43, 20);
         dataToolStripMenuItem.Text = "Data";
+        dataToolStripMenuItem.Click += dataToolStripMenuItem_Click;
         // 
         // importCSVAppendToolStripMenuItem
         // 
@@ -182,21 +186,22 @@ partial class LabelsViewControl
         tableLayoutPanel1.Controls.Add(dataGridView1, 0, 0);
         tableLayoutPanel1.Controls.Add(toolStrip1, 0, 2);
         tableLayoutPanel1.Controls.Add(flowLayoutPanel1, 0, 1);
-        tableLayoutPanel1.Location = new Point(3, 3);
+        tableLayoutPanel1.Dock = DockStyle.Fill;
+        tableLayoutPanel1.Location = new Point(4, 4);
         tableLayoutPanel1.Name = "tableLayoutPanel1";
         tableLayoutPanel1.RowCount = 3;
         tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         tableLayoutPanel1.RowStyles.Add(new RowStyle());
         tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-        tableLayoutPanel1.Size = new Size(708, 504);
+        tableLayoutPanel1.Size = new Size(742, 505);
         tableLayoutPanel1.TabIndex = 8;
         // 
         // toolStrip1
         // 
         toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripStatusLabel1, toolStripLabel1 });
-        toolStrip1.Location = new Point(0, 484);
+        toolStrip1.Location = new Point(0, 485);
         toolStrip1.Name = "toolStrip1";
-        toolStrip1.Size = new Size(708, 20);
+        toolStrip1.Size = new Size(742, 20);
         toolStrip1.TabIndex = 4;
         toolStrip1.Text = "toolStrip1";
         // 
@@ -220,9 +225,9 @@ partial class LabelsViewControl
         flowLayoutPanel1.Controls.Add(txtSearch);
         flowLayoutPanel1.Controls.Add(btnClearSearch);
         flowLayoutPanel1.Dock = DockStyle.Fill;
-        flowLayoutPanel1.Location = new Point(3, 449);
+        flowLayoutPanel1.Location = new Point(3, 450);
         flowLayoutPanel1.Name = "flowLayoutPanel1";
-        flowLayoutPanel1.Size = new Size(702, 32);
+        flowLayoutPanel1.Size = new Size(736, 32);
         flowLayoutPanel1.TabIndex = 5;
         // 
         // btnJmp
@@ -277,6 +282,7 @@ partial class LabelsViewControl
         // 
         // tableLayoutPanel2
         // 
+        tableLayoutPanel2.CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
         tableLayoutPanel2.ColumnCount = 2;
         tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 66.6666641F));
         tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.3333321F));
@@ -287,64 +293,87 @@ partial class LabelsViewControl
         tableLayoutPanel2.Name = "tableLayoutPanel2";
         tableLayoutPanel2.RowCount = 1;
         tableLayoutPanel2.RowStyles.Add(new RowStyle());
-        tableLayoutPanel2.Size = new Size(1072, 510);
+        tableLayoutPanel2.Size = new Size(1125, 513);
         tableLayoutPanel2.TabIndex = 9;
         // 
         // panel1
         // 
-        panel1.Controls.Add(label3);
-        panel1.Controls.Add(dataGridContexts);
-        panel1.Controls.Add(textBox1);
-        panel1.Controls.Add(label2);
-        panel1.Controls.Add(lblPanelName);
+        panel1.Controls.Add(groupBox1);
         panel1.Dock = DockStyle.Fill;
-        panel1.Location = new Point(717, 3);
+        panel1.Location = new Point(753, 4);
         panel1.Name = "panel1";
-        panel1.Size = new Size(352, 504);
+        panel1.Size = new Size(368, 505);
         panel1.TabIndex = 9;
         // 
-        // label3
+        // groupBox1
         // 
-        label3.AutoSize = true;
-        label3.Location = new Point(3, 121);
-        label3.Name = "label3";
-        label3.Size = new Size(105, 15);
-        label3.TabIndex = 4;
-        label3.Text = "Alternate Contexts";
+        groupBox1.Controls.Add(label2);
+        groupBox1.Controls.Add(txtDetailsLabelComment);
+        groupBox1.Controls.Add(txtDetailsLabelPrimaryName);
+        groupBox1.Controls.Add(lblPanelName);
+        groupBox1.Controls.Add(dataGridContexts);
+        groupBox1.Controls.Add(label3);
+        groupBox1.Dock = DockStyle.Fill;
+        groupBox1.Location = new Point(0, 0);
+        groupBox1.Name = "groupBox1";
+        groupBox1.Size = new Size(368, 505);
+        groupBox1.TabIndex = 6;
+        groupBox1.TabStop = false;
+        groupBox1.Text = "Main";
         // 
         // dataGridContexts
         // 
+        dataGridContexts.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         dataGridContexts.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dataGridContexts.Location = new Point(3, 139);
+        dataGridContexts.Location = new Point(6, 259);
         dataGridContexts.Name = "dataGridContexts";
-        dataGridContexts.Size = new Size(346, 365);
+        dataGridContexts.Size = new Size(356, 240);
         dataGridContexts.TabIndex = 3;
         // 
-        // textBox1
+        // txtDetailsLabelPrimaryName
         // 
-        textBox1.Location = new Point(3, 43);
-        textBox1.Name = "textBox1";
-        textBox1.Size = new Size(352, 23);
-        textBox1.TabIndex = 2;
-        // 
-        // label2
-        // 
-        label2.AutoSize = true;
-        label2.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-        label2.Location = new Point(3, 0);
-        label2.Name = "label2";
-        label2.Size = new Size(48, 15);
-        label2.TabIndex = 1;
-        label2.Text = "Details:";
+        txtDetailsLabelPrimaryName.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        txtDetailsLabelPrimaryName.Location = new Point(6, 37);
+        txtDetailsLabelPrimaryName.Name = "txtDetailsLabelPrimaryName";
+        txtDetailsLabelPrimaryName.Size = new Size(356, 23);
+        txtDetailsLabelPrimaryName.TabIndex = 2;
         // 
         // lblPanelName
         // 
         lblPanelName.AutoSize = true;
-        lblPanelName.Location = new Point(3, 25);
+        lblPanelName.Location = new Point(6, 19);
         lblPanelName.Name = "lblPanelName";
-        lblPanelName.Size = new Size(70, 15);
+        lblPanelName.Size = new Size(114, 15);
         lblPanelName.TabIndex = 0;
-        lblPanelName.Text = "Label Name";
+        lblPanelName.Text = "Label Primary Name";
+        // 
+        // label3
+        // 
+        label3.AutoSize = true;
+        label3.Location = new Point(6, 241);
+        label3.Name = "label3";
+        label3.Size = new Size(105, 15);
+        label3.TabIndex = 4;
+        label3.Text = "Alternate Contexts";
+        label3.Click += label3_Click;
+        // 
+        // txtDetailsLabelComment
+        // 
+        txtDetailsLabelComment.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        txtDetailsLabelComment.Location = new Point(6, 93);
+        txtDetailsLabelComment.Multiline = true;
+        txtDetailsLabelComment.Name = "txtDetailsLabelComment";
+        txtDetailsLabelComment.Size = new Size(356, 130);
+        txtDetailsLabelComment.TabIndex = 5;
+        // 
+        // label2
+        // 
+        label2.AutoSize = true;
+        label2.Location = new Point(6, 75);
+        label2.Name = "label2";
+        label2.Size = new Size(92, 15);
+        label2.TabIndex = 6;
+        label2.Text = "Label Comment";
         // 
         // LabelsViewControl
         // 
@@ -355,7 +384,7 @@ partial class LabelsViewControl
         Margin = new Padding(4, 3, 4, 3);
         MinimumSize = new Size(250, 282);
         Name = "LabelsViewControl";
-        Size = new Size(1072, 534);
+        Size = new Size(1125, 537);
         ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
         menuStrip1.ResumeLayout(false);
         menuStrip1.PerformLayout();
@@ -367,7 +396,8 @@ partial class LabelsViewControl
         flowLayoutPanel1.PerformLayout();
         tableLayoutPanel2.ResumeLayout(false);
         panel1.ResumeLayout(false);
-        panel1.PerformLayout();
+        groupBox1.ResumeLayout(false);
+        groupBox1.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)dataGridContexts).EndInit();
         ResumeLayout(false);
         PerformLayout();
@@ -400,9 +430,11 @@ partial class LabelsViewControl
     private ToolStripMenuItem normalizeWRAMLabelsToolStripMenuItem;
     private TableLayoutPanel tableLayoutPanel2;
     private Panel panel1;
-    private Label label2;
+    private GroupBox groupBox1;
+    private DataGridView dataGridContexts;
+    private TextBox txtDetailsLabelPrimaryName;
     private Label lblPanelName;
     private Label label3;
-    private DataGridView dataGridContexts;
-    private TextBox textBox1;
+    private Label label2;
+    private TextBox txtDetailsLabelComment;
 }

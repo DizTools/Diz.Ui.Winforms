@@ -28,12 +28,12 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
     private bool locked;
     private int currentlyEditing = -1;
     private DataTable? dataTable;
-    
+
     // Label details binding
     private IAnnotationLabel? selectedLabel;
     private BindingList<ContextMapping>? contextMappingsBindingList;
     private bool isUpdatingContextMappings; // Add this flag to prevent recursion
-    
+
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public IAnnotationLabel? SelectedLabel
     {
@@ -51,7 +51,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         InitializeComponent();
 
         Load += AliasList_Load;
-        
+
         // Set up label details binding
         SetupLabelDetailsBinding();
     }
@@ -68,7 +68,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         dataGridContexts.AutoGenerateColumns = false;
         dataGridContexts.AllowUserToAddRows = true;
         dataGridContexts.AllowUserToDeleteRows = true;
-        
+
         // Create columns for context mappings
         var contextColumn = new DataGridViewTextBoxColumn
         {
@@ -77,25 +77,25 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
             DataPropertyName = nameof(ContextMapping.Context),
             Width = 150
         };
-        
+
         var nameOverrideColumn = new DataGridViewTextBoxColumn
         {
-            Name = "NameOverride", 
+            Name = "NameOverride",
             HeaderText = "Name Override",
             DataPropertyName = nameof(ContextMapping.NameOverride),
             Width = 200
         };
-        
+
         dataGridContexts.Columns.Add(contextColumn);
         dataGridContexts.Columns.Add(nameOverrideColumn);
-        
+
         // Set up main grid selection changed event
         dataGridView1.SelectionChanged += DataGridView1_SelectionChanged;
-        
+
         // Handle context grid events for a better user experience
         dataGridContexts.UserDeletingRow += DataGridContexts_UserDeletingRow;
         // REMOVED: dataGridContexts.RowValidated += DataGridContexts_RowValidated;
-        
+
         // Add these events instead for better handling
         dataGridContexts.CellEndEdit += DataGridContexts_CellEndEdit;
         dataGridContexts.UserAddedRow += DataGridContexts_UserAddedRow;
@@ -122,7 +122,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         {
             contextMappingsBindingList.ListChanged -= ContextMappingsBindingList_ListChanged;
         }
-        
+
         // Clear previous label property change subscription
         if (selectedLabel is INotifyPropertyChanged previousLabel)
         {
@@ -132,7 +132,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         if (SelectedLabel == null)
         {
             // Clear bindings
-            textBox1.DataBindings.Clear();
+            txtDetailsLabelPrimaryName.DataBindings.Clear();
             dataGridContexts.DataSource = null;
             contextMappingsBindingList = null;
             lblPanelName.Text = "Label Details";
@@ -140,10 +140,10 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         }
 
         // Bind the label name textbox with proper two-way binding
-        textBox1.DataBindings.Clear();
-        var nameBinding = new Binding("Text", SelectedLabel, nameof(SelectedLabel.Name), 
+        txtDetailsLabelPrimaryName.DataBindings.Clear();
+        var nameBinding = new Binding("Text", SelectedLabel, nameof(SelectedLabel.Name),
             formattingEnabled: false, DataSourceUpdateMode.OnPropertyChanged);
-        textBox1.DataBindings.Add(nameBinding);
+        txtDetailsLabelPrimaryName.DataBindings.Add(nameBinding);
 
         // Subscribe to label property changes to update the main grid
         if (SelectedLabel is INotifyPropertyChanged notifyLabel)
@@ -153,33 +153,33 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
 
         // Create binding list for context mappings - use concrete ContextMapping class
         contextMappingsBindingList = new BindingList<ContextMapping>();
-        
+
         // Populate from existing context mappings (convert IContextMapping to ContextMapping)
         foreach (var mapping in SelectedLabel.ContextMappings)
         {
             // If it's already a ContextMapping, use it directly; otherwise create a new one
-            var contextMapping = mapping as ContextMapping ?? new ContextMapping 
-            { 
-                Context = mapping.Context, 
-                NameOverride = mapping.NameOverride 
+            var contextMapping = mapping as ContextMapping ?? new ContextMapping
+            {
+                Context = mapping.Context,
+                NameOverride = mapping.NameOverride
             };
             contextMappingsBindingList.Add(contextMapping);
         }
-        
+
         // Enable adding new rows
         contextMappingsBindingList.AllowNew = true;
         contextMappingsBindingList.AllowRemove = true;
         contextMappingsBindingList.AllowEdit = true;
-        
+
         // Subscribe to changes to sync back to the model
         contextMappingsBindingList.ListChanged += ContextMappingsBindingList_ListChanged;
 
         // Bind to the DataGridView
         dataGridContexts.DataSource = contextMappingsBindingList;
-        
+
         // Update panel title
         var snesAddress = GetSnesAddressOfCurrentlySelectedLabel();
-        lblPanelName.Text = snesAddress >= 0 
+        lblPanelName.Text = snesAddress >= 0
             ? $"Label Details - {Util.ToHexString6(snesAddress)}"
             : "Label Details";
     }
@@ -199,9 +199,9 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         // Find the corresponding row in the DataTable and update it
         foreach (DataRow row in dataTable.Rows)
         {
-            if (row["Address"] as string != addressStr) 
+            if (row["Address"] as string != addressStr)
                 continue;
-            
+
             switch (e.PropertyName)
             {
                 case nameof(IAnnotationLabel.Name):
@@ -214,24 +214,24 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
                     // Update the context column when context mappings change
                     row["Context"] = FormatContextMappings(SelectedLabel?.ContextMappings ?? []);
                     break;
-        }
-        
-        // Force the DataGridView to refresh this row
-        var rowIndex = dataTable.Rows.IndexOf(row);
+            }
+
+            // Force the DataGridView to refresh this row
+            var rowIndex = dataTable.Rows.IndexOf(row);
             if (rowIndex >= 0 && rowIndex < dataGridView1.Rows.Count)
             {
                 dataGridView1.InvalidateRow(rowIndex);
             }
-            
+
             break;
         }
     }
 
     private void ContextMappingsBindingList_ListChanged(object? sender, ListChangedEventArgs e)
     {
-        if (SelectedLabel?.ContextMappings == null || contextMappingsBindingList == null) 
+        if (SelectedLabel?.ContextMappings == null || contextMappingsBindingList == null)
             return;
-        
+
         // Don't sync during certain list operations to avoid recursion
         if (e.ListChangedType == ListChangedType.Reset)
             return;
@@ -243,10 +243,10 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         try
         {
             isUpdatingContextMappings = true;
-            
+
             // Clear and rebuild the model's collection
             SelectedLabel.ContextMappings.Clear();
-        
+
             foreach (var mapping in contextMappingsBindingList)
             {
                 // Only add mappings that have a non-empty context
@@ -255,7 +255,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
                     SelectedLabel.ContextMappings.Add(mapping);
                 }
             }
-        
+
             // Update the Context column in the main grid when context mappings change
             UpdateContextColumnForSelectedLabel();
         }
@@ -273,20 +273,20 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
     {
         if (SelectedLabel == null || dataTable == null)
             return;
-        
+
         var snesAddress = GetSnesAddressOfCurrentlySelectedLabel();
         if (snesAddress < 0)
             return;
 
         var addressStr = Util.ToHexString6(snesAddress);
-        
+
         // Find and update the row
         foreach (DataRow row in dataTable.Rows)
         {
             if (row["Address"] as string == addressStr)
             {
                 row["Context"] = FormatContextMappings(SelectedLabel.ContextMappings);
-            
+
                 // Force refresh
                 var rowIndex = dataTable.Rows.IndexOf(row);
                 if (rowIndex >= 0 && rowIndex < dataGridView1.Rows.Count)
@@ -479,13 +479,13 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         var existingSnesAddressStr = dataRow["Address"] as string;
 
         int.TryParse(existingSnesAddressStr, NumberStyles.HexNumber, null, out var existingSnesAddress);
-        
+
         var existingName = dataRow["Name"] as string;
         var existingComment = dataRow["Comment"] as string;
-        
+
         // we need to copy some of the older data to the new label if it exists
         var existingLabelAtOldAddress = existingSnesAddress != -1 ? Data.Labels.GetLabel(existingSnesAddress) : null;
-        
+
         var newLabel = new Label
         {
             Name = existingName ?? "",
@@ -568,7 +568,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
 
         // Format the context mappings as a string
         var contextString = FormatContextMappings(label.ContextMappings);
-        
+
         dataTable?.Rows.Add(Util.ToHexString6(snesAddress), label.Name, label.Comment, contextString);
     }
 
@@ -576,12 +576,12 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
     {
         if (contextMappings == null)
             return "";
-        
+
         var formattedMappings = contextMappings
             .Where(mapping => !string.IsNullOrWhiteSpace(mapping.Context))
             .Select(mapping => $"{mapping.Context}: {mapping.NameOverride}")
             .ToArray();
-        
+
         return string.Join(", ", formattedMappings);
     }
 
@@ -907,12 +907,27 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
                 break;
         }
     }
-    
+
     // INotifyPropertyChanged implementation
     public event PropertyChangedEventHandler? PropertyChanged;
-    
+
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private void lblPanelName_Click(object sender, EventArgs e)
+    {
+
+    }
+
+    private void label3_Click(object sender, EventArgs e)
+    {
+
+    }
+
+    private void dataToolStripMenuItem_Click(object sender, EventArgs e)
+    {
+
     }
 }
