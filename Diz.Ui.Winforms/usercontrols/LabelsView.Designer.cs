@@ -144,7 +144,6 @@ partial class LabelsViewControl
         dataToolStripMenuItem.Name = "dataToolStripMenuItem";
         dataToolStripMenuItem.Size = new Size(43, 20);
         dataToolStripMenuItem.Text = "Data";
-        dataToolStripMenuItem.Click += dataToolStripMenuItem_Click;
         // 
         // importCSVAppendToolStripMenuItem
         // 
@@ -355,7 +354,6 @@ partial class LabelsViewControl
         label3.Size = new Size(105, 15);
         label3.TabIndex = 4;
         label3.Text = "Alternate Contexts";
-        label3.Click += label3_Click;
         // 
         // txtDetailsLabelComment
         // 

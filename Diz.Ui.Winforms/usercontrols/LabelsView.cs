@@ -133,6 +133,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         {
             // Clear bindings
             txtDetailsLabelPrimaryName.DataBindings.Clear();
+            txtDetailsLabelComment.DataBindings.Clear(); // Clear comment binding
             dataGridContexts.DataSource = null;
             contextMappingsBindingList = null;
             lblPanelName.Text = "Label Details";
@@ -141,9 +142,15 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
 
         // Bind the label name textbox with proper two-way binding
         txtDetailsLabelPrimaryName.DataBindings.Clear();
-        var nameBinding = new Binding("Text", SelectedLabel, nameof(SelectedLabel.Name),
+        var nameBinding = new Binding("Text", SelectedLabel, nameof(SelectedLabel.Name), 
             formattingEnabled: false, DataSourceUpdateMode.OnPropertyChanged);
         txtDetailsLabelPrimaryName.DataBindings.Add(nameBinding);
+
+        // Bind the label comment textbox with proper two-way binding
+        txtDetailsLabelComment.DataBindings.Clear();
+        var commentBinding = new Binding("Text", SelectedLabel, nameof(SelectedLabel.Comment), 
+            formattingEnabled: false, DataSourceUpdateMode.OnPropertyChanged);
+        txtDetailsLabelComment.DataBindings.Add(commentBinding);
 
         // Subscribe to label property changes to update the main grid
         if (SelectedLabel is INotifyPropertyChanged notifyLabel)
@@ -152,37 +159,35 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         }
 
         // Create binding list for context mappings - use concrete ContextMapping class
-        contextMappingsBindingList = new BindingList<ContextMapping>();
-
+        contextMappingsBindingList = [];
+    
         // Populate from existing context mappings (convert IContextMapping to ContextMapping)
         foreach (var mapping in SelectedLabel.ContextMappings)
         {
             // If it's already a ContextMapping, use it directly; otherwise create a new one
-            var contextMapping = mapping as ContextMapping ?? new ContextMapping
-            {
-                Context = mapping.Context,
-                NameOverride = mapping.NameOverride
+            var contextMapping = mapping as ContextMapping ?? new ContextMapping 
+            { 
+                Context = mapping.Context, 
+                NameOverride = mapping.NameOverride 
             };
             contextMappingsBindingList.Add(contextMapping);
         }
-
+    
         // Enable adding new rows
         contextMappingsBindingList.AllowNew = true;
         contextMappingsBindingList.AllowRemove = true;
         contextMappingsBindingList.AllowEdit = true;
-
+    
         // Subscribe to changes to sync back to the model
         contextMappingsBindingList.ListChanged += ContextMappingsBindingList_ListChanged;
-
-        // Bind to the DataGridView
+        
         dataGridContexts.DataSource = contextMappingsBindingList;
-
-        // Update panel title
+        
         var snesAddress = GetSnesAddressOfCurrentlySelectedLabel();
-        lblPanelName.Text = snesAddress >= 0
+        groupBox1.Text = snesAddress >= 0 
             ? $"Label Details - {Util.ToHexString6(snesAddress)}"
             : "Label Details";
-    }
+}
 
     private void SelectedLabel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -705,6 +710,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         SafeEndEdit();
 
         dataGridView1.DataSource = dataTable;
+        dataGridView1.AllowUserToResizeColumns = true;
 
         // Configure columns AFTER binding
         if (dataGridView1.Columns.Count < 4) // Updated from 3 to 4
@@ -717,10 +723,10 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         dataGridView1.Columns[1].Width = 200;
 
         dataGridView1.Columns[2].HeaderText = "Comment";
-        dataGridView1.Columns[2].Width = 1000;
+        dataGridView1.Columns[2].Width = 200;
 
-        dataGridView1.Columns[3].HeaderText = "Context";
-        dataGridView1.Columns[3].Width = 300;
+        dataGridView1.Columns[3].HeaderText = "Contexts";
+        dataGridView1.Columns[3].Width = 200;
         dataGridView1.Columns[3].ReadOnly = true; // Make it non-editable
 
         // Enable sorting
@@ -914,20 +920,5 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-
-    private void lblPanelName_Click(object sender, EventArgs e)
-    {
-
-    }
-
-    private void label3_Click(object sender, EventArgs e)
-    {
-
-    }
-
-    private void dataToolStripMenuItem_Click(object sender, EventArgs e)
-    {
-
     }
 }
