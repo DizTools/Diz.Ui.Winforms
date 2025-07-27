@@ -32,7 +32,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
     // Label details binding
     private IAnnotationLabel? selectedLabel;
     private BindingList<ContextMapping>? contextMappingsBindingList;
-    private bool _isUpdatingContextMappings = false; // Add this flag to prevent recursion
+    private bool isUpdatingContextMappings; // Add this flag to prevent recursion
     
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public IAnnotationLabel? SelectedLabel
@@ -92,7 +92,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         // Set up main grid selection changed event
         dataGridView1.SelectionChanged += DataGridView1_SelectionChanged;
         
-        // Handle context grid events for better user experience
+        // Handle context grid events for a better user experience
         dataGridContexts.UserDeletingRow += DataGridContexts_UserDeletingRow;
         // REMOVED: dataGridContexts.RowValidated += DataGridContexts_RowValidated;
         
@@ -233,12 +233,12 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
             return;
 
         // Add a flag to prevent recursive calls
-        if (_isUpdatingContextMappings)
+        if (isUpdatingContextMappings)
             return;
 
         try
         {
-            _isUpdatingContextMappings = true;
+            isUpdatingContextMappings = true;
             
             // Clear and rebuild the model's collection
             SelectedLabel.ContextMappings.Clear();
@@ -258,7 +258,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         }
         finally
         {
-            _isUpdatingContextMappings = false;
+            isUpdatingContextMappings = false;
         }
     }
 
