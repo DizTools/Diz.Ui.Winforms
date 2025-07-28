@@ -150,6 +150,29 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         txtDetailsLabelComment.DataBindings.Clear();
         var commentBinding = new Binding("Text", SelectedLabel, nameof(SelectedLabel.Comment), 
             formattingEnabled: false, DataSourceUpdateMode.OnPropertyChanged);
+
+        // Handle formatting when data goes TO the control (from data source)
+        commentBinding.Format += (sender, e) =>
+        {
+            if (e.Value is string text)
+            {
+                e.Value = text
+                    .Replace("\r\n", "\n")
+                    .Replace("\r", "\n")
+                    .Replace("\n", Environment.NewLine);
+            }
+        };
+
+        // Handle parsing when data comes FROM the control (to data source)
+        commentBinding.Parse += (sender, e) =>
+        {
+            if (e.Value is string text)
+            {
+                // Optionally normalize back to \n for storage consistency
+                e.Value = text.Replace(Environment.NewLine, "\n");
+            }
+        };
+
         txtDetailsLabelComment.DataBindings.Add(commentBinding);
 
         // Subscribe to label property changes to update the main grid

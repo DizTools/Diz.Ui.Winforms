@@ -363,6 +363,8 @@ partial class LabelsViewControl
         txtDetailsLabelComment.Name = "txtDetailsLabelComment";
         txtDetailsLabelComment.Size = new Size(356, 130);
         txtDetailsLabelComment.TabIndex = 5;
+        txtDetailsLabelComment.WordWrap = true;
+        txtDetailsLabelComment.ScrollBars = ScrollBars.Vertical;
         // 
         // label2
         // 
