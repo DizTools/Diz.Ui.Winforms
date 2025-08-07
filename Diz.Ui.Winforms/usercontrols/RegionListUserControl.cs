@@ -10,12 +10,34 @@ public partial class RegionListUserControl : UserControl, IRegionListView
 {
     private IProjectController? projectController;
     private readonly BindingSource bindingSource = new();
+    private Label errorLabel; // Add this field for displaying errors
 
     public RegionListUserControl()
     {
         InitializeComponent();
+        CreateErrorLabel();
         ConfigureDataGridView();
         AttachEventHandlers();
+    }
+    
+    private void CreateErrorLabel()
+    {
+        errorLabel = new Label
+        {
+            Name = "errorLabel",
+            Text = "",
+            ForeColor = Color.Red,
+            BackColor = Color.LightYellow,
+            AutoSize = false,
+            Height = 25,
+            Dock = DockStyle.Top,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Padding = new Padding(5, 0, 5, 0),
+            Visible = false // Initially hidden
+        };
+        
+        Controls.Add(errorLabel);
+        errorLabel.BringToFront();
     }
     
     private void ConfigureDataGridView()
@@ -92,10 +114,49 @@ private void AttachEventHandlers()
     regionGridView.CellContentClick += RegionGridView_CellContentClick;
     regionGridView.UserDeletingRow += RegionGridView_UserDeletingRow;
     regionGridView.RowValidating += RegionGridView_RowValidating;
+    regionGridView.DataError += RegionGridView_DataError; // Add this line
     
     // Add these event handlers for hex conversion
     regionGridView.CellFormatting += RegionGridView_CellFormatting;
     regionGridView.CellParsing += RegionGridView_CellParsing;
+}
+
+private void RegionGridView_DataError(object? sender, DataGridViewDataErrorEventArgs e)
+{
+    // Handle data errors to replace the default dialog
+    var columnName = regionGridView.Columns[e.ColumnIndex].HeaderText;
+    var errorMessage = $"Data error in {columnName}: {e.Exception?.Message ?? "Invalid data format"}";
+    
+    // Display error in our custom label
+    ShowErrorMessage(errorMessage);
+    
+    // Prevent the default error dialog from showing
+    e.ThrowException = false;
+    
+    // You can also log the error if needed
+    System.Diagnostics.Debug.WriteLine($"DataGridView error: {errorMessage}");
+}
+
+private void ShowErrorMessage(string message)
+{
+    errorLabel.Text = message;
+    errorLabel.Visible = true;
+    
+    // Auto-hide the error message after 5 seconds
+    var timer = new System.Windows.Forms.Timer();
+    timer.Interval = 5000; // 5 seconds
+    timer.Tick += (s, e) =>
+    {
+        HideErrorMessage();
+        timer.Dispose();
+    };
+    timer.Start();
+}
+
+private void HideErrorMessage()
+{
+    errorLabel.Visible = false;
+    errorLabel.Text = "";
 }
 
 private void RegionGridView_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
@@ -122,16 +183,25 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
             if (string.IsNullOrWhiteSpace(stringValue))
             {
                 e.Value = 0;
+                e.ParsingApplied = true;
             }
             else if (ByteUtil.TryParseNum_Stripped(ref stringValue, NumberStyles.HexNumber, out var result))
             {
                 e.Value = result;
                 e.ParsingApplied = true;
+                HideErrorMessage(); // Hide any previous error messages on successful parsing
+            }
+            else
+            {
+                // Show error for invalid format
+                ShowErrorMessage($"Invalid address format: '{stringValue}'. Please enter a valid hexadecimal number.");
+                e.ParsingApplied = false;
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // If parsing fails, keep original value and let validation handle it
+            // Show error for parsing exceptions
+            ShowErrorMessage($"Error parsing address: {ex.Message}");
             e.ParsingApplied = false;
         }
     }
@@ -204,8 +274,7 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
         // Validate required fields
         if (string.IsNullOrWhiteSpace(row.Cells["RegionName"].Value?.ToString()))
         {
-            MessageBox.Show("Region Name is required.", "Validation Error", 
-                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            ShowErrorMessage("Region Name is required.");
             e.Cancel = true;
             return;
         }
@@ -218,8 +287,7 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
         if (start < end) 
             return;
         
-        MessageBox.Show("Start address must be less than end address.", 
-            "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        ShowErrorMessage("Start address must be less than end address.");
         e.Cancel = true;
     }
     
@@ -230,12 +298,12 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
             if (rowIndex >= 0 && rowIndex < bindingSource.Count)
             {
                 bindingSource.RemoveAt(rowIndex);
+                HideErrorMessage(); // Hide any error messages on successful deletion
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error deleting region: {ex.Message}", "Error", 
-                MessageBoxButtons.OK, MessageBoxIcon.Error);
+            ShowErrorMessage($"Error deleting region: {ex.Message}");
         }
     }
     
@@ -245,11 +313,11 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
         try
         {
             bindingSource.Add(region);
+            HideErrorMessage(); // Hide any error messages on successful addition
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error adding region: {ex.Message}", "Error", 
-                MessageBoxButtons.OK, MessageBoxIcon.Error);
+            ShowErrorMessage($"Error adding region: {ex.Message}");
         }
     }
     
