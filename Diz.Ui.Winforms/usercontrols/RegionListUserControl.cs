@@ -15,31 +15,33 @@ public partial class RegionListUserControl : UserControl, IRegionListView
     public RegionListUserControl()
     {
         InitializeComponent();
-        CreateErrorLabel();
-        ConfigureDataGridView();
-        AttachEventHandlers();
-    }
-    
-    private void CreateErrorLabel()
-    {
+        
         errorLabel = new Label
         {
             Name = "errorLabel",
             Text = "",
-            ForeColor = Color.Red,
-            BackColor = Color.LightYellow,
+            ForeColor = Color.Black, // Normal text color when no error
+            BackColor = SystemColors.Control, // Normal background
             AutoSize = false,
             Height = 25,
             Dock = DockStyle.Top,
             TextAlign = ContentAlignment.MiddleLeft,
-            Padding = new Padding(5, 0, 5, 0),
-            Visible = false // Initially hidden
+            Padding = new Padding(5, 2, 5, 2)
+            // Always visible now, not hidden
         };
-        
-        Controls.Add(errorLabel);
-        errorLabel.BringToFront();
-    }
     
+        Controls.Add(errorLabel);
+    
+        // Ensure the DataGridView docks below the error label
+        if (regionGridView != null)
+        {
+            regionGridView.Dock = DockStyle.Fill; // This will fill the remaining space after the top-docked error label
+        }
+
+        ConfigureDataGridView();
+        AttachEventHandlers();
+    }
+
     private void ConfigureDataGridView()
     {
         regionGridView.AutoGenerateColumns = false;
@@ -88,8 +90,8 @@ private void SetupColumns()
         {
             Name = "ContextToApply",
             DataPropertyName = "ContextToApply",
-            HeaderText = "Context",
-            Width = 120
+            HeaderText = "Label Context To Apply",
+            Width = 140
         },
         new DataGridViewTextBoxColumn
         {
@@ -140,23 +142,31 @@ private void RegionGridView_DataError(object? sender, DataGridViewDataErrorEvent
 private void ShowErrorMessage(string message)
 {
     errorLabel.Text = message;
-    errorLabel.Visible = true;
+    errorLabel.ForeColor = Color.Red;
+    errorLabel.BackColor = Color.LightYellow;
     
-    // Auto-hide the error message after 5 seconds
+    // Auto-clear the error message after 5 seconds (but keep the label visible)
     var timer = new System.Windows.Forms.Timer();
     timer.Interval = 5000; // 5 seconds
     timer.Tick += (s, e) =>
     {
-        HideErrorMessage();
+        ClearErrorMessage();
         timer.Dispose();
     };
     timer.Start();
 }
 
+private void ClearErrorMessage()
+{
+    errorLabel.Text = "";
+    errorLabel.ForeColor = Color.Black;
+    errorLabel.BackColor = SystemColors.Control;
+}
+
 private void HideErrorMessage()
 {
-    errorLabel.Visible = false;
-    errorLabel.Text = "";
+    // This method now just clears the message instead of hiding the label
+    ClearErrorMessage();
 }
 
 private void RegionGridView_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)

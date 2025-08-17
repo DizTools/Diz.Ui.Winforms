@@ -149,7 +149,7 @@ public partial class MainWindow : Form, IMainGridWindowView
 
     private void OnProjectClosing()
     {
-        CloseAndDisposeVisualizer();
+        CloseAndDisposeOtherViews();
         
         UpdateSaveOptionStates(saveEnabled: false, saveAsEnabled: false, closeEnabled: false);
     }
@@ -157,7 +157,7 @@ public partial class MainWindow : Form, IMainGridWindowView
     public void OnProjectOpened(string filename)
     {
         // TODO: do this with aliaslist too.
-        CloseAndDisposeVisualizer();
+        CloseAndDisposeOtherViews();
 
         UpdateSaveOptionStates(saveEnabled: true, saveAsEnabled: true, closeEnabled: true);
         RefreshUi();
@@ -165,8 +165,9 @@ public partial class MainWindow : Form, IMainGridWindowView
         Document.LastProjectFilename = filename; // do this last.
     }
 
-    private void CloseAndDisposeVisualizer()
+    private void CloseAndDisposeOtherViews()
     {
+        // close and dispose visualizer
         visualForm?.Close();
         visualForm?.Dispose();
         visualForm = null;
