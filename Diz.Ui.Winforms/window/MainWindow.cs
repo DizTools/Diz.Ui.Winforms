@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Configuration;
+using System.Reflection;
 using Diz.Controllers.controllers;
 using Diz.Controllers.interfaces;
 using Diz.Controllers.util;
@@ -103,9 +104,37 @@ public partial class MainWindow : Form, IMainGridWindowView
             targetMenu.DropDownItems.Add(newMenuItem);
         }
     }
+    
+    private static void InitializeConfiguration()
+    {
+        try
+        {
+            // hack: Try to access some of the settings to test configuration file works
+            var _ = Properties.Settings.Default.LastOpenedFile;
+            var __ = Properties.Settings.Default.OpenLastFileAutomatically;
+        }
+        catch (ConfigurationErrorsException)
+        {
+            // if it's not ok, reset it:
+            MessageBox.Show("Diz user.config file failed to load, attempting to reset it. If you have further issues, please manually delete it.");
+            try
+            {
+                Properties.Settings.Default.Reset();
+                Properties.Settings.Default.Save();
+            }
+            catch (Exception resetEx)
+            {
+                MessageBox.Show("Diz user.config reset failed.  Please manually delete it.");
+                System.Diagnostics.Debug.WriteLine($"Failed to reset configuration: {resetEx.Message}");
+            }
+        }
+    }
+
 
     private void Init()
     {
+        InitializeConfiguration();
+        
         AddDynamicMenuItems();
         
         InitMainTable();
