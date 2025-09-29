@@ -101,6 +101,13 @@ private void SetupColumns()
             HeaderText = "Priority", 
             Width = 80
         },
+        new DataGridViewCheckBoxColumn
+        {
+            Name = "ExportSeparateFile",
+            DataPropertyName = "ExportSeparateFile",
+            HeaderText = "Export Separate File", 
+            Width = 50 // for header
+        },
         new DataGridViewButtonColumn
         {
             Name = "Actions",
@@ -320,8 +327,17 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
             return;
         }
         
-        ShowErrorMessage("Start address must be less than end address.");
-        e.Cancel = true;
+        if (bool.TryParse(row.Cells["ExportSeparateFile"].Value?.ToString(), out var exportAsSeparateFile) && exportAsSeparateFile)
+        {
+            // for "export as separate file" regions, we don't allow crossing banks. validate:
+            var startBank = RomUtil.GetBankFromSnesAddress(startSnesAddr);
+            var endBank = RomUtil.GetBankFromSnesAddress(endSnesAddr);
+            if (startBank != endBank) {
+                ShowErrorMessage("When 'Export As Separate Files' is on, Start/end address must be in the same bank.");
+                e.Cancel = true;
+                return;
+            }
+        }
     }
     
     private void DeleteRegion(int rowIndex)
