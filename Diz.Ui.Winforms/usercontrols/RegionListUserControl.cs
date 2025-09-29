@@ -1,6 +1,7 @@
 ﻿using Diz.Controllers.interfaces;
 using Diz.Core.Interfaces;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Diz.Core.util;
 
@@ -274,12 +275,15 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
         e.Cancel = result != DialogResult.Yes;
     }
     
+    [SuppressMessage("ReSharper", "InvertIf")]
+    [SuppressMessage("ReSharper", "RedundantJumpStatement")]
     private void RegionGridView_RowValidating(object? sender, DataGridViewCellCancelEventArgs e)
     {
         var row = regionGridView.Rows[e.RowIndex];
         
-        // Skip validation for new row
-        if (row.IsNewRow) return;
+        // Skip validation if this is still a new row
+        if (row.IsNewRow)
+            return;
         
         // Validate required fields
         if (string.IsNullOrWhiteSpace(row.Cells["RegionName"].Value?.ToString()))
@@ -289,13 +293,43 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
             return;
         }
         
-        // Validate address range
-        if (!int.TryParse(row.Cells["StartSnesAddress"].Value?.ToString(), out var start) ||
-            !int.TryParse(row.Cells["EndSnesAddress"].Value?.ToString(), out var end)) 
+        if (!int.TryParse(row.Cells["StartSnesAddress"].Value?.ToString(), out var startSnesAddr))
+        {
+            ShowErrorMessage("Start SNES address must be valid number");
+            e.Cancel = true;
             return;
+        }
+        
+        if (!int.TryParse(row.Cells["EndSnesAddress"].Value?.ToString(), out var endSnesAddr))
+        {
+            ShowErrorMessage("End SNES address must be valid number");
+            e.Cancel = true;
+            return;
+        }
 
-        if (start < end) 
+        if (startSnesAddr == endSnesAddr) {
+            ShowErrorMessage("Start/end address must not overlap, zero-length regions not allowed");
+            e.Cancel = true;
             return;
+        }
+        
+        if (startSnesAddr > endSnesAddr) {
+            ShowErrorMessage("Start address must be less than end address");
+            e.Cancel = true;
+            return;
+        }
+        
+        if (startSnesAddr < 0 || endSnesAddr < 0) {
+            ShowErrorMessage("Negative numbers not allowed in SNES addresses");
+            e.Cancel = true;
+            return;
+        }
+        
+        if (startSnesAddr > 0xFFFFFF || endSnesAddr > 0xFFFFFF) {
+            ShowErrorMessage("SNES address too large (max allowed: 24-bits: 0xFFFFFF)");
+            e.Cancel = true;
+            return;
+        }
         
         ShowErrorMessage("Start address must be less than end address.");
         e.Cancel = true;
