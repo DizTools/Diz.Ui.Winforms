@@ -63,7 +63,7 @@ private void SetupColumns()
     {
         Name = "StartSnesAddress",
         DataPropertyName = "StartSnesAddress",
-        HeaderText = "Start Address",
+        HeaderText = "Start SNES Address [hex]",
         Width = 100
     };
     
@@ -71,7 +71,7 @@ private void SetupColumns()
     {
         Name = "EndSnesAddress", 
         DataPropertyName = "EndSnesAddress",
-        HeaderText = "End Address",
+        HeaderText = "End SNES Address [hex]",
         Width = 100
     };
     
@@ -106,7 +106,7 @@ private void SetupColumns()
             HeaderText = "Actions",
             Text = "Delete",
             UseColumnTextForButtonValue = true,
-            Width = 80
+            Width = 100
         }
     });
 }
