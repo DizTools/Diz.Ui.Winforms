@@ -117,9 +117,7 @@ private void AttachEventHandlers()
     regionGridView.CellContentClick += RegionGridView_CellContentClick;
     regionGridView.UserDeletingRow += RegionGridView_UserDeletingRow;
     regionGridView.RowValidating += RegionGridView_RowValidating;
-    regionGridView.DataError += RegionGridView_DataError; // Add this line
-    
-    // Add these event handlers for hex conversion
+    regionGridView.DataError += RegionGridView_DataError;
     regionGridView.CellFormatting += RegionGridView_CellFormatting;
     regionGridView.CellParsing += RegionGridView_CellParsing;
 }
@@ -130,13 +128,10 @@ private void RegionGridView_DataError(object? sender, DataGridViewDataErrorEvent
     var columnName = regionGridView.Columns[e.ColumnIndex].HeaderText;
     var errorMessage = $"Data error in {columnName}: {e.Exception?.Message ?? "Invalid data format"}";
     
-    // Display error in our custom label
     ShowErrorMessage(errorMessage);
     
     // Prevent the default error dialog from showing
     e.ThrowException = false;
-    
-    // You can also log the error if needed
     System.Diagnostics.Debug.WriteLine($"DataGridView error: {errorMessage}");
 }
 
@@ -148,7 +143,7 @@ private void ShowErrorMessage(string message)
     
     // Auto-clear the error message after 5 seconds (but keep the label visible)
     var timer = new System.Windows.Forms.Timer();
-    timer.Interval = 5000; // 5 seconds
+    timer.Interval = 5000;
     timer.Tick += (s, e) =>
     {
         ClearErrorMessage();
@@ -164,9 +159,7 @@ private void ClearErrorMessage()
     errorLabel.BackColor = SystemColors.Control;
 }
 
-private void HideErrorMessage()
-{
-    // This method now just clears the message instead of hiding the label
+private void HideErrorMessage() {
     ClearErrorMessage();
 }
 
@@ -247,7 +240,7 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
 
     private void BindingSource_AddingNew(object? sender, AddingNewEventArgs e)
     {
-        // Create a new region when user tries to add a row
+        // Sync UI and data: Create a new region in our data when user tries to add a row to the list
         e.NewObject = projectController?.Project?.Data?.CreateNewRegion();
     }
     
@@ -257,14 +250,11 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
         if (actionColumn == null || e.ColumnIndex != actionColumn.Index || e.RowIndex < 0) 
             return;
         
-        // Handle delete button click
         var result = MessageBox.Show("Are you sure you want to delete this region?", 
             "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 
-        if (result == DialogResult.Yes)
-        {
+        if (result == DialogResult.Yes) 
             DeleteRegion(e.RowIndex);
-        }
     }
     
     private void RegionGridView_UserDeletingRow(object? sender, DataGridViewRowCancelEventArgs e)
@@ -285,7 +275,6 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
         if (row.IsNewRow)
             return;
         
-        // Validate required fields
         if (string.IsNullOrWhiteSpace(row.Cells["RegionName"].Value?.ToString()))
         {
             ShowErrorMessage("Region Name is required.");
