@@ -409,7 +409,7 @@ public partial class MainWindow
         labelsView.BringFormToTop();
     }
     
-    [UsedImplicitly, MenuItem(menu: "Edit", name: "Create Label at IA", shortcutKeys: Keys.Alt | Keys.L)]
+    [UsedImplicitly, MenuItem(menu: "Edit", name: "Create Label at IA", shortcutKeys: Keys.Control | Keys.Alt | Keys.L)]
     private void CreateLabelFromIa()
     {
         ShowLabelsEditor();
