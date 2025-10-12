@@ -786,7 +786,7 @@ partial class MainWindow
         this.gotoFirstUnreachedToolStripMenuItem.Name = "gotoFirstUnreachedToolStripMenuItem";
         this.gotoFirstUnreachedToolStripMenuItem.ShortcutKeyDisplayString = "U";
         this.gotoFirstUnreachedToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-        this.gotoFirstUnreachedToolStripMenuItem.Text = "Goto First &Unreached";
+        this.gotoFirstUnreachedToolStripMenuItem.Text = "Goto First &Unreached Boundary";
         this.gotoFirstUnreachedToolStripMenuItem.Click += new System.EventHandler(this.gotoFirstUnreachedToolStripMenuItem_Click);
         // 
         // gotoNearUnreachedToolStripMenuItem
@@ -794,7 +794,7 @@ partial class MainWindow
         this.gotoNearUnreachedToolStripMenuItem.Name = "gotoNearUnreachedToolStripMenuItem";
         this.gotoNearUnreachedToolStripMenuItem.ShortcutKeyDisplayString = "H";
         this.gotoNearUnreachedToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-        this.gotoNearUnreachedToolStripMenuItem.Text = "Goto Previous Unreac&hed";
+        this.gotoNearUnreachedToolStripMenuItem.Text = "Goto Previous Unreac&hed Boundary";
         this.gotoNearUnreachedToolStripMenuItem.Click += new System.EventHandler(this.gotoNearUnreachedToolStripMenuItem_Click);
         // 
         // gotoNextUnreachedToolStripMenuItem
@@ -802,7 +802,7 @@ partial class MainWindow
         this.gotoNextUnreachedToolStripMenuItem.Name = "gotoNextUnreachedToolStripMenuItem";
         this.gotoNextUnreachedToolStripMenuItem.ShortcutKeyDisplayString = "N";
         this.gotoNextUnreachedToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-        this.gotoNextUnreachedToolStripMenuItem.Text = "Goto &Next Unreached";
+        this.gotoNextUnreachedToolStripMenuItem.Text = "Goto &Next Unreached Boundary";
         this.gotoNextUnreachedToolStripMenuItem.Click += new System.EventHandler(this.gotoNextUnreachedToolStripMenuItem_Click);
         // 
         // gotoNextUnreachedInPointToolStripMenuItem
