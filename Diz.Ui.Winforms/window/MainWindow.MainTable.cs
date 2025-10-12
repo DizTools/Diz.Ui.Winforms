@@ -356,13 +356,16 @@ public partial class MainWindow
         if (snesData == null)
             return;
 
-        switch (snesData.GetFlag(offset))
+        var flagType = snesData.GetFlag(offset);
+        var flagColor = Util.GetColorFromFlag(flagType);
+        
+        switch (flagType)
         {
             case FlagType.Unreached:
-                style.BackColor = Color.LightGray;
+                style.BackColor = flagColor;
                 style.ForeColor = Color.DarkSlateGray;
                 break;
-            case FlagType.Opcode: ;
+            case FlagType.Opcode:
                 var color = GetDisplayColorForRowFlaggedAsOpcode(offset, column, snesData);
                 if (color != null)
                     style.BackColor = color.Value;
@@ -371,27 +374,19 @@ public partial class MainWindow
                 style.ForeColor = Color.LightGray;
                 break;
             case FlagType.Graphics:
-                style.BackColor = Color.LightPink;
-                break;
             case FlagType.Music:
-                style.BackColor = Color.PowderBlue;
-                break;
             case FlagType.Data8Bit:
             case FlagType.Data16Bit:
             case FlagType.Data24Bit:
             case FlagType.Data32Bit:
-                style.BackColor = Color.NavajoWhite;
-                break;
             case FlagType.Pointer16Bit:
             case FlagType.Pointer24Bit:
             case FlagType.Pointer32Bit:
-                style.BackColor = Color.Orchid;
-                break;
             case FlagType.Text:
-                style.BackColor = Color.Aquamarine;
+                style.BackColor = flagColor;
                 break;
             case FlagType.Empty:
-                style.BackColor = Color.DarkSlateGray;
+                style.BackColor = flagColor;
                 style.ForeColor = Color.LightGray;
                 break;
         }
