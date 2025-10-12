@@ -346,8 +346,11 @@ public partial class MainWindow
         table.InvalidateRow(e.RowIndex);
     }
 
-    private void PaintCell(int offset, DataGridViewCellStyle style, int column, int selOffset)
+    private void PaintCell(int offset, DataGridViewCellStyle? style, int column, int selOffset)
     {
+        if (style == null)
+            return;
+        
         // editable cells show up green
         if (column is (int) ColumnType.Label or (int) ColumnType.DataBank or (int) ColumnType.DirectPage or (int) ColumnType.Comment) 
             style.SelectionBackColor = Color.Chartreuse;
