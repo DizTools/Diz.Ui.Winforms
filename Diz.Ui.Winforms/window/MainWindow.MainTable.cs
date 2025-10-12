@@ -399,17 +399,93 @@ public partial class MainWindow
         
         switch (column)
         {
-            //&& (Project.Data.GetFlag(selOffset) == Data.FlagType.Opcode || Project.Data.GetFlag(selOffset) == Data.FlagType.Unreached)
             case (int) ColumnType.Offset 
                 when Project.Data.ConvertSnesToPc(snesData.GetIntermediateAddressOrPointer(selOffset)) == offset:
                 
-            //&& (Project.Data.GetFlag(offset) == Data.FlagType.Opcode || Project.Data.GetFlag(offset) == Data.FlagType.Unreached)
             case (int) ColumnType.IA
                 when Project.Data.ConvertSnesToPc(snesData.GetIntermediateAddressOrPointer(offset)) == selOffset:
                 
                 style.BackColor = Color.DeepPink;
                 break;
         }
+    }
+
+    public enum RuledLineStyle
+    {
+        Solid,
+        Dashed,
+        Thick,
+        Double
+    }
+
+    private void DrawRuledLine(Graphics graphics, Rectangle cellBounds, RuledLineStyle style, bool drawOnTop = true)
+    {
+        var lineY = drawOnTop ? cellBounds.Top : cellBounds.Bottom - 2; // -2 = fudge it a bit
+
+        switch (style)
+        {
+            case RuledLineStyle.Solid:
+                using (var pen = new Pen(Color.Gray, 1))
+                    graphics.DrawLine(pen, cellBounds.Left, lineY, cellBounds.Right, lineY);
+                break;
+
+            case RuledLineStyle.Dashed:
+                using (var pen = new Pen(Color.Gray, 1))
+                {
+                    pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
+                    graphics.DrawLine(pen, cellBounds.Left, lineY, cellBounds.Right, lineY);
+                }
+
+                break;
+
+            case RuledLineStyle.Thick:
+                using (var pen = new Pen(Color.DarkGray, 2))
+                    graphics.DrawLine(pen, cellBounds.Left, lineY, cellBounds.Right, lineY);
+                break;
+
+            case RuledLineStyle.Double:
+                using (var pen = new Pen(Color.Gray, 1))
+                {
+                    if (drawOnTop)
+                    {
+                        graphics.DrawLine(pen, cellBounds.Left, lineY, cellBounds.Right, lineY);
+                        graphics.DrawLine(pen, cellBounds.Left, lineY + 2, cellBounds.Right, lineY + 2);
+                    }
+                    else
+                    {
+                        graphics.DrawLine(pen, cellBounds.Left, lineY - 2, cellBounds.Right, lineY - 2);
+                        graphics.DrawLine(pen, cellBounds.Left, lineY, cellBounds.Right, lineY);
+                    }
+                }
+
+                break;
+        }
+    }
+    
+    // Helper method to determine when to draw ruled lines
+    private void ShouldDrawRuledLineAboveRow(int offset, out bool placeLineAbove, out bool placeLineBelow)
+    {
+        placeLineAbove = false;
+        placeLineBelow = false;
+        
+        var snesData = Project.Data.GetSnesApi();
+        if (snesData == null || offset == -1 || offset < 0 || offset >= snesData.GetRomSize())
+            return;
+    
+        // Add line above labels
+        var snesAddress = snesData.ConvertPCtoSnes(offset);
+        var labelName = snesData.Labels.GetLabelName(snesAddress);
+        if (!string.IsNullOrEmpty(labelName) && !labelName.StartsWith('_') && !labelName.StartsWith('.'))
+            placeLineAbove = true;
+
+        var isOpcode = snesData.GetFlag(offset) is FlagType.Opcode;
+        
+        // RTS RTL
+        placeLineBelow |= isOpcode && snesData.GetRomByte(offset) is 0x60 or 0x6B;
+
+        // would be cool for inpoints that are functions (i.e. not simple branches/etc)
+        // we need more info here to do this, need like a InPointFunctionCall
+        // placeLineAbove |= snesData.GetInOutPoint(offset) == InOutPoint.InPoint;
     }
 
     private Color? GetDisplayColorForRowFlaggedAsOpcode(int offset, int column, ISnesData snesData)
@@ -488,6 +564,22 @@ public partial class MainWindow
             return;
         
         PaintCell(row, e.CellStyle, e.ColumnIndex, SelectedOffset);
+        
+        ShouldDrawRuledLineAboveRow(row, out var placeLineAbove, out var placeLineBelow);
+        if (!placeLineBelow && !placeLineAbove) 
+            return;
+        
+        e.Paint(e.CellBounds, DataGridViewPaintParts.All);
+        if (e.Graphics == null)
+            return;
+        
+        if (placeLineAbove)
+            DrawRuledLine(e.Graphics, e.CellBounds, RuledLineStyle.Solid, drawOnTop: true);
+
+        if (placeLineBelow)
+            DrawRuledLine(e.Graphics, e.CellBounds, RuledLineStyle.Solid, drawOnTop: false);
+        
+        e.Handled = true; // Prevent default painting
     }
 
     public void MarkHistoryPoint(int pcOffset, ISnesNavigation.HistoryArgs? historyArgs, string position)
@@ -513,7 +605,7 @@ public partial class MainWindow
         
         MarkHistoryPoint(SelectedOffset, historyArgs, "start");
 
-        // purely visual. allows this offset to appear more in the middle of the screen, instead of at the very bottom
+        // purely visual. allows this offset to appear more in the middle of the screen, instead of at the very bottom.
         // you typically want to be presented with a view that shows stuff of interest you jumped to 
         // visible and not having to scroll down a bit then back up.
         //
