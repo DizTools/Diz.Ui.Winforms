@@ -117,8 +117,8 @@
             this.MinimizeBox = false;
             this.Name = "ProgressDialog";
             this.Padding = new System.Windows.Forms.Padding(10);
-            this.ShowIcon = false;
-            this.ShowInTaskbar = false;
+            this.ShowIcon = true;
+            this.ShowInTaskbar = true;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Working...";
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();

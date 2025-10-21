@@ -51,7 +51,8 @@ partial class AliasList
         Margin = new Padding(4, 3, 4, 3);
         MinimumSize = new Size(250, 282);
         Name = "AliasList";
-        ShowIcon = false;
+        ShowIcon = true;
+        ShowInTaskbar = true;
         StartPosition = FormStartPosition.CenterParent;
         Text = "Label List";
         FormClosing += AliasList_FormClosing;

@@ -679,8 +679,8 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.Name = "ImportRomDialog";
-            this.ShowIcon = false;
-            this.ShowInTaskbar = false;
+            this.ShowIcon = true;
+            this.ShowInTaskbar = true;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "New Project";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ImportRomDialog_FormClosing);
