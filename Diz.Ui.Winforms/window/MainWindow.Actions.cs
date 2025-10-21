@@ -74,7 +74,7 @@ public partial class MainWindow
         }
         else
         {
-            MessageBox.Show($"{path} does not exist!");
+            PromptDialog.Show($"{path} does not exist!");
         }
     }
 

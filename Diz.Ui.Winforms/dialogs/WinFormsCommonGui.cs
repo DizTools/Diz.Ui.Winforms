@@ -10,11 +10,11 @@ public class WinFormsCommonGui : ICommonGui
         WinformsGuiUtil.PromptToConfirmAction("Warning", msg, () => true);
 
     public void ShowError(string msg) => 
-        MessageBox.Show(msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        PromptDialog.Show(msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
     
     public void ShowWarning(string msg) => 
-        MessageBox.Show(msg, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        PromptDialog.Show(msg, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
     
     public void ShowMessage(string msg) => 
-        MessageBox.Show(msg, "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        PromptDialog.Show(msg, "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
 }

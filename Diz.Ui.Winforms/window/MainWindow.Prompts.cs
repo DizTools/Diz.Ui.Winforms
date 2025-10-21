@@ -14,7 +14,7 @@ public partial class MainWindow
         if (Project == null || !(Project.Session?.UnsavedChanges ?? true))
             return true;
 
-        var result = MessageBox.Show(
+        var result = PromptDialog.Show(
             "You have unsaved changes; they will be lost if you continue.\nDo you want to save changes?",
             "Unsaved Changes", MessageBoxButtons.YesNoCancel);
 
@@ -34,11 +34,11 @@ public partial class MainWindow
     private static void ShowExportResults(LogCreatorOutput.OutputResult result)
     {
         if (result.FatalErrorMsg != "")
-            MessageBox.Show($"Internal exporter error in Diz: {result.FatalErrorMsg}", "Internal Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            PromptDialog.Show($"Internal exporter error in Diz: {result.FatalErrorMsg}", "Internal Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         else if (result.ErrorCount > 0)
-            MessageBox.Show("Disassembly exported with warnings, see errors.txt", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            PromptDialog.Show("Disassembly exported with warnings, see generated errors.txt file", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         else
-            MessageBox.Show("Disassembly files exported successfully!", "Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            PromptDialog.Show("Disassembly files exported successfully!", "Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     private bool PromptForOpenProjectFilename()
@@ -60,7 +60,7 @@ public partial class MainWindow
         }
         catch (Exception)
         {
-            MessageBox.Show("Failed to open help url:\r\n"+helpUrl+"", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            PromptDialog.Show("Failed to open help url:\r\n"+helpUrl+"", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
@@ -78,7 +78,7 @@ public partial class MainWindow
 
     private static void ReportNumberFlagsModified(long numModifiedFlags, int numFiles = 1)
     {
-        MessageBox.Show($"Modified total {numModifiedFlags} flags from {numFiles} files!",
+        PromptDialog.Show($"Modified total {numModifiedFlags} flags from {numFiles} files!",
             "Done",
             MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
@@ -160,8 +160,7 @@ public partial class MainWindow
 
     private static void ShowInfo(string s, string caption)
     {
-        MessageBox.Show(s, caption,
-            MessageBoxButtons.OK, MessageBoxIcon.Information);
+        PromptDialog.Show(s, caption, MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
     private bool PromptForInOutChecking()

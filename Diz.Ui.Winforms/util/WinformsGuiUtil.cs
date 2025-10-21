@@ -16,7 +16,7 @@ public static class WinformsGuiUtil
         }
         catch (Exception)
         {
-            MessageBox.Show($"Can't launch '{argsToLaunch}', ignoring.", "Error", MessageBoxButtons.OK,
+            PromptDialog.Show($"Can't launch '{argsToLaunch}', ignoring.", "Error", MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
         }
     }
@@ -58,7 +58,7 @@ public static class WinformsGuiUtil
     
     public static void ShowLineItemError(string msg, int errLine)
     {
-        MessageBox.Show(
+        PromptDialog.Show(
             "An error occurred while parsing the file.\n" + msg +
             (errLine > 0 ? $" (Check line {errLine}.)" : ""),
             "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -68,7 +68,7 @@ public static class WinformsGuiUtil
     public static T? PromptToConfirmAction<T>(string promptSubject, string promptText, Func<T> confirmAction)
     {
         var dialogResult =
-            MessageBox.Show(promptText, promptSubject, MessageBoxButtons.YesNo, MessageBoxIcon.Error);
+            PromptDialog.Show(promptText, promptSubject, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
         return dialogResult == DialogResult.Yes ? confirmAction() : default;
     }
