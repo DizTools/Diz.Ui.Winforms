@@ -66,6 +66,9 @@
         <Compile Update="usercontrols\LabelsView.cs">
           <SubType>Form</SubType>
         </Compile>
+        <Compile Update="dialogs\ErrorDialog.cs">
+          <SubType>Form</SubType>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>

@@ -109,7 +109,7 @@ public partial class MainWindow
 
     private static void ShowError(string errorMsg, string caption = "Error")
     {
-        MessageBox.Show(errorMsg, caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+        ErrorDialog.ShowError(errorMsg, caption);
     }
 
     private bool PromptHarshAutoStep(int offset, out int newOffset, out int count)
