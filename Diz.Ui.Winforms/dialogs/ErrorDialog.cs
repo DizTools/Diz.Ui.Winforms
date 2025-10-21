@@ -67,13 +67,7 @@ public class ErrorDialog : Form
         ResumeLayout(false);
     }
 
-    public static DialogResult ShowError(string errorMessage, string caption = "Error")
-    {
-        using var errorDialog = new ErrorDialog(errorMessage, caption);
-        return errorDialog.ShowDialog();
-    }
-    
-    public static DialogResult ShowError(IWin32Window owner, string errorMessage, string caption = "Error")
+    public static DialogResult ShowError(string errorMessage, string caption = "Error", IWin32Window? owner = null)
     {
         using var errorDialog = new ErrorDialog(errorMessage, caption);
         return errorDialog.ShowDialog(owner);
