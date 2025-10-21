@@ -6,6 +6,7 @@ using Diz.Controllers.util;
 using Diz.Core.Interfaces;
 using Diz.LogWriter;
 using Diz.Ui.Winforms.dialogs;
+using Diz.Ui.Winforms.util;
 
 namespace Diz.Ui.Winforms.window;
 
@@ -192,6 +193,8 @@ public partial class MainWindow : Form, IMainGridWindowView
         RefreshUi();
 
         Document.LastProjectFilename = filename; // do this last.
+
+        BringFormToTop();
     }
 
     private void CloseAndDisposeOtherViews()
@@ -212,10 +215,14 @@ public partial class MainWindow : Form, IMainGridWindowView
     {
         UpdateSaveOptionStates(saveEnabled: true, saveAsEnabled: true, closeEnabled: true);
         UpdateWindowTitle();
+        BringFormToTop();
     }
 
-    public void OnExportFinished(LogCreatorOutput.OutputResult result) => 
+    public void OnExportFinished(LogCreatorOutput.OutputResult result)
+    {
         ShowExportResults(result);
+        BringFormToTop();
+    }
 
     private void RememberNavigationPoint(int pcOffset, ISnesNavigation.HistoryArgs? historyArgs)
     {
@@ -258,6 +265,5 @@ public partial class MainWindow : Form, IMainGridWindowView
 
     public event EventHandler? OnFormClosed;
 
-    public void BringFormToTop() => 
-        Focus();
+    public void BringFormToTop() => this.BringWinFormToTop();
 }

@@ -1,8 +1,7 @@
-﻿#nullable enable
-
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Diz.Core.util;
+using Diz.Ui.Winforms.dialogs;
 
 namespace Diz.Ui.Winforms.util;
 
@@ -107,6 +106,14 @@ public static class WinformsGuiUtil
         cb.DataSource = bs;
         cb.DisplayMember = "Value";
         cb.ValueMember = "Key";
+    }
+    
+    public static void BringWinFormToTop(this Form form)
+    {
+        form.TopMost = true;
+        form.Activate();
+        form.Focus();
+        form.TopMost = false;
     }
 
     [DllImport("user32.dll")]

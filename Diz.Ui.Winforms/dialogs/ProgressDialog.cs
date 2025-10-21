@@ -70,9 +70,13 @@ public partial class ProgressDialog : Form, IProgressView
     public bool IsVisible() => Visible;
 
     public void SignalJobIsDone() => this.InvokeIfRequired(Close);
-    public bool PromptDialog() => ShowDialog() == DialogResult.OK;
+    public bool PromptDialog()
+    {
+        BringFormToTop();
+        return ShowDialog() == DialogResult.OK;
+    }
+
     public event EventHandler? OnFormClosed;
 
-    public void BringFormToTop() => 
-        Focus();
+    public void BringFormToTop() => this.BringWinFormToTop();
 }

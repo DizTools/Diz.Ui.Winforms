@@ -63,7 +63,8 @@ public partial class MainWindow
         // this could mess up internal operations and iterate through collections being modified/etc.
         Hide();
         var result = action();
-        Show();
+        Show(); 
+        BringFormToTop();
         return result;
     }
 
