@@ -177,7 +177,7 @@ public partial class ImportRomDialog : Form, IImportRomDialogView
         var i = 0;
         foreach (var (_, checkBox, textBox) in vectorTableGui)
         {
-            Debug.Assert(i is >= 0 and < 12);
+            Debug.Assert(i is >= 0 and < 12); // ugh, rip this out.
             var whichTable = i / 6;
             var whichEntry = i % 6;
             var vectorValue = Controller.GetVectorTableValue(whichTable, whichEntry);
@@ -191,9 +191,7 @@ public partial class ImportRomDialog : Form, IImportRomDialogView
         textBox.Text = Util.NumberToBaseString(vectorValue, Util.NumberBase.Hexadecimal, 4);
 
         var enabled = vectorValue >= 0x8000;
-        checkBox.Enabled = enabled;
-        if (!enabled)
-            checkBox.Checked = false;
+        checkBox.Checked = checkBox.Enabled = enabled;
     }
 
     private void ImportROMDialog_Load(object sender, EventArgs e) => 
