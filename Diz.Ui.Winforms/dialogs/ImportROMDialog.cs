@@ -111,8 +111,9 @@ public partial class ImportRomDialog : Form, IImportRomDialogView
         detectMessage.Text = Controller.GetDetectionMessage();
     }
 
-    private void UpdateOkayButtonEnabled() => 
-        okay.Enabled = (Controller?.Builder?.Input?.AnalysisResults?.RomSpeed ?? RomSpeed.Unknown) != RomSpeed.Unknown;
+    private void UpdateOkayButtonEnabled() =>
+        // validation settings AFTER this will give a warning, so just leave this always enabled
+        okay.Enabled = true;
 
     private void UpdateTextboxes()
     {
@@ -134,15 +135,13 @@ public partial class ImportRomDialog : Form, IImportRomDialogView
 
     private void SetDefaultsIfDetectionFailed()
     {
-        // TODO: we need a way to update the UI when detection fails and a mode is manually selected.
-        //  currently, there's no way to manually override. the OK button stays greyed out forever.
-        
         romspeed.Text = "????";
         romtitle.Text = "?????????????????????";
         
         foreach (var (_, checkBox, textBox) in vectorTableGui)
         {
-            checkBox.Checked = true;
+            checkBox.Checked = false;
+            checkBox.Enabled = false;
             textBox.Text = "????";
         }
     }
