@@ -37,11 +37,11 @@
             this.label6 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.label13 = new System.Windows.Forms.Label();
-            this.checkboxEmuIRQ = new System.Windows.Forms.CheckBox();
+            this.checkboxEmuIRQBRK = new System.Windows.Forms.CheckBox();
             this.checkboxEmuRESET = new System.Windows.Forms.CheckBox();
             this.checkboxEmuNMI = new System.Windows.Forms.CheckBox();
             this.checkboxEmuABORT = new System.Windows.Forms.CheckBox();
-            this.checkboxEmuBRK = new System.Windows.Forms.CheckBox();
+            this.checkboxEmuReseved3Ignored = new System.Windows.Forms.CheckBox();
             this.checkboxEmuCOP = new System.Windows.Forms.CheckBox();
             this.checkboxNativeIRQ = new System.Windows.Forms.CheckBox();
             this.checkboxNativeRESET = new System.Windows.Forms.CheckBox();
@@ -51,11 +51,11 @@
             this.checkboxNativeCOP = new System.Windows.Forms.CheckBox();
             this.label12 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
-            this.textEmuIRQ = new System.Windows.Forms.TextBox();
+            this.textEmuIRQBRK = new System.Windows.Forms.TextBox();
             this.textEmuRESET = new System.Windows.Forms.TextBox();
             this.textEmuNMI = new System.Windows.Forms.TextBox();
             this.textEmuABORT = new System.Windows.Forms.TextBox();
-            this.textEmuBRK = new System.Windows.Forms.TextBox();
+            this.textEmuReseved3Ignored = new System.Windows.Forms.TextBox();
             this.textEmuCOP = new System.Windows.Forms.TextBox();
             this.textNativeIRQ = new System.Windows.Forms.TextBox();
             this.textNativeRESET = new System.Windows.Forms.TextBox();
@@ -163,11 +163,11 @@
             // groupBox2
             // 
             this.groupBox2.Controls.Add(this.label13);
-            this.groupBox2.Controls.Add(this.checkboxEmuIRQ);
+            this.groupBox2.Controls.Add(this.checkboxEmuIRQBRK);
             this.groupBox2.Controls.Add(this.checkboxEmuRESET);
             this.groupBox2.Controls.Add(this.checkboxEmuNMI);
             this.groupBox2.Controls.Add(this.checkboxEmuABORT);
-            this.groupBox2.Controls.Add(this.checkboxEmuBRK);
+            this.groupBox2.Controls.Add(this.checkboxEmuReseved3Ignored);
             this.groupBox2.Controls.Add(this.checkboxEmuCOP);
             this.groupBox2.Controls.Add(this.checkboxNativeIRQ);
             this.groupBox2.Controls.Add(this.checkboxNativeRESET);
@@ -177,11 +177,11 @@
             this.groupBox2.Controls.Add(this.checkboxNativeCOP);
             this.groupBox2.Controls.Add(this.label12);
             this.groupBox2.Controls.Add(this.label11);
-            this.groupBox2.Controls.Add(this.textEmuIRQ);
+            this.groupBox2.Controls.Add(this.textEmuIRQBRK);
             this.groupBox2.Controls.Add(this.textEmuRESET);
             this.groupBox2.Controls.Add(this.textEmuNMI);
             this.groupBox2.Controls.Add(this.textEmuABORT);
-            this.groupBox2.Controls.Add(this.textEmuBRK);
+            this.groupBox2.Controls.Add(this.textEmuReseved3Ignored);
             this.groupBox2.Controls.Add(this.textEmuCOP);
             this.groupBox2.Controls.Add(this.textNativeIRQ);
             this.groupBox2.Controls.Add(this.textNativeRESET);
@@ -217,13 +217,13 @@
             // 
             // checkboxEmuIRQ
             // 
-            this.checkboxEmuIRQ.AutoSize = true;
-            this.checkboxEmuIRQ.Location = new System.Drawing.Point(230, 175);
-            this.checkboxEmuIRQ.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.checkboxEmuIRQ.Name = "checkboxEmuIRQ";
-            this.checkboxEmuIRQ.Size = new System.Drawing.Size(15, 14);
-            this.checkboxEmuIRQ.TabIndex = 31;
-            this.checkboxEmuIRQ.UseVisualStyleBackColor = true;
+            this.checkboxEmuIRQBRK.AutoSize = true;
+            this.checkboxEmuIRQBRK.Location = new System.Drawing.Point(230, 175);
+            this.checkboxEmuIRQBRK.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.checkboxEmuIRQBRK.Name = "checkboxEmuIRQBRK";
+            this.checkboxEmuIRQBRK.Size = new System.Drawing.Size(15, 14);
+            this.checkboxEmuIRQBRK.TabIndex = 31;
+            this.checkboxEmuIRQBRK.UseVisualStyleBackColor = true;
             // 
             // checkboxEmuRESET
             // 
@@ -259,13 +259,13 @@
             // 
             // checkboxEmuBRK
             // 
-            this.checkboxEmuBRK.AutoSize = true;
-            this.checkboxEmuBRK.Location = new System.Drawing.Point(230, 74);
-            this.checkboxEmuBRK.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.checkboxEmuBRK.Name = "checkboxEmuBRK";
-            this.checkboxEmuBRK.Size = new System.Drawing.Size(15, 14);
-            this.checkboxEmuBRK.TabIndex = 23;
-            this.checkboxEmuBRK.UseVisualStyleBackColor = true;
+            this.checkboxEmuReseved3Ignored.AutoSize = true;
+            this.checkboxEmuReseved3Ignored.Location = new System.Drawing.Point(230, 74);
+            this.checkboxEmuReseved3Ignored.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.checkboxEmuReseved3Ignored.Name = "checkboxEmuReseved3Ignored";
+            this.checkboxEmuReseved3Ignored.Size = new System.Drawing.Size(15, 14);
+            this.checkboxEmuReseved3Ignored.TabIndex = 23;
+            this.checkboxEmuReseved3Ignored.UseVisualStyleBackColor = true;
             // 
             // checkboxEmuCOP
             // 
@@ -367,15 +367,15 @@
             // 
             // textEmuIRQ
             // 
-            this.textEmuIRQ.Location = new System.Drawing.Point(182, 172);
-            this.textEmuIRQ.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.textEmuIRQ.MaxLength = 4;
-            this.textEmuIRQ.Name = "textEmuIRQ";
-            this.textEmuIRQ.ReadOnly = true;
-            this.textEmuIRQ.Size = new System.Drawing.Size(39, 23);
-            this.textEmuIRQ.TabIndex = 30;
-            this.textEmuIRQ.TabStop = false;
-            this.textEmuIRQ.Text = "FFFF";
+            this.textEmuIRQBRK.Location = new System.Drawing.Point(182, 172);
+            this.textEmuIRQBRK.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.textEmuIRQBRK.MaxLength = 4;
+            this.textEmuIRQBRK.Name = "textEmuIRQBRK";
+            this.textEmuIRQBRK.ReadOnly = true;
+            this.textEmuIRQBRK.Size = new System.Drawing.Size(39, 23);
+            this.textEmuIRQBRK.TabIndex = 30;
+            this.textEmuIRQBRK.TabStop = false;
+            this.textEmuIRQBRK.Text = "FFFF";
             // 
             // textEmuRESET
             // 
@@ -415,15 +415,15 @@
             // 
             // textEmuBRK
             // 
-            this.textEmuBRK.Location = new System.Drawing.Point(182, 70);
-            this.textEmuBRK.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.textEmuBRK.MaxLength = 4;
-            this.textEmuBRK.Name = "textEmuBRK";
-            this.textEmuBRK.ReadOnly = true;
-            this.textEmuBRK.Size = new System.Drawing.Size(39, 23);
-            this.textEmuBRK.TabIndex = 22;
-            this.textEmuBRK.TabStop = false;
-            this.textEmuBRK.Text = "FFFF";
+            this.textEmuReseved3Ignored.Location = new System.Drawing.Point(182, 70);
+            this.textEmuReseved3Ignored.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.textEmuReseved3Ignored.MaxLength = 4;
+            this.textEmuReseved3Ignored.Name = "textEmuReseved3Ignored";
+            this.textEmuReseved3Ignored.ReadOnly = true;
+            this.textEmuReseved3Ignored.Size = new System.Drawing.Size(39, 23);
+            this.textEmuReseved3Ignored.TabIndex = 22;
+            this.textEmuReseved3Ignored.TabStop = false;
+            this.textEmuReseved3Ignored.Text = "FFFF";
             // 
             // textEmuCOP
             // 
@@ -704,11 +704,11 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Label label13;
-        private System.Windows.Forms.CheckBox checkboxEmuIRQ;
+        private System.Windows.Forms.CheckBox checkboxEmuIRQBRK;
         private System.Windows.Forms.CheckBox checkboxEmuRESET;
         private System.Windows.Forms.CheckBox checkboxEmuNMI;
         private System.Windows.Forms.CheckBox checkboxEmuABORT;
-        private System.Windows.Forms.CheckBox checkboxEmuBRK;
+        private System.Windows.Forms.CheckBox checkboxEmuReseved3Ignored;
         private System.Windows.Forms.CheckBox checkboxEmuCOP;
         private System.Windows.Forms.CheckBox checkboxNativeIRQ;
         private System.Windows.Forms.CheckBox checkboxNativeRESET;
@@ -718,11 +718,11 @@
         private System.Windows.Forms.CheckBox checkboxNativeCOP;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.Label label11;
-        private System.Windows.Forms.TextBox textEmuIRQ;
+        private System.Windows.Forms.TextBox textEmuIRQBRK;
         private System.Windows.Forms.TextBox textEmuRESET;
         private System.Windows.Forms.TextBox textEmuNMI;
         private System.Windows.Forms.TextBox textEmuABORT;
-        private System.Windows.Forms.TextBox textEmuBRK;
+        private System.Windows.Forms.TextBox textEmuReseved3Ignored;
         private System.Windows.Forms.TextBox textEmuCOP;
         private System.Windows.Forms.TextBox textNativeIRQ;
         private System.Windows.Forms.TextBox textNativeRESET;

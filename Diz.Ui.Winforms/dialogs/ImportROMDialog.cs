@@ -7,32 +7,43 @@ using Diz.Cpu._65816.import;
 using Diz.Ui.Winforms.util;
 using System.ComponentModel;
 using Diz.Core.Interfaces;
+using Diz.Cpu._65816;
 
 namespace Diz.Ui.Winforms.dialogs;
 
 [SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
 public partial class ImportRomDialog : Form, IImportRomDialogView
 {
-    public record VectorControls(string Name, CheckBox Check, TextBox Text);
+    public record VectorControls(string Name, CheckBox? Check, TextBox? Text);
 
-    // NOTE: all this could be converted to use databinding and be easier to deal with, but,
-    // probably more work than its worth. this is fine, if a bit manual. it's unlikely to ever need to change.
+    // NOTES:
+    // - all this could be converted to use databinding and be easier to deal with, but,
+    //   probably more work than its worth. this is fine, if a bit manual. it's unlikely to ever need to change.
+    // - there's a few hidden entries that we won't put in the GUI
     private List<VectorControls> GetVectorGuiMappings()
     {
         return
         [
+            // 1. these need to be kept in VECTOR TABLE ORDER.
+            // 2. and ALL 16 vector entries must be present (even if there's no corresponding GUI for them) 
+            
+            new VectorControls(SnesVectorNames.Native_Reserved1__ignored, null, null),  // no GUI
+            new VectorControls(SnesVectorNames.Native_Reserved2__ignored, null, null),  // no GUI
             new VectorControls(SnesVectorNames.Native_COP, checkboxNativeCOP, textNativeCOP),
             new VectorControls(SnesVectorNames.Native_BRK, checkboxNativeBRK, textNativeBRK),
             new VectorControls(SnesVectorNames.Native_ABORT, checkboxNativeABORT, textNativeABORT),
             new VectorControls(SnesVectorNames.Native_NMI, checkboxNativeNMI, textNativeNMI),
-            new VectorControls(SnesVectorNames.Native_RESET, checkboxNativeRESET, textNativeRESET),
+            new VectorControls(SnesVectorNames.Native_RESET__ignored, checkboxNativeRESET, textNativeRESET),
             new VectorControls(SnesVectorNames.Native_IRQ, checkboxNativeIRQ, textNativeIRQ),
+            
+            new VectorControls(SnesVectorNames.Emulation_Reserved1__ignored, null, null),  // no GUI
+            new VectorControls(SnesVectorNames.Emulation_Reserved2__ignored, null, null),  // no GUI
             new VectorControls(SnesVectorNames.Emulation_COP, checkboxEmuCOP, textEmuCOP),
-            new VectorControls(SnesVectorNames.Emulation_Unknown, checkboxEmuBRK, textEmuBRK),
+            new VectorControls(SnesVectorNames.Emulation_Reserved3__ignored, checkboxEmuReseved3Ignored, textEmuReseved3Ignored), // this is not BRK. it's reserved, it's not real. GUI row will still say BRK though
             new VectorControls(SnesVectorNames.Emulation_ABORT, checkboxEmuABORT, textEmuABORT),
             new VectorControls(SnesVectorNames.Emulation_NMI, checkboxEmuNMI, textEmuNMI),
             new VectorControls(SnesVectorNames.Emulation_RESET, checkboxEmuRESET, textEmuRESET),
-            new VectorControls(SnesVectorNames.Emulation_IRQBRK, checkboxEmuIRQ, textEmuIRQ)
+            new VectorControls(SnesVectorNames.Emulation_IRQBRK, checkboxEmuIRQBRK, textEmuIRQBRK)
         ];
     }
 
@@ -40,9 +51,9 @@ public partial class ImportRomDialog : Form, IImportRomDialogView
     private readonly List<VectorControls> vectorTableGui;
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public IImportRomDialogController Controller
+    public IImportRomDialogController? Controller
     {
-        get => controller!;    // TODO: fixme
+        get => controller;
         set
         {
             if (controller != null)
@@ -62,6 +73,9 @@ public partial class ImportRomDialog : Form, IImportRomDialogView
         vectorTableGui = GetVectorGuiMappings();
         foreach (var vector in vectorTableGui)
         {
+            if (vector.Check == null)
+                continue;
+            
             vector.Check.CheckedChanged += OnVectorCheckboxCheckedChanged;
             vector.Check.Tag = vector;
         }
@@ -75,13 +89,11 @@ public partial class ImportRomDialog : Form, IImportRomDialogView
         if (checkbox.Tag is not VectorControls vector)
             return;
         
-        Controller.Builder.OptionSetGenerateVectorTableLabelFor(vector.Name, vector.Check.Checked);
+        Controller.Builder.OptionSetGenerateVectorTableLabelFor(vector.Name, vector.Check?.Checked ?? true);
     }
 
     private void DataBind()
     {
-        // Debug.Assert(Controller.Builder.Input.AnalysisResults != null); // needed?
-        
         // this is the better way to do this but... we need better hooks for knowing when stuff changes, it's a mess
         WinformsGuiUtil.BindListControlToEnum<RomMapMode>(cmbRomMapMode, 
             Controller.Builder, 
@@ -140,9 +152,14 @@ public partial class ImportRomDialog : Form, IImportRomDialogView
         
         foreach (var (_, checkBox, textBox) in vectorTableGui)
         {
-            checkBox.Checked = false;
-            checkBox.Enabled = false;
-            textBox.Text = "????";
+            if (checkBox != null)
+            {
+                checkBox.Checked = false;
+                checkBox.Enabled = false;
+            }
+
+            if (textBox != null)
+                textBox.Text = "????";
         }
     }
 
@@ -154,7 +171,7 @@ public partial class ImportRomDialog : Form, IImportRomDialogView
 
             foreach (var (vectorName, checkBox, _) in vectorTableGui)
             {
-                if (checkBox.Checked)
+                if (checkBox?.Checked ?? true)
                     enabledVectors.Add(vectorName);
             }
 
@@ -173,15 +190,21 @@ public partial class ImportRomDialog : Form, IImportRomDialogView
 
     private void SyncGuiVectorTableEntriesFromController()
     {
-        var i = 0;
-        foreach (var (_, checkBox, textBox) in vectorTableGui)
+        var guiMappedVectorEntries = 
+            vectorTableGui
+                .Select((vectorControl, index) => new
+                {
+                    VectorTableOffset = index*2,
+                    VectorControl = vectorControl
+                })
+                .Where(x => x.VectorControl is { Check: not null, Text: not null })
+                .ToList();
+        
+        foreach (var guiMappedVectorEntry in guiMappedVectorEntries)
         {
-            Debug.Assert(i is >= 0 and < 12); // ugh, rip this out.
-            var whichTable = i / 6;
-            var whichEntry = i % 6;
-            var vectorValue = Controller.GetVectorTableValue(whichTable, whichEntry);
-            SetGuiForVectorEntry(vectorValue, textBox, checkBox);
-            ++i;
+            // read the word value of this entry from the ROM
+            var vectorRomWordValue = Controller.ReadRomVectorTableEntryValueWord(guiMappedVectorEntry.VectorTableOffset);
+            SetGuiForVectorEntry(vectorRomWordValue, guiMappedVectorEntry.VectorControl.Text!, guiMappedVectorEntry.VectorControl.Check!);
         }
     }
 
