@@ -279,7 +279,8 @@ public partial class MainWindow
                 break;
             case ColumnType.Instruction:
                 var len = snesData.GetInstructionLength(row);
-                e.Value = row + len <= Project.Data.GetRomSize() ? snesData.GetInstructionStr(row) : "";
+                const bool showMnemonicHint = true; // TEMP HACK. TODO: should be yes if SNES, no if NES (depending on assemblerflavor)
+                e.Value = row + len <= Project.Data.GetRomSize() ? snesData.GetInstructionStr(row, showMnemonicHint) : "";
                 break;
             case ColumnType.IA:
                 var ia = snesData.GetIntermediateAddressOrPointer(row);
