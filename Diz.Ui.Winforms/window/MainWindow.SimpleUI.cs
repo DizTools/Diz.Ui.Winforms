@@ -189,7 +189,9 @@ public partial class MainWindow
         // TODO
     }
 
-    private void importCDLToolStripMenuItem_Click_1(object sender, EventArgs e) => ImportBizhawkCDL();
+    private void importCDLToolStripMenuItem_Click_1(object sender, EventArgs e) => ImportBizhawkCdl();
+
+    private void importMesen2CDLToolStripMenuItem_Click(object sender, EventArgs e) => ImportMesen2Cdl();
 
     private void importBsnesTracelogText_Click(object sender, EventArgs e) => ImportBsnesTraceLogText();
 

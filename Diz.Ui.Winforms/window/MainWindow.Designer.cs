@@ -70,6 +70,7 @@ partial class MainWindow
         this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
         this.importUsageMapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         this.importCDLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+        this.importMesen2CDLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         this.toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
         this.importTraceLogText = new System.Windows.Forms.ToolStripMenuItem();
         this.exportToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -462,6 +463,7 @@ partial class MainWindow
         this.toolStripMenuItem2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.importUsageMapToolStripMenuItem,
             this.importCDLToolStripMenuItem,
+            this.importMesen2CDLToolStripMenuItem,
             this.toolStripSeparator8,
             this.importTraceLogText});
         this.toolStripMenuItem2.Name = "toolStripMenuItem2";
@@ -482,8 +484,16 @@ partial class MainWindow
         this.importCDLToolStripMenuItem.Name = "importCDLToolStripMenuItem";
         this.importCDLToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I)));
         this.importCDLToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
-        this.importCDLToolStripMenuItem.Text = "Import CDL...";
+        this.importCDLToolStripMenuItem.Text = "Import Bizhawk CDL (SNES)...";
         this.importCDLToolStripMenuItem.Click += new System.EventHandler(this.importCDLToolStripMenuItem_Click_1);
+        // 
+        // importMesen2CDLToolStripMenuItem
+        // 
+        this.importMesen2CDLToolStripMenuItem.Enabled = false;
+        this.importMesen2CDLToolStripMenuItem.Name = "importMesen2CDLToolStripMenuItem";
+        this.importMesen2CDLToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
+        this.importMesen2CDLToolStripMenuItem.Text = "Import Mesen2 CDL (NES)...";
+        this.importMesen2CDLToolStripMenuItem.Click += new System.EventHandler(this.importMesen2CDLToolStripMenuItem_Click);
         // 
         // toolStripSeparator8
         // 
@@ -1258,6 +1268,7 @@ partial class MainWindow
     private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
     private System.Windows.Forms.ToolStripMenuItem importUsageMapToolStripMenuItem;
     private System.Windows.Forms.ToolStripMenuItem importCDLToolStripMenuItem;
+    private System.Windows.Forms.ToolStripMenuItem importMesen2CDLToolStripMenuItem;
     private System.Windows.Forms.ToolStripSeparator toolStripSeparator8;
     private System.Windows.Forms.ToolStripMenuItem importTraceLogText;
     private System.Windows.Forms.ToolStripMenuItem importCaptureToolStripMenuItem;

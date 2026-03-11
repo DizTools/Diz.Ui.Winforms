@@ -67,8 +67,9 @@ public partial class MainWindow
     private void githubToolStripMenuItem_Click(object sender, EventArgs e) =>
         WinformsGuiUtil.OpenExternalProcess("https://github.com/Isofrieze/DiztinGUIsh");
 
-    private string PromptOpenBizhawkCDLFile()
+    private string PromptOpenCdlFile(string msg)
     {
+        openCDLDialog.Title = msg;
         openCDLDialog.InitialDirectory = Project.ProjectFileName;
         if (openCDLDialog.ShowDialog() != DialogResult.OK)
             return "";
@@ -83,7 +84,7 @@ public partial class MainWindow
             MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
-    private bool PromptForImportBSNESTraceLogFile()
+    private bool PromptForImportBsnesTraceLogFile()
     {
         openTraceLogDialog.Multiselect = true;
         return openTraceLogDialog.ShowDialog() == DialogResult.OK;
