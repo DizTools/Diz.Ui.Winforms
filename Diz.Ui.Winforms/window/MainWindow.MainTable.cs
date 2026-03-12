@@ -259,14 +259,16 @@ public partial class MainWindow
         var snesData = Project.Data.GetSnesApi();
         if (romByte == null || snesData == null)
             return;
+
+        var snesAddressOfRow = Project.Data.ConvertPCtoSnes(row);
         
         switch ((ColumnType) e.ColumnIndex)
         {
             case ColumnType.Label:
-                e.Value = Project.Data.Labels.GetLabelName(Project.Data.ConvertPCtoSnes(row));
+                e.Value = Project.Data.Labels.GetLabelName(snesAddressOfRow);
                 break;
             case ColumnType.Offset:
-                e.Value = Util.NumberToBaseString(Project.Data.ConvertPCtoSnes(row), Util.NumberBase.Hexadecimal, 6);
+                e.Value = Util.NumberToBaseString(Project.ProjectUserSettings.DisplayOffsetsInGrid ? row : snesAddressOfRow, Util.NumberBase.Hexadecimal, 6);
                 break;
             case ColumnType.AsciiCharRep:
                 e.Value = (char)romByte;
@@ -302,7 +304,7 @@ public partial class MainWindow
                 e.Value = RomUtil.BoolToSize(snesData.GetXFlag(row));
                 break;
             case ColumnType.Comment:
-                e.Value = Project.Data.GetCommentText(Project.Data.ConvertPCtoSnes(row));
+                e.Value = Project.Data.GetCommentText(snesAddressOfRow);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

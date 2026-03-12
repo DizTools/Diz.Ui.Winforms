@@ -125,6 +125,19 @@ public partial class MainWindow
 
         importerMenuItemsEnabled = true;
         UpdateImporterEnabledStatus();
+        UpdateColumnHeaderLabels();
+    }
+
+    private void UpdateColumnHeaderLabels()
+    {
+        foreach (DataGridViewColumn column in table.Columns)
+        {
+            if (column.Name == "ColumnPC")
+            {
+                column.HeaderText = Project.ProjectUserSettings.DisplayOffsetsInGrid ? "ROM" : "PC";
+                break;
+            }
+        }
     }
 
     private void ClampViewOffsetToRomSize()
