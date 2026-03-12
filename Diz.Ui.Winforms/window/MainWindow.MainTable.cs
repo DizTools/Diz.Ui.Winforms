@@ -61,7 +61,7 @@ public partial class MainWindow
     }
 
     private void SetRow(int rowIndex) => 
-        table.CurrentCell = table.Rows[rowIndex].Cells[table.CurrentCell.ColumnIndex];
+        table.CurrentCell = table.Rows[rowIndex].Cells[table.CurrentCell?.ColumnIndex ?? 0];
 
 
     private void table_MouseDown(object sender, MouseEventArgs e)
