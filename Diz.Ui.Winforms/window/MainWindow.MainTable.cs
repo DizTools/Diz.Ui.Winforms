@@ -645,9 +645,10 @@ public partial class MainWindow
         InvalidateTable();
     }
 
+    // column == -1 means: use (don't change) current column
     private void InternalSelectOffset(int pcOffset, int column)
     {
-        var col = column == -1 ? table.CurrentCell.ColumnIndex : column;
+        var col = column == -1 ? table.CurrentCell?.ColumnIndex ?? 0 : column;
         if (pcOffset < ViewOffset)
         {
             ViewOffset = pcOffset;
