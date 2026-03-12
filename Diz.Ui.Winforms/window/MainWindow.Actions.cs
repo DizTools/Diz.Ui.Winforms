@@ -424,6 +424,13 @@ public partial class MainWindow
         var propertyEditorForm = new GenericPropertyEditorForm(ProjectController.Project.ProjectSettings);
         propertyEditorForm.ShowDialog();
     }
+    
+    private void ShowProjectUserSettings()
+    {
+        var propertyEditorForm = new GenericPropertyEditorForm(ProjectController.Project.ProjectUserSettings);
+        propertyEditorForm.ShowDialog();
+        RefreshUi();
+    }
 
     private void SetMarkerLabel(FlagType flagType)
     {

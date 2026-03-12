@@ -148,6 +148,7 @@ public partial class MainWindow
     private void EnableSubWindows()
     {
         projectSettingsToolStripMenuItem.Enabled = true;
+        projectUserSettingsToolStripMenuItem.Enabled = true;
     }
 
     public void UpdateSaveOptionStates(bool saveEnabled, bool saveAsEnabled, bool closeEnabled)

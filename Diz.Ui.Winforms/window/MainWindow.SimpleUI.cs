@@ -180,6 +180,8 @@ public partial class MainWindow
     private void moveWithStepToolStripMenuItem_Click(object sender, EventArgs e) => ToggleMoveWithStep();
 
     private void projectSettingsToolStripMenuItem_Click(object sender, EventArgs e) => ShowProjectSettings();
+    
+    private void projectUserSettingsToolStripMenuItem_Click(object sender, EventArgs e) => ShowProjectUserSettings();
 
     private void openLastProjectAutomaticallyToolStripMenuItem_Click(object sender, EventArgs e) =>
         ToggleOpenLastProjectEnabled();
