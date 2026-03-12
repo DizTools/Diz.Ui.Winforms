@@ -226,15 +226,11 @@ public partial class MainWindow
             NavigationForm.BringToFront();
     }
 
-    private void goBackToolStripMenuItem_Click(object sender, EventArgs e) => 
-        NavigationForm.Navigate(forwardDirection: false, 
-            overshootAmount: standardOvershootAmount
-        );
-
-    private void goForwardToolStripMenuItem_Click(object sender, EventArgs e) => 
-        NavigationForm.Navigate(forwardDirection: true, 
-            overshootAmount: standardOvershootAmount
-        );
+    private void goBackToolStripMenuItem_Click(object sender, EventArgs e) => NavigateBackwards();
+    private void goForwardToolStripMenuItem_Click(object sender, EventArgs e) => NavigateForwards();
+    
+    private void NavigateBackwards() => NavigationForm.Navigate(forwardDirection: false, overshootAmount: standardOvershootAmount);
+    private void NavigateForwards() => NavigationForm.Navigate(forwardDirection: true, overshootAmount: standardOvershootAmount);
 
     private void LabelsOnOnLabelChanged(object? sender, EventArgs e)
     {

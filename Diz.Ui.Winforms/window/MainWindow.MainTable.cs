@@ -66,6 +66,18 @@ public partial class MainWindow
 
     private void table_MouseDown(object sender, MouseEventArgs e)
     {
+        switch (e.Button)
+        {
+            // handle mouse extra buttons: "back" and "forward" for navigation
+            // note: might need to remap these for some mice.
+            case MouseButtons.XButton1:  // Back
+                NavigateBackwards();
+                break;
+            case MouseButtons.XButton2:  // Forward
+                NavigateForwards();
+                break;
+        }
+
         InvalidateTable();
     }
 
