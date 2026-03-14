@@ -2,7 +2,7 @@
 
 public sealed class GenericPropertyEditorForm : Form
 {
-    private PropertyGrid propertyGrid;
+    private readonly PropertyGrid propertyGrid;
 
     public GenericPropertyEditorForm(object items, string windowTitle = "Edit Properties")
     {
@@ -30,7 +30,7 @@ public sealed class GenericPropertyEditorForm : Form
     private void ExpandAllGridItems()
     {
         var root = propertyGrid.SelectedGridItem;
-        while (root.Parent != null) {
+        while (root?.Parent != null) {
             root = root.Parent;
         }
 

@@ -78,14 +78,9 @@ public partial class MainWindow
         var recalculatingInProgress = _cooldownForPercentUpdate != -1;
 
         var reCalcMsg  = recalculatingInProgress ? "[recalculating...]" : "";
-        if (reached == -1)
-        {
-            percentComplete.Text = reCalcMsg;
-        }
-        else
-        {
-            percentComplete.Text = $"{reached * 100.0 / size:N3}% ({reached:D}/{size:D}) {reCalcMsg}";
-        }
+        percentComplete.Text = reached == -1 
+            ? reCalcMsg 
+            : $"{reached * 100.0 / size:N3}% ({reached:D}/{size:D}) {reCalcMsg}";
 
         _cachedReached = reached;
     }
@@ -95,17 +90,33 @@ public partial class MainWindow
     // CAUTION: very expensive method. be careful using in UI performance-critical places
     private int CalculateTotalBytesReached()
     {
+        var snesData = Project.Data.GetSnesApi();
+        if (snesData == null)
+            return 0;
+        
         int totalUnreached = 0, size = Project.Data.GetRomSize();
-        for (int i = 0; i < size; i++)
-            if (Project.Data.GetSnesApi().GetFlag(i) == FlagType.Unreached)
+        for (var i = 0; i < size; i++)
+        {
+            if (snesData.GetFlag(i) == FlagType.Unreached)
                 totalUnreached++;
-        int reached = size - totalUnreached;
+        }
+
+        var reached = size - totalUnreached;
         return reached;
     }
 
-    public void UpdateMarkerLabel()
+    // SNES address of an in-progress multi-selection
+    // the end may be BEFORE this address, so be prepared for that.
+    // this is just the address we selected at the start of the operation
+    // -1 if no multiselect in progress
+    private int multiSelectOffestStart = -1;
+
+    private void UpdateMarkerAndMultiselectLabel()
     {
-        currentMarker.Text = $"Marker: {markFlag.ToString()}";
+        var currentMarkerText = $"Marker: {markFlag.ToString()}";
+        var selectText = multiSelectOffestStart != -1 ? $" | @ ${multiSelectOffestStart:X6}" : "";
+        
+        currentMarker.Text = currentMarkerText + selectText;
     }
 
     private void UpdateDataGridView()

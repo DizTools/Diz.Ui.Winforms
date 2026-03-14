@@ -71,13 +71,14 @@ public partial class MarkManyView<TDataSource> : Form, IMarkManyView<TDataSource
         
     private void UpdatePropertyIndex(MarkCommand.MarkManyProperty eProperty)
     {
-        // TODO: woof. fixme :) very, very hardcoded
+        // TODO: woof. fixme :) very, very hardcoded. real bad to do it this way
         comboPropertyType.SelectedIndex = (int) eProperty;
     }
         
     private void ClampPropertyValue() => 
         propertyValueIntDpOrD = Util.ClampIndex(propertyValueIntDpOrD, PropertyMaxIntVal);
 
+    // oof. extremely hardcoded, replace this
     public FlagType GetFlagTypeFromComboBox() =>
         flagCombo.SelectedIndex switch
         {
@@ -98,6 +99,7 @@ public partial class MarkManyView<TDataSource> : Form, IMarkManyView<TDataSource
             _ => 0
         };
         
+    // oof. extremely hardcoded, replace this
     public int GetComboxBoxIndexFromFlagType(FlagType flagType) =>
         flagType switch
         {
@@ -118,6 +120,7 @@ public partial class MarkManyView<TDataSource> : Form, IMarkManyView<TDataSource
             _ => 0
         };
 
+    // oof. extremely hardcoded, replace this
     public Architecture GetCpuArchFromComboBox() =>
         archCombo.SelectedIndex switch
         {
@@ -127,6 +130,7 @@ public partial class MarkManyView<TDataSource> : Form, IMarkManyView<TDataSource
             _ => 0
         };
         
+    // oof. extremely hardcoded, replace this
     public int GetComboBoxFromCpuArch(Architecture arch) =>
         arch switch
         {
@@ -146,6 +150,7 @@ public partial class MarkManyView<TDataSource> : Form, IMarkManyView<TDataSource
     public object GetPropertyValue() => 
         GetPropertyValue(comboPropertyType.SelectedIndex);
 
+    // oof. extremely hardcoded, replace this
     private object GetPropertyValue(int whichProperty)
     {
         // ReSharper disable once HeapView.BoxingAllocation
@@ -161,12 +166,9 @@ public partial class MarkManyView<TDataSource> : Form, IMarkManyView<TDataSource
         };
     }
 
-    public void AttemptSetSettings(MarkCommand.MarkManyProperty markProperty, object markValue)
+    public void RestoreUiFromSettings(MarkCommand.MarkManyProperty markProperty, object markValue)
     {
-        if (markValue == null)
-            return;
-
-        // wooooooofffffffff..... fixme. jank as hell.
+        // this is still kind of heinous
         try
         {
             switch (markProperty)
@@ -193,29 +195,24 @@ public partial class MarkManyView<TDataSource> : Form, IMarkManyView<TDataSource
         }
     }
 
-    public void AttemptSetSettings(Dictionary<MarkCommand.MarkManyProperty, object> settings)
+    public void RestoreUiFromSettings(MarkManyViewSettings settings)
     {
-        // TODO: this doesn't work yet for the properties that are shared like D and DP.
-        // we need to make the UI read from these settings instead of stuffing their values into them
-        // one-time. For now, it's still a decent way to go.
-            
-        foreach (var kvp in settings)
-        {
-            var settingsProperty = kvp.Key;
-            var settingsValue = kvp.Value;
-
-            AttemptSetSettings(settingsProperty, settingsValue);
+        foreach (var (settingsProperty, settingsValue) in settings.AllSettings) {
+            RestoreUiFromSettings(settingsProperty, settingsValue);
         }
+
+        Property = settings.SelectedProperty;
     }
 
-    public Dictionary<MarkCommand.MarkManyProperty, object> SaveCurrentSettings()
+    public MarkManyViewSettings BuildSettingsFromUi()
     {
-        var outputSettings = new Dictionary<MarkCommand.MarkManyProperty, object>();
-            
-        for (var i = 0; i < comboPropertyType.Items.Count; ++i)
-        {
-            var val = GetPropertyValue(i);
-            outputSettings.Add((MarkCommand.MarkManyProperty) i, val);
+        var outputSettings = new MarkManyViewSettings {
+            SelectedProperty = Property,
+        };
+
+        for (var i = 0; i < comboPropertyType.Items.Count; ++i) {
+            var val = GetPropertyValue(i); // this suckkks
+            outputSettings.AllSettings.Add((MarkCommand.MarkManyProperty) i, val);
         }
 
         return outputSettings;

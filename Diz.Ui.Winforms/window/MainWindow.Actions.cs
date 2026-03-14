@@ -151,34 +151,48 @@ public partial class MainWindow
         UpdateUi_TimerAndPercent();
     }
 
-    private void MarkMany(int offset, MarkCommand.MarkManyProperty property)
+    private bool MarkMany(MarkCommand.MarkManyProperty? initialPropertySelected = null)
     {
         if (!RomDataPresent()) 
-            return;
+            return false;
+        
+        const int defaultCount = 0x10;
 
-        var mark = PromptMarkMany(offset, property);
-        if (mark == null)
-            return;
+        // if we don't have multiselect, use these:
+        var startOffset = SelectedOffset;
+        var count = defaultCount;
+        
+        if (GetNormalizedMultiSelectRange(out var multiStartOffset, out var multiEndOffset))
+        {
+            // we have a valid multiselect range, use that
+            startOffset = multiStartOffset;
+            count = multiEndOffset - multiStartOffset + 1;
+        }
 
-        MarkMany(mark.Property, mark.Start, mark.Value, mark.Count);
+        var markCommandToExecute = PromptBuildMarkManyCommand(startOffset, count, initialPropertySelected);
+        if (markCommandToExecute == null)
+            return false;
 
+        ExecuteMarkManyCommand(markCommandToExecute);
         UpdateSomeUI2();
+
+        return true;
     }
 
-    private void MarkMany(MarkCommand.MarkManyProperty markProperty, int markStart, object markValue, int markCount)
+    private void ExecuteMarkManyCommand(MarkCommand command)
     {
         var snesApi = Project.Data.GetSnesApi();
         if (snesApi == null)
             return;
             
-        var newNavigatedOffset = markProperty switch
+        var newNavigatedOffset = command.Property switch
         {
-            MarkCommand.MarkManyProperty.Flag => snesApi.MarkTypeFlag(markStart, (FlagType) markValue, markCount),
-            MarkCommand.MarkManyProperty.DataBank => snesApi.MarkDataBank(markStart, (int) markValue, markCount),
-            MarkCommand.MarkManyProperty.DirectPage => snesApi.MarkDirectPage(markStart, (int) markValue, markCount),
-            MarkCommand.MarkManyProperty.MFlag => snesApi.MarkMFlag(markStart, (bool) markValue, markCount),
-            MarkCommand.MarkManyProperty.XFlag => snesApi.MarkXFlag(markStart, (bool) markValue, markCount),
-            MarkCommand.MarkManyProperty.CpuArch => snesApi.MarkArchitecture(markStart, (Architecture) markValue, markCount),
+            MarkCommand.MarkManyProperty.Flag => snesApi.MarkTypeFlag(command.Start, (FlagType) command.Value, command.Count),
+            MarkCommand.MarkManyProperty.DataBank => snesApi.MarkDataBank(command.Start, (int) command.Value, command.Count),
+            MarkCommand.MarkManyProperty.DirectPage => snesApi.MarkDirectPage(command.Start, (int) command.Value, command.Count),
+            MarkCommand.MarkManyProperty.MFlag => snesApi.MarkMFlag(command.Start, (bool) command.Value, command.Count),
+            MarkCommand.MarkManyProperty.XFlag => snesApi.MarkXFlag(command.Start, (bool) command.Value, command.Count),
+            MarkCommand.MarkManyProperty.CpuArch => snesApi.MarkArchitecture(command.Start, (Architecture) command.Value, command.Count),
             _ => -1
         };
 
@@ -186,6 +200,8 @@ public partial class MainWindow
 
         if (moveWithStep && newNavigatedOffset != -1)
             SelectOffset(newNavigatedOffset, new ISnesNavigation.HistoryArgs {Description = "Mark (multi)"});
+        
+        CancelMultiSelect();
     }
 
     private void GoToIntermediateAddress(int offset)
@@ -435,7 +451,7 @@ public partial class MainWindow
     private void SetMarkerLabel(FlagType flagType)
     {
         markFlag = flagType;
-        UpdateMarkerLabel();
+        UpdateMarkerAndMultiselectLabel();
     }
 
     private void ToggleMoveWithStep()

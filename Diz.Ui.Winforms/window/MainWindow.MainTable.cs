@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using Diz.Controllers.controllers;
+using Diz.Core.commands;
 using Diz.Core.Interfaces;
 using Diz.Core.util;
 using Diz.Cpu._65816;
@@ -105,16 +106,23 @@ public partial class MainWindow
 
         table.CurrentCell = table.Rows[table.CurrentCell.RowIndex].Cells[newColumnIndex];
     }
-    
+
+    private void CancelMultiSelect()
+    {
+        multiSelectOffestStart = -1;
+        InvalidateTable();
+    }
     
     private void BeginEditingColumn(ColumnType columnType)
     {
+        CancelMultiSelect(); // probably the right call
+        
         table.CurrentCell = GetCellInSelectedRowByColumnType(columnType);
         table.BeginEdit(true);
     }
 
     private DataGridViewCell GetCellInSelectedRowByColumnType(ColumnType columnType) => 
-        table.Rows[table.CurrentCell.RowIndex].Cells[(int) columnType];
+        table.Rows[table.CurrentCell?.RowIndex ?? 0].Cells[(int) columnType];
 
     private void ScrollVertically(int offset, int amount)
     {
@@ -220,6 +228,15 @@ public partial class MainWindow
                 e.Handled = true;
                 break;
             
+            case Keys.Q:
+                OnMultiSelectToggle();
+                e.Handled = true;
+                break;
+            case Keys.Escape:
+                CancelMultiSelect();
+                e.Handled = true;
+                break;
+            
             // I don't like this because it messes with CTRL+C
             // case Keys.C:
             //     BeginEditingColumn(ColumnType.Comment);
@@ -236,12 +253,13 @@ public partial class MainWindow
                 break;
             
             case Keys.Enter:
+                CancelMultiSelect();
                 table.BeginEdit(true);
                 e.Handled = true;
                 break;
             
             case Keys.Delete:
-                if (table.CurrentCell.ColumnIndex == (int)ColumnType.Label)
+                if (table.CurrentCell?.ColumnIndex == (int)ColumnType.Label)
                 {
                     // if editing a label, delete this label (don't just set to empty or we'll end up with blank labels)
                     var labels = snesData.Data.Labels;
@@ -253,12 +271,35 @@ public partial class MainWindow
                 }
                 
                 // for everything else BUT labels, this is fine:
-                table.CurrentCell.Value = null;
+                if (table.CurrentCell != null)
+                    table.CurrentCell.Value = null;
                 e.Handled = true;
                 break;
         }
         
         InvalidateTable();
+    }
+
+    private void OnMultiSelectToggle()
+    {
+        if (multiSelectOffestStart == -1)
+        {
+            // start multiselecting
+            multiSelectOffestStart = SelectedOffset;
+            InvalidateTable();
+            return;
+        }
+        
+        OnMultiSelectCompleted();
+    }
+
+    private void OnMultiSelectCompleted()
+    {
+        // do something with the multiselect range we just confirmed.
+        // we can do whatever, but for now we'll just do the MarkMany
+        MarkMany();
+
+        CancelMultiSelect();
     }
 
     private void table_CellValueNeeded(object sender, DataGridViewCellValueEventArgs e)
@@ -411,7 +452,7 @@ public partial class MainWindow
 
         if (selOffset < 0 || selOffset >= Project.Data.GetRomSize()) 
             return;
-        
+
         switch (column)
         {
             case (int) ColumnType.Offset 
@@ -423,6 +464,39 @@ public partial class MainWindow
                 style.BackColor = Color.DeepPink;
                 break;
         }
+
+        // override all colors for multiselected rows on particular columns
+        var isHighlightedForMultiSelect = column is (int) ColumnType.Label or (int) ColumnType.Offset or (int) ColumnType.IA;
+        if (isHighlightedForMultiSelect)
+        {
+            if (GetNormalizedMultiSelectRange(out var multiStartOffset, out var multiEndOffset) && offset >= multiStartOffset && offset <= multiEndOffset)
+            {
+                style.BackColor = Color.DarkBlue;
+                style.ForeColor = Color.Yellow;
+            }
+        }
+    }
+
+    // multiselect start position and the current cursor position (selected cell) may be before or after each other.
+    // this function returns the two in a particular order so start <= end
+    // return false if no multiselect is active
+    public bool GetNormalizedMultiSelectRange(out int startOffset, out int endOffset)
+    {
+        startOffset = endOffset = -1;
+        if (multiSelectOffestStart == -1)
+            return false;
+        
+        if (multiSelectOffestStart < SelectedOffset)
+        {
+            startOffset = multiSelectOffestStart;
+            endOffset = SelectedOffset;
+        }
+        else
+        {
+            startOffset = SelectedOffset;
+            endOffset = multiSelectOffestStart;
+        }
+        return true;
     }
 
     public enum RuledLineStyle

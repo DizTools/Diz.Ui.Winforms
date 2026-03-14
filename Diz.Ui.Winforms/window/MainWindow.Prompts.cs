@@ -1,4 +1,5 @@
 ﻿using Diz.Controllers.controllers;
+using Diz.Controllers.interfaces;
 using Diz.Core.commands;
 using Diz.Cpu._65816;
 using Diz.LogWriter;
@@ -100,7 +101,12 @@ public partial class MainWindow
         if (!RomDataPresent())
             return -1;
 
-        var go = new GotoDialog(ViewOffset + table.CurrentCell.RowIndex, Project.Data);
+        var go = new GotoDialog(
+            ViewOffset + table.CurrentCell?.RowIndex ?? 0, 
+            Project.Data, 
+            initiallySelectSnesAddr: !Project.ProjectUserSettings.DisplayOffsetsInGrid 
+        );
+        
         var result = go.ShowDialog();
         if (result != DialogResult.OK)
             return -1;
@@ -125,30 +131,37 @@ public partial class MainWindow
         count = harsh.Count;
         return true;
     }
+    
+    // -----------------------
+    
+    private MarkManyViewSettings savedMarkManySettings = new();
 
-    public MarkCommand PromptMarkMany(int offset, MarkCommand.MarkManyProperty property)
+    private MarkCommand? PromptBuildMarkManyCommand(int offset, int count, MarkCommand.MarkManyProperty? property = null)
     {
-        var markManyController = CreateMarkManyController(offset, property);
-        var markCommand = markManyController.GetMarkCommand();
+        var settingToUse = savedMarkManySettings;
+        if (property != null)
+            settingToUse.SelectedProperty = property.Value;
+        
+        var markManyController = CreateMarkManyController();
+        var markCommand = markManyController.Show(startOffset: offset, count: count, inputSettings: settingToUse);
 
-        if (markCommand != null) 
-            SavedMarkManySettings = markManyController.Settings;
-
+        if (markCommand == null)
+            return null;
+            
+        // save a copy of previous UI settings, so we can restore them next time
+        savedMarkManySettings = markManyController.GetCurrentSettings();
         return markCommand;
     }
-
-    private Dictionary<MarkCommand.MarkManyProperty, object> SavedMarkManySettings { get; set; } = new();
         
-    private MarkManyController<ISnesData> CreateMarkManyController(int offset, MarkCommand.MarkManyProperty property)
+    private MarkManyController<ISnesData> CreateMarkManyController()
     {
-        // NOTE: in upstream 3.0 branch, replace this with dependency injection
+        // TODO: replace view creation with dependency injection
         var view = new MarkManyView<ISnesData>();
-        var markManyController = new MarkManyController<ISnesData>(offset, property, Project.Data.GetSnesApi(), view)
-        {
-            Settings = SavedMarkManySettings
-        };
-        markManyController.MarkManyView.Controller = markManyController;
-        return markManyController;
+        var snesData = Project.Data.GetSnesApi();
+        
+        return snesData == null 
+            ? throw new InvalidOperationException("No snes data present") 
+            : new MarkManyController<ISnesData>(snesData, view);
     }
 
     private bool PromptForMisalignmentCheck()
@@ -177,7 +190,7 @@ public partial class MainWindow
         string initialDir = null; // TODO: Project.ProjectFileName
         return WinformsGuiUtil.PromptToConfirmAction(promptSubject, promptText, 
             () => WinformsGuiUtil.PromptToSelectFile(initialDir)
-        );
+        ) ?? "";
     }
 
     public void OnProjectOpenWarnings(IEnumerable<string> warnings)

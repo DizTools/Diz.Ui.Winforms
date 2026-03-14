@@ -7,17 +7,23 @@ namespace Diz.Ui.Winforms.dialogs;
 public partial class GotoDialog : Form
 {
     private readonly Data data;
-    public GotoDialog(int offset, Data data)
+    private readonly bool initiallySelectSnesAddr;
+    public GotoDialog(int offset, Data data, bool initiallySelectSnesAddr = true)
     {
         InitializeComponent();
         this.data = data;
+        this.initiallySelectSnesAddr = initiallySelectSnesAddr;
         textROM.Text = Util.NumberToBaseString((uint)data.ConvertPCtoSnes(offset), Util.NumberBase.Hexadecimal, 6);
         textPC.Text = Util.NumberToBaseString((uint)offset, Util.NumberBase.Hexadecimal, 0);
     }
 
     private void GotoDialog_Load(object sender, EventArgs e)
     {
-        textROM.SelectAll();
+        if (!initiallySelectSnesAddr)
+            textROM.SelectAll();
+        else
+            textPC.SelectAll();
+        
         UpdateUi();
     }
 
