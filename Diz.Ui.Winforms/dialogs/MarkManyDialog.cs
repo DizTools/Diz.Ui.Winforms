@@ -260,17 +260,17 @@ public partial class MarkManyView<TDataSource> : Form, IMarkManyView<TDataSource
     }
 
     private void UpdateRegValueText() => 
-        regValue.Text = Util.NumberToBaseString(propertyValueIntDpOrD, NoBase, 0);
+        regValue.Text = Util.NumberToBaseString((uint)propertyValueIntDpOrD, NoBase, 0);
 
     private void UpdateCountText() => 
-        textCount.Text = Util.NumberToBaseString(Controller.DataRange.RangeCount, NoBase, 0);
+        textCount.Text = Util.NumberToBaseString((uint)Controller.DataRange.RangeCount, NoBase, 0);
 
     private void UpdateEndText() => 
-        textEnd.Text = Util.NumberToBaseString(radioSNES.Checked ? Data.ConvertPCtoSnes(Controller.DataRange.EndIndex) : Controller.DataRange.EndIndex, NoBase, DigitCount);
+        textEnd.Text = Util.NumberToBaseString((uint)(radioSNES.Checked ? Data.ConvertPCtoSnes(Controller.DataRange.EndIndex) : Controller.DataRange.EndIndex), NoBase, DigitCount);
 
     private void UpdateStartText() =>
         textStart.Text =
-            Util.NumberToBaseString(radioSNES.Checked ? Data.ConvertPCtoSnes(Controller.DataRange.StartIndex) : Controller.DataRange.StartIndex, NoBase, DigitCount);
+            Util.NumberToBaseString((uint)(radioSNES.Checked ? Data.ConvertPCtoSnes(Controller.DataRange.StartIndex) : Controller.DataRange.StartIndex), NoBase, DigitCount);
 
     private void property_SelectedIndexChanged(object sender, EventArgs e) => UpdateVisibility();
 

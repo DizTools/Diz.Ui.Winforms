@@ -210,7 +210,7 @@ public partial class ImportRomDialog : Form, IImportRomDialogView
 
     private static void SetGuiForVectorEntry(int vectorValue, Control textBox, CheckBox checkBox)
     {
-        textBox.Text = Util.NumberToBaseString(vectorValue, Util.NumberBase.Hexadecimal, 4);
+        textBox.Text = Util.NumberToBaseString((uint)vectorValue, Util.NumberBase.Hexadecimal, 4);
 
         var enabled = vectorValue >= 0x8000;
         checkBox.Checked = checkBox.Enabled = enabled;

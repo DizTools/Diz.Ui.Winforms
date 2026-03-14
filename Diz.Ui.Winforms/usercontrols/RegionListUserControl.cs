@@ -177,7 +177,7 @@ private void RegionGridView_CellFormatting(object? sender, DataGridViewCellForma
          regionGridView.Columns[e.ColumnIndex].Name == "EndSnesAddress") && 
         e.Value is int intValue)
     {
-        e.Value = Util.NumberToBaseString(intValue, Util.NumberBase.Hexadecimal, 6, showPrefix: false);
+        e.Value = Util.NumberToBaseString((uint)intValue, Util.NumberBase.Hexadecimal, 6, showPrefix: false);
         e.FormattingApplied = true;
     }
 }
