@@ -7,7 +7,7 @@ namespace Diz.Ui.Winforms.dialogs;
 public partial class NavigationForm : Form
 {
     private IDizDocument document;
-    private ISnesNavigation snesNavigation;
+    private IProjectNavigation snesNavigation;
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public IDizDocument Document
@@ -21,7 +21,7 @@ public partial class NavigationForm : Form
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public ISnesNavigation SnesNavigation
+    public IProjectNavigation SnesNavigation
     {
         get => snesNavigation;
         set

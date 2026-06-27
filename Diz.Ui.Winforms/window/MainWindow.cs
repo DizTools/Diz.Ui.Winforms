@@ -224,7 +224,7 @@ public partial class MainWindow : Form, IMainGridWindowView
         BringFormToTop();
     }
 
-    private void RememberNavigationPoint(int pcOffset, ISnesNavigation.HistoryArgs? historyArgs)
+    private void RememberNavigationPoint(int pcOffset, IProjectNavigation.HistoryArgs? historyArgs)
     {
         var snesAddress = Project.Data.ConvertPCtoSnes(pcOffset);
         var history = Document.NavigationHistory;

@@ -1,6 +1,7 @@
 ﻿using Diz.Controllers.controllers;
 using Diz.Controllers.interfaces;
 using Diz.Core.commands;
+using Diz.Core.Interfaces;
 using Diz.Cpu._65816;
 using Diz.LogWriter;
 using Diz.Ui.Winforms.dialogs;
@@ -153,15 +154,15 @@ public partial class MainWindow
         return markCommand;
     }
         
-    private MarkManyController<ISnesData> CreateMarkManyController()
+    private MarkManyController<ISnesApi<IData>> CreateMarkManyController()
     {
         // TODO: replace view creation with dependency injection
-        var view = new MarkManyView<ISnesData>();
+        var view = new MarkManyView<ISnesApi<IData>>();
         var snesData = Project.Data.GetSnesApi();
         
         return snesData == null 
             ? throw new InvalidOperationException("No snes data present") 
-            : new MarkManyController<ISnesData>(snesData, view);
+            : new MarkManyController<ISnesApi<IData>>(snesData, view);
     }
 
     private bool PromptForMisalignmentCheck()

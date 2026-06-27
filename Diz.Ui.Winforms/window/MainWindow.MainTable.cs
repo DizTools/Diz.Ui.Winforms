@@ -577,7 +577,7 @@ public partial class MainWindow
         // placeLineAbove |= snesData.GetInOutPoint(offset) == InOutPoint.InPoint;
     }
 
-    private Color? GetDisplayColorForRowFlaggedAsOpcode(int offset, int column, ISnesData snesData)
+    private Color? GetDisplayColorForRowFlaggedAsOpcode(int offset, int column, ISnesApi<IData> snesData)
     {
         int opcode = Project.Data.GetRomByte(offset) ?? 0x0;
         var whichColumn = (ColumnType)column;
@@ -671,7 +671,7 @@ public partial class MainWindow
         e.Handled = true; // Prevent default painting
     }
 
-    public void MarkHistoryPoint(int pcOffset, ISnesNavigation.HistoryArgs? historyArgs, string position)
+    public void MarkHistoryPoint(int pcOffset, IProjectNavigation.HistoryArgs? historyArgs, string position)
     {
         if (historyArgs == null) 
             return;
@@ -684,10 +684,10 @@ public partial class MainWindow
     public void SelectOffsetWithOvershoot(int pcOffset, int overshootAmount = 0)
         => SelectOffset(pcOffset, -1, null, overshootAmount);
 
-    public void SelectOffset(int pcOffset, ISnesNavigation.HistoryArgs? historyArgs = null)
+    public void SelectOffset(int pcOffset, IProjectNavigation.HistoryArgs? historyArgs = null)
         => SelectOffset(pcOffset, -1, historyArgs);
 
-    public void SelectOffset(int pcOffset, int column = -1, ISnesNavigation.HistoryArgs? historyArgs = null, int overshootAmount=0)
+    public void SelectOffset(int pcOffset, int column = -1, IProjectNavigation.HistoryArgs? historyArgs = null, int overshootAmount=0)
     {
         if (pcOffset == -1)
             return;

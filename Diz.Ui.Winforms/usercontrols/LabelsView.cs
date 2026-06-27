@@ -400,7 +400,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
 
         ProjectController.SelectOffset(
             romOffsetOfSelection,
-            new ISnesNavigation.HistoryArgs { Description = "Jump To Label" }
+            new IProjectNavigation.HistoryArgs { Description = "Jump To Label" }
         );
     }
 

@@ -89,7 +89,7 @@ public partial class MainWindow
             
         ProjectController.MarkChanged();
         var newOffset = snesData.Step(offset, false, false, offset - 1);
-        SelectOffset(newOffset, -1, new ISnesNavigation.HistoryArgs {Description = "Step Over"}, overshootAmount: standardOvershootAmount);
+        SelectOffset(newOffset, -1, new IProjectNavigation.HistoryArgs {Description = "Step Over"}, overshootAmount: standardOvershootAmount);
         UpdateUi_TimerAndPercent();
     }
 
@@ -100,7 +100,7 @@ public partial class MainWindow
             
         ProjectController.MarkChanged();
         var newOffset = Project.Data.GetSnesApi().Step(offset, true, false, offset - 1);
-        SelectOffset(newOffset, -1, new ISnesNavigation.HistoryArgs {Description = "Step Into"}, overshootAmount: standardOvershootAmount);
+        SelectOffset(newOffset, -1, new IProjectNavigation.HistoryArgs {Description = "Step Into"}, overshootAmount: standardOvershootAmount);
         UpdateUi_TimerAndPercent();
     }
 
@@ -112,7 +112,7 @@ public partial class MainWindow
         ProjectController.MarkChanged();
         var destination = Project.Data.GetSnesApi().AutoStepSafe(offset);
         if (moveWithStep) 
-            SelectOffset(destination, -1, new ISnesNavigation.HistoryArgs {Description = "AutoStep (Safe)"}, overshootAmount: standardOvershootAmount);
+            SelectOffset(destination, -1, new IProjectNavigation.HistoryArgs {Description = "AutoStep (Safe)"}, overshootAmount: standardOvershootAmount);
             
         UpdateUi_TimerAndPercent();
     }
@@ -129,7 +129,7 @@ public partial class MainWindow
         var destination = Project.Data.GetSnesApi().AutoStepHarsh(newOffset, count);
             
         if (moveWithStep) 
-            SelectOffset(destination, -1, new ISnesNavigation.HistoryArgs {Description = "AutoStep (Harsh)"}, overshootAmount: standardOvershootAmount);
+            SelectOffset(destination, -1, new IProjectNavigation.HistoryArgs {Description = "AutoStep (Harsh)"}, overshootAmount: standardOvershootAmount);
 
         UpdateUi_TimerAndPercent();
     }
@@ -146,7 +146,7 @@ public partial class MainWindow
         ProjectController.MarkChanged();
         var newOffset = snesData.MarkTypeFlag(offset, markFlag, RomUtil.GetByteLengthForFlag(markFlag));
             
-        SelectOffset(newOffset, -1, new ISnesNavigation.HistoryArgs {Description = "Mark (single)"}, overshootAmount: standardOvershootAmount);
+        SelectOffset(newOffset, -1, new IProjectNavigation.HistoryArgs {Description = "Mark (single)"}, overshootAmount: standardOvershootAmount);
             
         UpdateUi_TimerAndPercent();
     }
@@ -199,7 +199,7 @@ public partial class MainWindow
         ProjectController.MarkChanged();
 
         if (moveWithStep && newNavigatedOffset != -1)
-            SelectOffset(newNavigatedOffset, new ISnesNavigation.HistoryArgs {Description = "Mark (multi)"});
+            SelectOffset(newNavigatedOffset, new IProjectNavigation.HistoryArgs {Description = "Mark (multi)"});
         
         CancelMultiSelect();
     }
@@ -210,13 +210,13 @@ public partial class MainWindow
         if (snesOffset == -1)
             return;
             
-        SelectOffset(snesOffset, -1, new ISnesNavigation.HistoryArgs {Description = "GoTo Intermediate Addr"}, overshootAmount: standardOvershootAmount);
+        SelectOffset(snesOffset, -1, new IProjectNavigation.HistoryArgs {Description = "GoTo Intermediate Addr"}, overshootAmount: standardOvershootAmount);
     }
 
     public void GoTo(int offset)
     {
         if (IsOffsetInRange(offset))
-            SelectOffset(offset, -1, new ISnesNavigation.HistoryArgs {Description = "Goto"}, overshootAmount: standardOvershootAmount);
+            SelectOffset(offset, -1, new IProjectNavigation.HistoryArgs {Description = "Goto"}, overshootAmount: standardOvershootAmount);
         else
             ShowOffsetOutOfRangeMsg();
     }
@@ -289,7 +289,7 @@ public partial class MainWindow
 
             // very optional. just to create an entry in the history.
             MarkHistoryPoint(iaSourceOffsetPc,
-                new ISnesNavigation.HistoryArgs { Description = "Find next unreached: branch origin" }, "origin");
+                new IProjectNavigation.HistoryArgs { Description = "Find next unreached: branch origin" }, "origin");
         }
         else
         {
@@ -303,11 +303,11 @@ public partial class MainWindow
             
             // very optional. just to create an entry in the history.
             MarkHistoryPoint(foundOffset,
-                new ISnesNavigation.HistoryArgs { Description = "Find next unreached: untaken branch point" }, "origin");
+                new IProjectNavigation.HistoryArgs { Description = "Find next unreached: untaken branch point" }, "origin");
         }
 
         // now, set the real position
-        SelectOffset(foundOffset, -1, new ISnesNavigation.HistoryArgs { Description = "Find next unreached branch point" }, overshootAmount: standardOvershootAmount);
+        SelectOffset(foundOffset, -1, new IProjectNavigation.HistoryArgs { Description = "Find next unreached branch point" }, overshootAmount: standardOvershootAmount);
     }
     
     
@@ -335,12 +335,12 @@ public partial class MainWindow
         }
         
         MarkHistoryPoint(possiblePointerTablePcOffset,
-            new ISnesNavigation.HistoryArgs { Description = "Detect next pointer table" }, "origin");
+            new IProjectNavigation.HistoryArgs { Description = "Detect next pointer table" }, "origin");
         
-        SelectOffset(possiblePointerTablePcOffset, -1, new ISnesNavigation.HistoryArgs { Description = "Detect next pointer table" }, overshootAmount: standardOvershootAmount);
+        SelectOffset(possiblePointerTablePcOffset, -1, new IProjectNavigation.HistoryArgs { Description = "Detect next pointer table" }, overshootAmount: standardOvershootAmount);
     }
     
-    private static ISnesNavigation.HistoryArgs BuildUnreachedHistoryArgs(bool fromStartOrEnd, bool forwardDirection)
+    private static IProjectNavigation.HistoryArgs BuildUnreachedHistoryArgs(bool fromStartOrEnd, bool forwardDirection)
     {
         var dirStr = forwardDirection ? "Forward" : "Previous";
         var endStr = !fromStartOrEnd ? "" 
@@ -348,7 +348,7 @@ public partial class MainWindow
                 ? " (From ROM start)" 
                 : " (From ROM end)";
             
-        return new ISnesNavigation.HistoryArgs
+        return new IProjectNavigation.HistoryArgs
         {
             Description = $"GoTo Unreached: {dirStr} {endStr}"
         };

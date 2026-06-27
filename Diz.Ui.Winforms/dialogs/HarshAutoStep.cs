@@ -3,6 +3,7 @@ using System.Globalization;
 using Diz.Core.model.snes;
 using Diz.Core.util;
 using System.ComponentModel;
+using Diz.Core.model;
 
 namespace Diz.Ui.Winforms.dialogs;
 

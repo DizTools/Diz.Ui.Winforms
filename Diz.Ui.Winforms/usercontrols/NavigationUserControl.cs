@@ -40,7 +40,7 @@ namespace Diz.Ui.Winforms.usercontrols
         }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public ISnesNavigation SnesNavigation { get; set; }
+        public IProjectNavigation SnesNavigation { get; set; }
 
         public NavigationUserControl()
         {
