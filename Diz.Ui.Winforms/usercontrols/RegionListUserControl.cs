@@ -76,6 +76,19 @@ private void SetupColumns()
         Width = 100
     };
     
+    // ExportType is an enum: bind the combobox items to the enum values themselves (not strings)
+    // so the selected item round-trips straight back through the binding source without conversion.
+    var exportTypeColumn = new DataGridViewComboBoxColumn
+    {
+        Name = "ExportType",
+        DataPropertyName = "ExportType",
+        HeaderText = "Export Type",
+        Width = 90,
+        ValueType = typeof(RegionExportType),
+        DataSource = Enum.GetValues(typeof(RegionExportType)),
+        FlatStyle = FlatStyle.Flat
+    };
+
     regionGridView.Columns.AddRange(new DataGridViewColumn[]
     {
         startAddressColumn,
@@ -107,6 +120,28 @@ private void SetupColumns()
             DataPropertyName = "ExportSeparateFile",
             HeaderText = "Export Separate File", 
             Width = 50 // for header
+        },
+        exportTypeColumn,
+        new DataGridViewTextBoxColumn
+        {
+            Name = "AssetType",
+            DataPropertyName = "AssetType",
+            HeaderText = "Asset Type",
+            Width = 110
+        },
+        new DataGridViewTextBoxColumn
+        {
+            Name = "AssetVersion",
+            DataPropertyName = "AssetVersion",
+            HeaderText = "Asset Version",
+            Width = 80
+        },
+        new DataGridViewTextBoxColumn
+        {
+            Name = "AssetName",
+            DataPropertyName = "AssetName",
+            HeaderText = "Asset Name",
+            Width = 150
         },
         new DataGridViewButtonColumn
         {
@@ -180,6 +215,47 @@ private void RegionGridView_CellFormatting(object? sender, DataGridViewCellForma
         e.Value = Util.NumberToBaseString(intValue, Util.NumberBase.Hexadecimal, 6, showPrefix: false);
         e.FormattingApplied = true;
     }
+
+    ApplyAssetCellStyling(e);
+}
+
+// the asset columns only mean anything when we're not exporting as plain inline assembly.
+// grey them out + make them read-only per-row (rather than hiding the columns entirely,
+// which would make it non-obvious that the feature exists).
+private void ApplyAssetCellStyling(DataGridViewCellFormattingEventArgs e)
+{
+    if (!IsAssetColumn(regionGridView.Columns[e.ColumnIndex].Name))
+        return;
+
+    if (e.RowIndex < 0 || e.RowIndex >= regionGridView.Rows.Count)
+        return;
+
+    var row = regionGridView.Rows[e.RowIndex];
+    var disabled = GetRowExportType(row) == RegionExportType.Assembly;
+
+    row.Cells[e.ColumnIndex].ReadOnly = disabled;
+
+    if (!disabled)
+        return;
+
+    e.CellStyle.BackColor = SystemColors.Control;
+    e.CellStyle.ForeColor = SystemColors.GrayText;
+}
+
+private static bool IsAssetColumn(string columnName) =>
+    columnName is "AssetType" or "AssetVersion" or "AssetName";
+
+// read the ExportType cell back out as an enum. cells can hold either the enum or its
+// string form depending on whether the user just edited it, so handle both.
+private static RegionExportType GetRowExportType(DataGridViewRow row)
+{
+    var value = row.Cells["ExportType"].Value;
+    if (value is RegionExportType exportType)
+        return exportType;
+
+    return Enum.TryParse<RegionExportType>(value?.ToString(), out var parsed)
+        ? parsed
+        : RegionExportType.Assembly;
 }
 
 private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingEventArgs e)
@@ -338,8 +414,53 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
                 return;
             }
         }
+
+        var exportType = GetRowExportType(row);
+
+        // asset name is used as a relative path under the asset root, so don't let it escape.
+        // empty is fine: the exporter falls back to RegionName.
+        var assetName = row.Cells["AssetName"].Value?.ToString() ?? "";
+        if (!string.IsNullOrWhiteSpace(assetName))
+        {
+            if (assetName.Contains('\\') || assetName.Contains("..") || assetName.StartsWith('/'))
+            {
+                ShowErrorMessage("Asset Name must be a relative path: no backslashes, no '..', and no leading '/'.");
+                e.Cancel = true;
+                return;
+            }
+        }
+
+        if (exportType == RegionExportType.Asset)
+        {
+            var assetType = row.Cells["AssetType"].Value?.ToString() ?? "";
+            if (!ValidAssetTypes.TryGetValue(assetType, out var bpp))
+            {
+                ShowErrorMessage($"Asset Type is required when Export Type is 'Asset'. Expected one of: {string.Join(", ", ValidAssetTypes.Keys)}.");
+                e.Cancel = true;
+                return;
+            }
+
+            // 8 rows, bpp/2 bitplane pairs, 2 bytes per row per pair = bpp*8 bytes per tile.
+            // a partial tile at the end would silently produce garbage graphics, so reject it here.
+            var tileSizeInBytes = bpp * 8;
+            var regionLength = endSnesAddr - startSnesAddr;
+            if (regionLength % tileSizeInBytes != 0) {
+                ShowErrorMessage($"Region length ({regionLength} bytes) must be a whole multiple of {tileSizeInBytes} bytes (one {bpp}bpp tile) when Asset Type is '{assetType}'.");
+                e.Cancel = true;
+                return;
+            }
+        }
     }
-    
+
+    // asset types Diz knows how to write a manifest for, mapped to their bits-per-pixel.
+    // keep in sync with RegionAssetUtil.ParseSnesGfxBpp in Diz.LogWriter.
+    private static readonly Dictionary<string, int> ValidAssetTypes = new()
+    {
+        { "gfx.snes.2bpp", 2 },
+        { "gfx.snes.4bpp", 4 },
+        { "gfx.snes.8bpp", 8 },
+    };
+
     private void DeleteRegion(int rowIndex)
     {
         try
