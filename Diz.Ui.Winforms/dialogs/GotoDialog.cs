@@ -13,8 +13,8 @@ public partial class GotoDialog : Form
         InitializeComponent();
         this.data = data;
         this.initiallySelectSnesAddr = initiallySelectSnesAddr;
-        textROM.Text = Util.NumberToBaseString(data.ConvertPCtoSnes(offset), Util.NumberBase.Hexadecimal, 6);
-        textPC.Text = Util.NumberToBaseString(offset, Util.NumberBase.Hexadecimal, 0);
+        textROM.Text = Util.NumberToBaseString((uint)data.ConvertPCtoSnes(offset), Util.NumberBase.Hexadecimal, 6);
+        textPC.Text = Util.NumberToBaseString((uint)offset, Util.NumberBase.Hexadecimal, 0);
     }
 
     private void GotoDialog_Load(object sender, EventArgs e)
@@ -115,7 +115,7 @@ public partial class GotoDialog : Form
             var pc = data.ConvertSnesToPc(address);
                 
             textROM.Text = finalText;
-            textPC.Text = Util.NumberToBaseString(pc, noBase, 0);
+            textPC.Text = Util.NumberToBaseString((uint)pc, noBase, 0);
         });
 
         UpdateUi();
@@ -128,7 +128,7 @@ public partial class GotoDialog : Form
             var addr = data.ConvertPCtoSnes(offset);
 
             textPC.Text = finalText;
-            textROM.Text = Util.NumberToBaseString(addr, noBase, 6);
+            textROM.Text = Util.NumberToBaseString((uint)addr, noBase, 6);
         });
 
         UpdateUi();
@@ -155,7 +155,7 @@ public partial class GotoDialog : Form
         if (radioHex.Checked) {
             if (int.TryParse(textPC.Text, out var result))
             {
-                textPC.Text = Util.NumberToBaseString(result, Util.NumberBase.Hexadecimal, 0);
+                textPC.Text = Util.NumberToBaseString((uint)result, Util.NumberBase.Hexadecimal, 0);
             }
         } else {
             if (int.TryParse(textPC.Text, NumberStyles.HexNumber, null, out var result))

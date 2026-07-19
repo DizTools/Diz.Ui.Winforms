@@ -12,7 +12,7 @@ namespace Diz.Ui.Winforms.window;
 public partial class MainWindow
 {
     // Get the PC offset IN THE ROM for the selected row in the GRID
-    public int SelectedOffset => table.CurrentCell.RowIndex + ViewOffset;
+    public int SelectedOffset => (table.CurrentCell?.RowIndex ?? 0) + ViewOffset;
 
     private int rowsToShow;
     private bool moveWithStep = true;
@@ -321,13 +321,13 @@ public partial class MainWindow
                 e.Value = Project.Data.Labels.GetLabelName(snesAddressOfRow);
                 break;
             case ColumnType.Offset:
-                e.Value = Util.NumberToBaseString(Project.ProjectUserSettings.DisplayOffsetsInGrid ? row : snesAddressOfRow, Util.NumberBase.Hexadecimal, 6);
+                e.Value = Util.NumberToBaseString((uint)(Project.ProjectUserSettings.DisplayOffsetsInGrid ? row : snesAddressOfRow), Util.NumberBase.Hexadecimal, 6);
                 break;
             case ColumnType.AsciiCharRep:
                 e.Value = (char)romByte;
                 break;
             case ColumnType.NumericRep:
-                e.Value = Util.NumberToBaseString((int)romByte, displayBase);
+                e.Value = Util.NumberToBaseString((uint)romByte, displayBase);
                 break;
             case ColumnType.Point:
                 e.Value = RomUtil.PointToString(snesData.GetInOutPoint(row));
@@ -338,16 +338,16 @@ public partial class MainWindow
                 break;
             case ColumnType.IA:
                 var ia = snesData.GetIntermediateAddressOrPointer(row);
-                e.Value = ia >= 0 ? Util.NumberToBaseString(ia, Util.NumberBase.Hexadecimal, 6) : "";
+                e.Value = ia is >= 0 ? Util.NumberToBaseString((uint)ia, Util.NumberBase.Hexadecimal, 6) : "";
                 break;
             case ColumnType.TypeFlag:
                 e.Value = Util.GetEnumDescription(snesData.GetFlag(row));
                 break;
             case ColumnType.DataBank:
-                e.Value = Util.NumberToBaseString(snesData.GetDataBank(row), Util.NumberBase.Hexadecimal, 2);
+                e.Value = Util.NumberToBaseString((uint)snesData.GetDataBank(row), Util.NumberBase.Hexadecimal, 2);
                 break;
             case ColumnType.DirectPage:
-                e.Value = Util.NumberToBaseString(snesData.GetDirectPage(row), Util.NumberBase.Hexadecimal, 4);
+                e.Value = Util.NumberToBaseString((uint)snesData.GetDirectPage(row), Util.NumberBase.Hexadecimal, 4);
                 break;
             case ColumnType.MFlag:
                 e.Value = RomUtil.BoolToSize(snesData.GetMFlag(row));
@@ -455,10 +455,10 @@ public partial class MainWindow
         switch (column)
         {
             case (int) ColumnType.Offset 
-                when Project.Data.ConvertSnesToPc(snesData.GetIntermediateAddressOrPointer(selOffset)) == offset:
+                when Project.Data.ConvertSnesToPc((int?)snesData.GetIntermediateAddressOrPointer(selOffset) ?? -1) == offset:
                 
             case (int) ColumnType.IA
-                when Project.Data.ConvertSnesToPc(snesData.GetIntermediateAddressOrPointer(offset)) == selOffset:
+                when Project.Data.ConvertSnesToPc((int?)snesData.GetIntermediateAddressOrPointer(offset) ?? -1) == selOffset:
                 
                 style.BackColor = Color.DeepPink;
                 break;

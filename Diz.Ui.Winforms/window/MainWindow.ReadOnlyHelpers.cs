@@ -11,7 +11,7 @@ public partial class MainWindow
         if (!RomDataPresent())
             return -1;
 
-        var ia = Project.Data.GetSnesApi().GetIntermediateAddressOrPointer(offset);
+        var ia = (int?)Project.Data.GetSnesApi()!.GetIntermediateAddressOrPointer(offset) ?? -1;
         if (ia < 0)
             return -1;
 

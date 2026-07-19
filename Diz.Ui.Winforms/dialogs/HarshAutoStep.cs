@@ -46,9 +46,9 @@ public partial class HarshAutoStep : Form
         if (Count < 0) Count = 0;
 
         updatingText = true;
-        if (selected != textStart) textStart.Text = Util.NumberToBaseString(radioSNES.Checked ? data.ConvertPCtoSnes(StartRomOffset) : StartRomOffset, noBase, digits);
-        if (selected != textEnd) textEnd.Text = Util.NumberToBaseString(radioSNES.Checked ? data.ConvertPCtoSnes(EndRomOffset) : EndRomOffset, noBase, digits);
-        if (selected != textCount) textCount.Text = Util.NumberToBaseString(Count, noBase, 0);
+        if (selected != textStart) textStart.Text = Util.NumberToBaseString((uint)(radioSNES.Checked ? data.ConvertPCtoSnes(StartRomOffset) : StartRomOffset), noBase, digits);
+        if (selected != textEnd) textEnd.Text = Util.NumberToBaseString((uint)(radioSNES.Checked ? data.ConvertPCtoSnes(EndRomOffset) : EndRomOffset), noBase, digits);
+        if (selected != textCount) textCount.Text = Util.NumberToBaseString((uint)Count, noBase, 0);
         updatingText = false;
     }
 
