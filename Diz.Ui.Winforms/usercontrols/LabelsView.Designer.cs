@@ -29,12 +29,7 @@ partial class LabelsViewControl
     private void InitializeComponent()
     {
         DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
-        openFileDialog1 = new OpenFileDialog();
-        saveFileDialog1 = new SaveFileDialog();
         dataGridView1 = new DataGridView();
-        Address = new DataGridViewTextBoxColumn();
-        Alias = new DataGridViewTextBoxColumn();
-        Comment = new DataGridViewTextBoxColumn();
         menuStrip1 = new MenuStrip();
         dataToolStripMenuItem = new ToolStripMenuItem();
         importCSVAppendToolStripMenuItem = new ToolStripMenuItem();
@@ -71,17 +66,9 @@ partial class LabelsViewControl
         groupBox1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dataGridContexts).BeginInit();
         SuspendLayout();
-        // 
-        // openFileDialog1
-        // 
-        openFileDialog1.Filter = "Comma Separated Value Files|*.csv|BSNES Symbols Map|*.cpu.sym|Text Files|*.txt|All Files|*.*";
-        // 
-        // saveFileDialog1
-        // 
-        saveFileDialog1.Filter = "Comma Separated Value Files|*.csv|Text Files|*.txt|All Files|*.*";
-        // 
+        //
         // dataGridView1
-        // 
+        //
         dataGridView1.AllowUserToResizeColumns = false;
         dataGridView1.AllowUserToResizeRows = false;
         dataGridView1.BorderStyle = BorderStyle.None;
@@ -112,23 +99,8 @@ partial class LabelsViewControl
         dataGridView1.Size = new Size(742, 447);
         dataGridView1.TabIndex = 3;
         dataGridView1.TabStop = false;
-        dataGridView1.CellBeginEdit += dataGridView1_CellBeginEdit;
-        dataGridView1.CellValidating += dataGridView1_CellValidating;
-        dataGridView1.UserDeletingRow += dataGridView1_UserDeletingRow;
-        dataGridView1.KeyDown += table_KeyDown;
-        // 
-        // Address
-        // 
-        Address.Name = "Address";
-        // 
-        // Alias
-        // 
-        Alias.Name = "Alias";
-        // 
-        // Comment
-        // 
-        Comment.Name = "Comment";
-        // 
+        // NOTE: grid events are wired in LabelsViewControl.SetupGrid(), not here
+        //
         // menuStrip1
         // 
         menuStrip1.Items.AddRange(new ToolStripItem[] { dataToolStripMenuItem });
@@ -405,17 +377,12 @@ partial class LabelsViewControl
     }
 
     #endregion
-    private System.Windows.Forms.OpenFileDialog openFileDialog1;
-    private System.Windows.Forms.SaveFileDialog saveFileDialog1;
     private DataGridView dataGridView1;
     private MenuStrip menuStrip1;
     private ToolStripMenuItem dataToolStripMenuItem;
     private ToolStripMenuItem importCSVAppendToolStripMenuItem;
     private ToolStripMenuItem importCSVToolStripMenuItem;
     private ToolStripMenuItem exportCSVToolStripMenuItem;
-    private DataGridViewTextBoxColumn Address;
-    private DataGridViewTextBoxColumn Alias;
-    private DataGridViewTextBoxColumn Comment;
     private TableLayoutPanel tableLayoutPanel1;
     private ToolStrip toolStrip1;
     private ToolStripLabel toolStripStatusLabel1;

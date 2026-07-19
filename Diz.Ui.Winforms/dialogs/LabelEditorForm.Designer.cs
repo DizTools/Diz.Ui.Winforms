@@ -1,6 +1,6 @@
 ﻿namespace Diz.Ui.Winforms.dialogs;
 
-partial class AliasList
+partial class LabelEditorForm
 {
     /// <summary>
     /// Required designer variable.
@@ -41,7 +41,7 @@ partial class AliasList
         labelsViewControl1.Size = new Size(1071, 551);
         labelsViewControl1.TabIndex = 0;
         // 
-        // AliasList
+        // LabelEditorForm
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
@@ -50,12 +50,12 @@ partial class AliasList
         FormBorderStyle = FormBorderStyle.SizableToolWindow;
         Margin = new Padding(4, 3, 4, 3);
         MinimumSize = new Size(250, 282);
-        Name = "AliasList";
+        Name = "LabelEditorForm";
         ShowIcon = true;
         ShowInTaskbar = true;
         StartPosition = FormStartPosition.CenterParent;
         Text = "Label List";
-        FormClosing += AliasList_FormClosing;
+        FormClosing += LabelEditorForm_FormClosing;
         ResumeLayout(false);
     }
 

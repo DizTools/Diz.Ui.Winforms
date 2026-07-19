@@ -144,7 +144,7 @@ public partial class MainWindow : Form, IMainGridWindowView
         UpdateUiFromSettings();
 
         if (appSettings.OpenLastFileAutomatically)
-            OpenLastProject();
+            _ = OpenLastProject(); // fire-and-forget at startup; the open shows its own progress UI.
     }
 
 
@@ -186,7 +186,7 @@ public partial class MainWindow : Form, IMainGridWindowView
 
     public void OnProjectOpened(string filename)
     {
-        // TODO: do this with aliaslist too.
+        // TODO: do this with the label editor form too.
         CloseAndDisposeOtherViews();
 
         UpdateSaveOptionStates(saveEnabled: true, saveAsEnabled: true, closeEnabled: true);
