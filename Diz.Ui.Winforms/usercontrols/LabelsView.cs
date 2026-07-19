@@ -1,641 +1,345 @@
-﻿using System.ComponentModel;
-using System.Data;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Runtime.CompilerServices;
 using Diz.Controllers.controllers;
 using Diz.Controllers.interfaces;
 using Diz.Core.Interfaces;
 using Diz.Core.model;
 using Diz.Core.model.snes;
-using Diz.Core.util;
 using Diz.Cpu._65816;
+using Diz.Ui.ViewModels.Labels;
 using Diz.Ui.Winforms.util;
-using Label = Diz.Core.model.Label;
 
 namespace Diz.Ui.Winforms.usercontrols;
 
+// Step 3 of the new-ui plan: this control renders LabelEditorViewModel (Diz.Ui.ViewModels)
+// instead of owning a DataTable. All label logic (validation, filtering, sorting, address
+// math, import/export, WRAM normalization) lives in the VM; this file is widget wiring.
+//
+// Binding: VM Rows (ReadOnlyObservableCollection) -> ObservableBindingList adapter
+// (plan finding 4: WinForms can't observe INCC) -> BindingSource -> DataGridView.
+// One-way. Grid edits flow back through vm.ValidateEdit/CommitEdit, never list mutation.
 [SuppressMessage("ReSharper", "UnusedType.Global")]
 [SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
-public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyPropertyChanged
+public partial class LabelsViewControl : UserControl, ILabelEditorView
 {
-    private string CurrentSearchTerm => txtSearch?.Text ?? "";
-
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public IProjectController? ProjectController { get; set; }
 
     private Data? Data => ProjectController?.Project?.Data;
-    private bool locked;
-    private int currentlyEditing = -1;
-    private DataTable? dataTable;
 
-    // Label details binding
+    private ILabelEditorViewModel? viewModel;
+    private ObservableBindingList<ILabelRowViewModel, LabelGridRow>? gridRows;
+    private readonly BindingSource bindingSource = new();
+    private bool syncingSelection;
+
+    // details panel (right side): binds straight to the model label, exactly as before.
+    // grid refresh on detail edits is automatic now (label INPC -> row VM -> ItemChanged).
     private IAnnotationLabel? selectedLabel;
     private BindingList<ContextMapping>? contextMappingsBindingList;
-    private bool isUpdatingContextMappings; // Add this flag to prevent recursion
-
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public IAnnotationLabel? SelectedLabel
-    {
-        get => selectedLabel;
-        set
-        {
-            selectedLabel = value;
-            OnPropertyChanged();
-            UpdateLabelDetailsBinding();
-        }
-    }
+    private bool isUpdatingContextMappings;
 
     public LabelsViewControl()
     {
         InitializeComponent();
-
-        Load += AliasList_Load;
-
-        // Set up label details binding
-        SetupLabelDetailsBinding();
+        SetupGrid();
+        SetupLabelDetailsPanel();
+        Load += (_, _) => { if (viewModel == null) RecreateViewModel(); };
+        Disposed += (_, _) => TearDownViewModel();
     }
 
-    private void AliasList_Load(object? sender, EventArgs e)
+    // ------------------------------------------------------------------ VM lifecycle
+
+    // the VM is project-scoped (it wraps the open project's label provider), so this view
+    // composes it here rather than resolving it from the DI container. the IA-resolution
+    // port is the composition-layer wiring for Diz.Cpu.65816, which the VM assembly is
+    // forbidden to reference.
+    private void RecreateViewModel()
     {
         SafeEndEdit();
-        RepopulateFromData();
+        TearDownViewModel();
+
+        var labels = Data?.Labels;
+        if (labels == null)
+            return;
+
+        viewModel = new LabelEditorViewModel(
+            labels,
+            notificationMarshaller: RunOnUiThread,
+            resolveRomOffsetToSnesIa: romOffset =>
+                Data?.GetSnesApi()?.GetIntermediateAddress(romOffset, resolve: true) ?? -1);
+
+        viewModel.PropertyChanged += ViewModel_PropertyChanged;
+        viewModel.ErrorRaised += ViewModel_ErrorRaised;
+        viewModel.NavigationRequested += ViewModel_NavigationRequested;
+
+        // preserve the current search box contents across project rebinds (old behavior)
+        if (txtSearch.Text.Length != 0)
+            viewModel.SearchTerm = txtSearch.Text;
+
+        gridRows = new ObservableBindingList<ILabelRowViewModel, LabelGridRow>(
+            viewModel.Rows, row => new LabelGridRow(row));
+
+        SuspendDrawingDuring(() => bindingSource.DataSource = gridRows);
+        toolStripStatusLabel1.Text = viewModel.StatusText;
     }
 
-    private void SetupLabelDetailsBinding()
+    private void TearDownViewModel()
     {
-        // Setup the context grid
-        dataGridContexts.AutoGenerateColumns = false;
-        dataGridContexts.AllowUserToAddRows = true;
-        dataGridContexts.AllowUserToDeleteRows = true;
+        if (viewModel == null)
+            return;
 
-        // Create columns for context mappings
-        var contextColumn = new DataGridViewTextBoxColumn
-        {
-            Name = "Context",
-            HeaderText = "Context",
-            DataPropertyName = nameof(ContextMapping.Context),
-            Width = 150
-        };
+        bindingSource.DataSource = null;
+        gridRows?.Dispose();
+        gridRows = null;
 
-        var nameOverrideColumn = new DataGridViewTextBoxColumn
-        {
-            Name = "NameOverride",
-            HeaderText = "Name Override",
-            DataPropertyName = nameof(ContextMapping.NameOverride),
-            Width = 200
-        };
-
-        dataGridContexts.Columns.Add(contextColumn);
-        dataGridContexts.Columns.Add(nameOverrideColumn);
-
-        // Set up main grid selection changed event
-        dataGridView1.SelectionChanged += DataGridView1_SelectionChanged;
-
-        // Handle context grid events for a better user experience
-        dataGridContexts.UserDeletingRow += DataGridContexts_UserDeletingRow;
-        // REMOVED: dataGridContexts.RowValidated += DataGridContexts_RowValidated;
-
-        // Add these events instead for better handling
-        dataGridContexts.CellEndEdit += DataGridContexts_CellEndEdit;
-        dataGridContexts.UserAddedRow += DataGridContexts_UserAddedRow;
+        viewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        viewModel.ErrorRaised -= ViewModel_ErrorRaised;
+        viewModel.NavigationRequested -= ViewModel_NavigationRequested;
+        viewModel.Dispose();
+        viewModel = null;
     }
 
-    private void DataGridView1_SelectionChanged(object? sender, EventArgs e)
+    // VM marshaller contract: synchronous when already on the UI thread (send semantics).
+    // off-thread notifications only occur during VM async work (e.g. ImportLabelsAsync).
+    private void RunOnUiThread(Action action)
     {
-        var selectedSnesAddress = GetSnesAddressOfCurrentlySelectedLabel();
-        if (selectedSnesAddress >= 0 && Data?.Labels != null)
-        {
-            var selectedLabel1 = Data.Labels.GetLabel(selectedSnesAddress);
-            SelectedLabel = selectedLabel1;
-        }
+        if (IsHandleCreated && InvokeRequired)
+            Invoke(action);
         else
-        {
-            SelectedLabel = null;
-        }
+            action();
     }
 
-    private void UpdateLabelDetailsBinding()
+    // ------------------------------------------------------------------ grid setup
+
+    private void SetupGrid()
     {
-        // Clear previous binding list event subscription
-        if (contextMappingsBindingList != null)
-        {
-            contextMappingsBindingList.ListChanged -= ContextMappingsBindingList_ListChanged;
-        }
+        dataGridView1.AutoGenerateColumns = false;
+        // rows are added/removed only through VM commands (plan review: the bound list is
+        // read-only). adding still works via "New Label From IA" / Ctrl+Alt+L; deleting via
+        // the Delete key below.
+        dataGridView1.AllowUserToAddRows = false;
+        dataGridView1.AllowUserToDeleteRows = false;
+        dataGridView1.AllowUserToResizeColumns = true;
 
-        // Clear previous label property change subscription
-        if (selectedLabel is INotifyPropertyChanged previousLabel)
-        {
-            previousLabel.PropertyChanged -= SelectedLabel_PropertyChanged;
-        }
+        dataGridView1.Columns.AddRange(
+            NewColumn("Address", nameof(LabelGridRow.Address), 80),
+            NewColumn("Name", nameof(LabelGridRow.Name), 200),
+            NewColumn("Comment", nameof(LabelGridRow.Comment), 200),
+            NewColumn("Contexts", nameof(LabelGridRow.Context), 200, readOnly: true));
 
-        if (SelectedLabel == null)
-        {
-            // Clear bindings
-            txtDetailsLabelPrimaryName.DataBindings.Clear();
-            txtDetailsLabelComment.DataBindings.Clear(); // Clear comment binding
-            dataGridContexts.DataSource = null;
-            contextMappingsBindingList = null;
-            lblPanelName.Text = "Label Details";
-            return;
-        }
+        dataGridView1.DataSource = bindingSource;
 
-        // Bind the label name textbox with proper two-way binding
-        txtDetailsLabelPrimaryName.DataBindings.Clear();
-        var nameBinding = new Binding("Text", SelectedLabel, nameof(SelectedLabel.Name), 
-            formattingEnabled: false, DataSourceUpdateMode.OnPropertyChanged);
-        txtDetailsLabelPrimaryName.DataBindings.Add(nameBinding);
-
-        // Bind the label comment textbox with proper two-way binding
-        txtDetailsLabelComment.DataBindings.Clear();
-        var commentBinding = new Binding("Text", SelectedLabel, nameof(SelectedLabel.Comment), 
-            formattingEnabled: false, DataSourceUpdateMode.OnPropertyChanged);
-
-        // Handle formatting when data goes TO the control (from data source)
-        commentBinding.Format += (sender, e) =>
-        {
-            if (e.Value is string text)
-            {
-                e.Value = text
-                    .Replace("\r\n", "\n")
-                    .Replace("\r", "\n")
-                    .Replace("\n", Environment.NewLine);
-            }
-        };
-
-        // Handle parsing when data comes FROM the control (to data source)
-        commentBinding.Parse += (sender, e) =>
-        {
-            if (e.Value is string text)
-            {
-                // Optionally normalize back to \n for storage consistency
-                e.Value = text.Replace(Environment.NewLine, "\n");
-            }
-        };
-
-        txtDetailsLabelComment.DataBindings.Add(commentBinding);
-
-        // Subscribe to label property changes to update the main grid
-        if (SelectedLabel is INotifyPropertyChanged notifyLabel)
-        {
-            notifyLabel.PropertyChanged += SelectedLabel_PropertyChanged;
-        }
-
-        // Create binding list for context mappings - use concrete ContextMapping class
-        contextMappingsBindingList = [];
-    
-        // Populate from existing context mappings (convert IContextMapping to ContextMapping)
-        foreach (var mapping in SelectedLabel.ContextMappings)
-        {
-            // If it's already a ContextMapping, use it directly; otherwise create a new one
-            var contextMapping = mapping as ContextMapping ?? new ContextMapping 
-            { 
-                Context = mapping.Context, 
-                NameOverride = mapping.NameOverride 
-            };
-            contextMappingsBindingList.Add(contextMapping);
-        }
-    
-        // Enable adding new rows
-        contextMappingsBindingList.AllowNew = true;
-        contextMappingsBindingList.AllowRemove = true;
-        contextMappingsBindingList.AllowEdit = true;
-    
-        // Subscribe to changes to sync back to the model
-        contextMappingsBindingList.ListChanged += ContextMappingsBindingList_ListChanged;
-        
-        dataGridContexts.DataSource = contextMappingsBindingList;
-        
-        var snesAddress = GetSnesAddressOfCurrentlySelectedLabel();
-        groupBox1.Text = snesAddress >= 0 
-            ? $"Label Details - {Util.ToHexString6(snesAddress)}"
-            : "Label Details";
-}
-
-    private void SelectedLabel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (sender != SelectedLabel || dataTable == null)
-            return;
-
-        // Get the SNES address of the currently selected label
-        var snesAddress = GetSnesAddressOfCurrentlySelectedLabel();
-        if (snesAddress < 0)
-            return;
-
-        var addressStr = Util.ToHexString6(snesAddress);
-
-        // Find the corresponding row in the DataTable and update it
-        foreach (DataRow row in dataTable.Rows)
-        {
-            if (row["Address"] as string != addressStr)
-                continue;
-
-            switch (e.PropertyName)
-            {
-                case nameof(IAnnotationLabel.Name):
-                    row["Name"] = SelectedLabel?.Name ?? "";
-                    break;
-                case nameof(IAnnotationLabel.Comment):
-                    row["Comment"] = SelectedLabel?.Comment ?? "";
-                    break;
-                case nameof(IAnnotationLabel.ContextMappings):
-                    // Update the context column when context mappings change
-                    row["Context"] = FormatContextMappings(SelectedLabel?.ContextMappings ?? []);
-                    break;
-            }
-
-            // Force the DataGridView to refresh this row
-            var rowIndex = dataTable.Rows.IndexOf(row);
-            if (rowIndex >= 0 && rowIndex < dataGridView1.Rows.Count)
-            {
-                dataGridView1.InvalidateRow(rowIndex);
-            }
-
-            break;
-        }
+        dataGridView1.CellValidating += Grid_CellValidating;
+        dataGridView1.ColumnHeaderMouseClick += Grid_ColumnHeaderMouseClick;
+        dataGridView1.SelectionChanged += Grid_SelectionChanged;
+        dataGridView1.KeyDown += Grid_KeyDown;
     }
 
-    private void ContextMappingsBindingList_ListChanged(object? sender, ListChangedEventArgs e)
+    private static DataGridViewTextBoxColumn NewColumn(
+        string header, string boundProperty, int width, bool readOnly = false) => new()
     {
-        if (SelectedLabel?.ContextMappings == null || contextMappingsBindingList == null)
+        HeaderText = header,
+        DataPropertyName = boundProperty,
+        Width = width,
+        ReadOnly = readOnly,
+        // plan finding 5: native sorting stays OFF; header clicks route to the VM
+        SortMode = DataGridViewColumnSortMode.Programmatic,
+    };
+
+    private static LabelField? FieldForColumn(int columnIndex) => columnIndex switch
+    {
+        0 => LabelField.Address,
+        1 => LabelField.Name,
+        2 => LabelField.Comment,
+        _ => null, // Contexts column: read-only, and the VM dropped context sorting (step 2)
+    };
+
+    private LabelGridRow? GridRowAt(int rowIndex) =>
+        gridRows != null && rowIndex >= 0 && rowIndex < gridRows.Count ? gridRows[rowIndex] : null;
+
+    private ILabelRowViewModel? CurrentRowViewModel() =>
+        GridRowAt(dataGridView1.CurrentCell?.RowIndex ?? -1)?.Row;
+
+    private int IndexOfRow(ILabelRowViewModel row)
+    {
+        for (var i = 0; i < (gridRows?.Count ?? 0); i++)
+            if (ReferenceEquals(gridRows![i].Row, row))
+                return i;
+        return -1;
+    }
+
+    // ------------------------------------------------------------------ cell editing
+
+    private void Grid_CellValidating(object? sender, DataGridViewCellValidatingEventArgs e)
+    {
+        // CellValidating also fires on plain cell navigation; only act on real edits
+        if (!dataGridView1.IsCurrentCellInEditMode)
             return;
 
-        // Don't sync during certain list operations to avoid recursion
-        if (e.ListChangedType == ListChangedType.Reset)
+        var row = GridRowAt(e.RowIndex)?.Row;
+        var field = FieldForColumn(e.ColumnIndex);
+        if (viewModel == null || row == null || field == null)
             return;
 
-        // Add a flag to prevent recursive calls
-        if (isUpdatingContextMappings)
+        var proposed = e.FormattedValue?.ToString() ?? "";
+        var result = viewModel.ValidateEdit(row, field.Value, proposed);
+        toolStripStatusLabel1.Text = result.Error ?? "";
+        if (!result.IsValid)
+        {
+            e.Cancel = true; // stay in edit mode, exactly like the old grid
+            return;
+        }
+
+        // valid: apply AFTER the grid finishes its whole commit sequence. CommitEdit
+        // mutates the bound row list (remove+add), and doing that from inside a grid edit
+        // event re-enters SetCurrentCellAddressCore -- the native-crash family SafeEndEdit
+        // exists to paper over. BeginInvoke posts past the entire sequence; the grid's own
+        // value push-back lands in LabelGridRow's no-op setters in between.
+        BeginInvoke(() => viewModel?.CommitEdit(row, field.Value, proposed));
+    }
+
+    private void Grid_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyCode != Keys.Delete || dataGridView1.IsCurrentCellInEditMode)
             return;
 
+        var row = CurrentRowViewModel();
+        if (viewModel == null || row == null)
+            return;
+
+        viewModel.DeleteLabel(row.SnesAddress);
+        e.Handled = true;
+    }
+
+    // ------------------------------------------------------------------ sorting / selection
+
+    private void Grid_ColumnHeaderMouseClick(object? sender, DataGridViewCellMouseEventArgs e)
+    {
+        var field = FieldForColumn(e.ColumnIndex);
+        if (viewModel == null || field == null)
+            return;
+
+        SafeEndEdit();
+        SuspendDrawingDuring(() =>
+        {
+            if (viewModel.SortField == field.Value)
+            {
+                viewModel.SortDescending = !viewModel.SortDescending;
+            }
+            else
+            {
+                viewModel.SortField = field.Value;
+                viewModel.SortDescending = false;
+            }
+        });
+
+        foreach (DataGridViewColumn column in dataGridView1.Columns)
+            column.HeaderCell.SortGlyphDirection = SortOrder.None;
+        dataGridView1.Columns[e.ColumnIndex].HeaderCell.SortGlyphDirection =
+            viewModel.SortDescending ? SortOrder.Descending : SortOrder.Ascending;
+    }
+
+    private void Grid_SelectionChanged(object? sender, EventArgs e)
+    {
+        if (syncingSelection)
+            return;
+
+        var row = CurrentRowViewModel();
+        if (viewModel != null)
+        {
+            syncingSelection = true;
+            viewModel.SelectedRow = row;
+            syncingSelection = false;
+        }
+        UpdateDetailsPanelFor(row);
+    }
+
+    private void SyncGridSelectionFromViewModel()
+    {
+        var row = viewModel?.SelectedRow;
+        if (syncingSelection || row == null)
+            return;
+
+        var index = IndexOfRow(row);
+        if (index < 0 || index >= dataGridView1.Rows.Count)
+            return;
+
+        var columnIndex = dataGridView1.CurrentCell?.ColumnIndex ?? 1;
+        syncingSelection = true;
         try
         {
-            isUpdatingContextMappings = true;
-
-            // Clear and rebuild the model's collection
-            SelectedLabel.ContextMappings.Clear();
-
-            foreach (var mapping in contextMappingsBindingList)
-            {
-                // Only add mappings that have a non-empty context
-                if (!string.IsNullOrWhiteSpace(mapping.Context))
-                {
-                    SelectedLabel.ContextMappings.Add(mapping);
-                }
-            }
-
-            // Update the Context column in the main grid when context mappings change
-            UpdateContextColumnForSelectedLabel();
+            dataGridView1.CurrentCell = dataGridView1.Rows[index].Cells[columnIndex];
         }
-        catch (Exception ex)
+        catch (InvalidOperationException)
         {
-            System.Diagnostics.Debug.WriteLine($"Error syncing context mappings: {ex.Message}");
+            // mid-commit; the grid will catch up on the next selection change
         }
         finally
         {
-            isUpdatingContextMappings = false;
+            syncingSelection = false;
         }
+        UpdateDetailsPanelFor(row);
     }
 
-    private void UpdateContextColumnForSelectedLabel()
+    // ------------------------------------------------------------------ VM events
+
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (SelectedLabel == null || dataTable == null)
-            return;
-
-        var snesAddress = GetSnesAddressOfCurrentlySelectedLabel();
-        if (snesAddress < 0)
-            return;
-
-        var addressStr = Util.ToHexString6(snesAddress);
-
-        // Find and update the row
-        foreach (DataRow row in dataTable.Rows)
+        switch (e.PropertyName)
         {
-            if (row["Address"] as string == addressStr)
-            {
-                row["Context"] = FormatContextMappings(SelectedLabel.ContextMappings);
-
-                // Force refresh
-                var rowIndex = dataTable.Rows.IndexOf(row);
-                if (rowIndex >= 0 && rowIndex < dataGridView1.Rows.Count)
-                {
-                    dataGridView1.InvalidateRow(rowIndex);
-                }
+            case nameof(ILabelEditorViewModel.StatusText):
+                toolStripStatusLabel1.Text = viewModel?.StatusText ?? "";
                 break;
-            }
+            case nameof(ILabelEditorViewModel.SelectedRow):
+                SyncGridSelectionFromViewModel();
+                break;
+            case nameof(ILabelEditorViewModel.SearchTerm):
+                // VM-side clears (e.g. FocusOrCreate*) must reach the search box too
+                if (viewModel != null && txtSearch.Text != viewModel.SearchTerm)
+                    txtSearch.Text = viewModel.SearchTerm;
+                break;
         }
     }
 
-    private void DataGridContexts_UserDeletingRow(object? sender, DataGridViewRowCancelEventArgs e)
-    {
-        // Let the binding list handle the deletion automatically
-        // The ListChanged event will sync back to the model
-    }
+    private void ViewModel_ErrorRaised(object? sender, string message) =>
+        MessageBox.Show(message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
-    private void DataGridContexts_CellEndEdit(object? sender, DataGridViewCellEventArgs e)
-    {
-        // This will naturally trigger the binding list's ListChanged event
-        // No need to manually call ResetBindings()
-    }
-
-    private void DataGridContexts_UserAddedRow(object? sender, DataGridViewRowEventArgs e)
-    {
-        // This will naturally trigger the binding list's ListChanged event
-        // No need for manual intervention
-    }
-
-    // REMOVE this method entirely as it was causing the recursion:
-    // private void DataGridContexts_RowValidated(object sender, DataGridViewCellEventArgs e)
-
-    private void LabelsOnOnLabelChanged(object? sender, EventArgs e)
-    {
-        // this is a bit hacky and very costly for lots of labels at the moment.
-        // be careful. better to replace with property notify change/etc later on.
-        RepopulateFromData();
-    }
-
-    private void AliasList_FormClosing(object sender, FormClosingEventArgs e)
-    {
-        if (e.CloseReason != CloseReason.UserClosing)
-            return;
-
-        e.Cancel = true;
-        Hide();
-    }
-
-    // returns: -1 if not found
-    private int GetSnesAddressOfCurrentlySelectedLabel()
-    {
-        if (dataGridView1.SelectedCells.Count == 0)
-            return -1;
-
-        var selectedRowSnesAddrObj = dataGridView1?.SelectedCells[0]?.OwningRow?.Cells[0].Value;
-        if (selectedRowSnesAddrObj == null)
-            return -1;
-
-        var selectedRowSnesAddrTxt = selectedRowSnesAddrObj as string;
-        return int.TryParse(selectedRowSnesAddrTxt, NumberStyles.HexNumber, null,
-            out var val)
-            ? val
-            : -1;
-    }
-
-    private int GetRomOffsetOfCurrentlySelectedLabel()
-    {
-        var selectedSnesAddress = GetSnesAddressOfCurrentlySelectedLabel();
-        if (selectedSnesAddress < 0)
-            return -1;
-
-        return Data?.ConvertSnesToPc(selectedSnesAddress) ?? -1;
-    }
-
-    private void btnJmp_Click(object sender, EventArgs e)
+    private void ViewModel_NavigationRequested(object? sender, int snesAddress)
     {
         if (ProjectController == null)
             return;
 
-        var romOffsetOfSelection = GetRomOffsetOfCurrentlySelectedLabel();
-        if (romOffsetOfSelection == -1)
+        var romOffset = Data?.ConvertSnesToPc(snesAddress) ?? -1;
+        if (romOffset == -1)
             return;
 
-        ProjectController.SelectOffset(
-            romOffsetOfSelection,
-            new ISnesNavigation.HistoryArgs { Description = "Jump To Label" }
-        );
+        ProjectController.SelectOffset(romOffset,
+            new ISnesNavigation.HistoryArgs { Description = "Jump To Label" });
     }
 
-    public string PromptForCsvFilename()
-    {
-        var result = openFileDialog1.ShowDialog();
-        return result != DialogResult.OK || openFileDialog1.FileName == ""
-            ? ""
-            : openFileDialog1.FileName;
-    }
+    // ------------------------------------------------------------------ toolbar / search
 
-    public void ShowLineItemError(string exMessage, int errLine)
-    {
-        WinformsGuiUtil.ShowLineItemError(exMessage, errLine);
-    }
+    private void btnJmp_Click(object sender, EventArgs e) =>
+        viewModel?.JumpToSelectedInMainView();
 
-    public void SetProjectController(IProjectController? projectController)
-    {
-        ProjectController = projectController;
-    }
+    private void btnNewFromCurrentIA_Click(object sender, EventArgs e) =>
+        FocusOrCreateLabelAtSelectedRomOffsetIa();
 
-    private void exportCSVToolStripMenuItem_Click(object sender, EventArgs e)
+    private void txtSearch_TextChanged(object sender, EventArgs e)
     {
-        var result = saveFileDialog1.ShowDialog();
-        if (result != DialogResult.OK || saveFileDialog1.FileName == "")
+        if (viewModel == null)
             return;
-
-        var fileName = saveFileDialog1.FileName;
-
-        try
-        {
-            using var sw = new StreamWriter(fileName);
-
-            // TODO: use a better CSV output tool for this. this probably doesn't escape strings properly/etc
-            WriteLabelsToCsv(sw);
-        }
-        catch (Exception)
-        {
-            MessageBox.Show("An error occurred while saving the file.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
+        SafeEndEdit();
+        SuspendDrawingDuring(() => viewModel.SearchTerm = txtSearch.Text);
     }
 
-    private void WriteLabelsToCsv(TextWriter textWriter)
+    private void btnClearSearch_Click(object sender, EventArgs e)
     {
-        if (Data?.Labels?.Labels == null)
-            return;
-
-        foreach (var (snesOffset, label) in Data.Labels.Labels)
-        {
-            OutputCsvLine(textWriter, snesOffset, label);
-        }
+        SafeEndEdit();
+        txtSearch.Text = ""; // TextChanged pushes the empty term into the VM
     }
 
-    private static void OutputCsvLine(TextWriter sw, int labelSnesAddress, IReadOnlyLabel label)
-    {
-        var outputLine = $"{Util.ToHexString6(labelSnesAddress)},{label.Name},{label.Comment}";
-        sw.WriteLine(outputLine);
-    }
-
-    private void dataGridView1_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
-    {
-        if (Data?.Labels == null)
-            return;
-
-        // When using DataTable, we need to get the value from the underlying DataRowView
-        var rowView = e.Row?.DataBoundItem as DataRowView;
-        var cellValue = rowView?["Address"] as string;
-
-        if (string.IsNullOrEmpty(cellValue))
-            return;
-
-        if (!int.TryParse(cellValue, NumberStyles.HexNumber, null, out var val))
-            return;
-
-        locked = true;
-        Data.Labels.RemoveLabel(val);
-        locked = false;
-    }
-
-    private void dataGridView1_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
-    {
-        currentlyEditing = e.RowIndex;
-
-        // start by entering an address first, not the label
-        if (dataGridView1.Rows[e.RowIndex].IsNewRow && e.ColumnIndex == 1)
-        {
-            dataGridView1.CurrentCell = dataGridView1.Rows[e.RowIndex].Cells[0];
-        }
-    }
-
-    private void dataGridView1_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
-    {
-        if (Data?.Labels == null)
-            return;
-
-        if (dataGridView1.Rows[e.RowIndex].IsNewRow)
-            return;
-
-        var dataBoundItem = (DataRowView?)dataGridView1.Rows[e.RowIndex].DataBoundItem;
-        if (dataBoundItem == null)
-            return;
-
-        var dataRow = dataBoundItem.Row;
-        var existingSnesAddressStr = dataRow["Address"] as string;
-
-        int.TryParse(existingSnesAddressStr, NumberStyles.HexNumber, null, out var existingSnesAddress);
-
-        var existingName = dataRow["Name"] as string;
-        var existingComment = dataRow["Comment"] as string;
-
-        // we need to copy some of the older data to the new label if it exists
-        var existingLabelAtOldAddress = existingSnesAddress != -1 ? Data.Labels.GetLabel(existingSnesAddress) : null;
-
-        var newLabel = new Label
-        {
-            Name = existingName ?? "",
-            Comment = existingComment ?? "",
-            ContextMappings = existingLabelAtOldAddress?.ContextMappings ?? [],
-        };
-
-        toolStripStatusLabel1.Text = "";
-        var newSnesAddress = -1;
-
-        switch (e.ColumnIndex)
-        {
-            // TODO: don't use indices, use the string column name.
-            case 0: // label's address
-                {
-                    if (!int.TryParse(e.FormattedValue?.ToString() ?? "", NumberStyles.HexNumber, null, out newSnesAddress))
-                    {
-                        e.Cancel = true;
-                        toolStripStatusLabel1.Text = "Must enter a valid hex address.";
-                        break;
-                    }
-
-                    if (existingSnesAddress == -1 && Data.Labels.GetLabel(newSnesAddress) != null)
-                    {
-                        e.Cancel = true;
-                        toolStripStatusLabel1.Text = "This address already has a label.";
-                        break;
-                    }
-
-                    if (dataGridView1.EditingControl != null)
-                    {
-                        dataGridView1.EditingControl.Text = Util.ToHexString6(newSnesAddress);
-                    }
-
-                    break;
-                }
-            case 1: // label name
-                {
-                    newSnesAddress = existingSnesAddress;
-                    newLabel.Name = e.FormattedValue?.ToString() ?? "";
-                    // todo (validate for valid label characters)
-                    break;
-                }
-            case 2: // label comment
-                {
-                    newSnesAddress = existingSnesAddress;
-                    newLabel.Comment = e.FormattedValue?.ToString() ?? "";
-                    // todo (validate for valid comment characters, if any)
-                    break;
-                }
-        }
-
-        locked = true;
-        if (currentlyEditing >= 0)
-        {
-            if (newSnesAddress >= 0)
-                Data.Labels.RemoveLabel(existingSnesAddress);
-
-            Data.Labels.AddLabel(newSnesAddress, newLabel, true);
-        }
-
-        locked = false;
-
-        currentlyEditing = -1;
-    }
-
-    public void AddRow(int snesAddress, Label label)
-    {
-        if (locked)
-            return;
-
-        RawAdd(snesAddress, label);
-        dataGridView1.Invalidate();
-    }
-
-    private void RawAdd(int snesAddress, IReadOnlyLabel label)
-    {
-        if (dataTable == null)
-            InitializeDataTable();
-
-        // Format the context mappings as a string
-        var contextString = FormatContextMappings(label.ContextMappings);
-
-        dataTable?.Rows.Add(Util.ToHexString6(snesAddress), label.Name, label.Comment, contextString);
-    }
-
-    private string FormatContextMappings(IEnumerable<IReadOnlyContextMapping> contextMappings)
-    {
-        if (contextMappings == null)
-            return "";
-
-        var formattedMappings = contextMappings
-            .Where(mapping => !string.IsNullOrWhiteSpace(mapping.Context))
-            .Select(mapping => $"{mapping.Context}: {mapping.NameOverride}")
-            .ToArray();
-
-        return string.Join(", ", formattedMappings);
-    }
-
-    public void RemoveRow(int address)
-    {
-        if (locked || dataTable == null)
-            return;
-
-        var addressStr = Util.ToHexString6(address);
-
-        // Find and remove the row
-        for (var index = dataTable.Rows.Count - 1; index >= 0; index--)
-        {
-            if (dataTable.Rows[index]["Address"] as string != addressStr)
-                continue;
-
-            dataTable.Rows.RemoveAt(index);
-            break;
-        }
-    }
-
-    public void ClearAndInvalidateDataGrid()
-    {
-        dataTable?.Clear();
-        dataGridView1.Invalidate();
-    }
+    // ------------------------------------------------------------------ menu commands
 
     private void importCSVAppendToolStripMenuItem_Click(object sender, EventArgs e)
     {
@@ -671,42 +375,97 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
     private static bool PromptWarning(string msg) =>
         MessageBox.Show(msg, "Warning", MessageBoxButtons.OKCancel) == DialogResult.OK;
 
-    public void RebindProject()
+    private async void exportCSVToolStripMenuItem_Click(object sender, EventArgs e)
     {
-        if (Data?.Labels != null)
+        if (viewModel == null)
+            return;
+
+        var result = saveFileDialog1.ShowDialog();
+        if (result != DialogResult.OK || saveFileDialog1.FileName == "")
+            return;
+
+        try
         {
-            // see MainWindow.StateUpdate.RebindProject(): this runs on every project change,
-            // so unsubscribe first to avoid stacking duplicate handlers on the same instance.
-            Data.Labels.OnLabelChanged -= LabelsOnOnLabelChanged;
-            Data.Labels.OnLabelChanged += LabelsOnOnLabelChanged;
+            // step 1's exporter: same non-RFC-4180 dialect the importer reads; sanitizes
+            // (and reports) what the old hand-rolled writer silently exported broken.
+            await viewModel.ExportLabelsAsync(saveFileDialog1.FileName);
+        }
+        catch (Exception)
+        {
+            MessageBox.Show("An error occurred while saving the file.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private void normalizeWRAMLabelsToolStripMenuItem_Click(object sender, EventArgs e) =>
+        // the controller owns the confirm prompt; the label mutations stream back into the
+        // VM via provider events, so no manual repopulate is needed anymore.
+        SuspendDrawingDuring(() => ProjectController?.NormalizeWramLabels());
+
+    // ------------------------------------------------------------------ ILabelEditorView
+    // (interface reshaping is step 4; these keep the existing contract working.)
+
+    public string PromptForCsvFilename()
+    {
+        var result = openFileDialog1.ShowDialog();
+        return result != DialogResult.OK || openFileDialog1.FileName == ""
+            ? ""
+            : openFileDialog1.FileName;
+    }
+
+    public void ShowLineItemError(string exMessage, int errLine) =>
+        WinformsGuiUtil.ShowLineItemError(exMessage, errLine);
+
+    public void SetProjectController(IProjectController? projectController) =>
+        ProjectController = projectController;
+
+    public void RepopulateFromData() => RecreateViewModel();
+
+    public void RebindProject() => RecreateViewModel();
+
+    public event EventHandler? OnFormClosed; // never raised: the host form hides on close (as before)
+
+    // hides Control.Show(): callers of ILabelEditorView.Show() expect the WINDOW to appear
+    public new void Show() => FindForm()?.Show();
+
+    public void BringFormToTop() => FindForm()?.Focus();
+
+    public void FocusOrCreateLabelAtSelectedRomOffsetIa()
+    {
+        var selectedOffset = ProjectController?.ProjectView.SelectedOffset ?? -1;
+        if (selectedOffset == -1)
+        {
+            MessageBox.Show("No offset selected in main form, or no project loaded.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
         }
 
-        SafeEndEdit();
-        RepopulateFromData();
-
-        // todo: eventually use databinding/datasource, probably.
-        // Todo: modify observabledictionary wrapper to avoid having to do the .Dict call here.
-        // tmp disabled // Data.Labels.PropertyChanged += Labels_PropertyChanged;
-        // tmp disabled // Data.Labels.CollectionChanged += Labels_CollectionChanged;
+        FocusOrCreateLabelAtRomOffsetIa(selectedOffset);
     }
 
-    private void txtSearch_TextChanged(object sender, EventArgs e)
+    public void FocusOrCreateLabelAtRomOffsetIa(int selectedOffset) =>
+        BeginGridEditFor(viewModel?.FocusOrCreateAtRomOffsetIa(selectedOffset));
+
+    public void FocusOrCreateLabelAtSnesAddress(int snesAddress) =>
+        BeginGridEditFor(viewModel?.FocusOrCreateAtSnesAddress(snesAddress));
+
+    private void BeginGridEditFor(ILabelRowViewModel? row)
     {
-        SafeEndEdit();
-        RepopulateFromData();
+        if (row == null)
+            return;
+
+        var index = IndexOfRow(row);
+        if (index < 0 || index >= dataGridView1.Rows.Count)
+            return;
+
+        dataGridView1.CurrentCell = dataGridView1.Rows[index].Cells[1]; // name cell
+        dataGridView1.BeginEdit(true);
     }
 
-    private void btnClearSearch_Click(object sender, EventArgs e)
-    {
-        SafeEndEdit();
-        txtSearch.Text = "";    // this will kick off RepopulateFromData() via event
-    }
+    // ------------------------------------------------------------------ drawing helpers
 
     private void SafeEndEdit()
     {
         // not thrilled about this implementation, but necessary to prevent silent native crashes like:
         // System.InvalidOperationException: Operation did not succeed because the program cannot commit or quit a cell value change
-
         try
         {
             if (dataGridView1.IsCurrentCellInEditMode)
@@ -714,7 +473,6 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         }
         catch (Exception ex)
         {
-            // If we can't end the edit normally, try to cancel it
             try
             {
                 dataGridView1.CancelEdit();
@@ -726,227 +484,132 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
         }
     }
 
-    private void InitializeDataTable()
+    // CPU optimization for bulk row changes: prevent layout/repaint while the VM streams
+    // thousands of row events (search, sort, rebind, normalize). hacky but effective.
+    private void SuspendDrawingDuring(Action action)
     {
-        dataTable = new DataTable();
-        dataTable.Columns.Add("Address", typeof(string));
-        dataTable.Columns.Add("Name", typeof(string));
-        dataTable.Columns.Add("Comment", typeof(string));
-        dataTable.Columns.Add("Context", typeof(string)); // Add the new Context column
-
-        // or, we can get weird crashes. happens at startup when we're editing a row on the grid by default.
-        SafeEndEdit();
-
-        dataGridView1.DataSource = dataTable;
-        dataGridView1.AllowUserToResizeColumns = true;
-
-        // Configure columns AFTER binding
-        if (dataGridView1.Columns.Count < 4) // Updated from 3 to 4
-            return; // big problem.
-
-        dataGridView1.Columns[0].HeaderText = "Address";
-        dataGridView1.Columns[0].Width = 80;
-
-        dataGridView1.Columns[1].HeaderText = "Name";
-        dataGridView1.Columns[1].Width = 200;
-
-        dataGridView1.Columns[2].HeaderText = "Comment";
-        dataGridView1.Columns[2].Width = 200;
-
-        dataGridView1.Columns[3].HeaderText = "Contexts";
-        dataGridView1.Columns[3].Width = 200;
-        dataGridView1.Columns[3].ReadOnly = true; // Make it non-editable
-
-        // Enable sorting
-        dataGridView1.Columns[0].SortMode = DataGridViewColumnSortMode.Automatic;
-        dataGridView1.Columns[1].SortMode = DataGridViewColumnSortMode.Automatic;
-        dataGridView1.Columns[2].SortMode = DataGridViewColumnSortMode.Automatic;
-        dataGridView1.Columns[3].SortMode = DataGridViewColumnSortMode.Automatic;
-    }
-
-    public void Optimization_SuspendDrawing(bool suspend)
-    {
-        // optional: CPU optimization:
-        // prevent layout calculations and repainting while we're doing large data modifications
-        // greatly speeds things up, but this is all hacky as hell.
-
-        if (suspend)
+        WinformsGuiUtil.SuspendDrawing(dataGridView1);
+        dataGridView1.SuspendLayout();
+        SuspendLayout();
+        try
         {
-            WinformsGuiUtil.SuspendDrawing(dataGridView1);
-            dataGridView1.Enabled = false;
-            dataGridView1.Visible = false;
-            dataGridView1.SuspendLayout();
-            SuspendLayout();
+            action();
         }
-        else
+        finally
         {
-            dataGridView1.Enabled = true;
-            dataGridView1.Visible = true;
             ResumeLayout(performLayout: true);
             dataGridView1.ResumeLayout(performLayout: true);
             WinformsGuiUtil.ResumeDrawing(dataGridView1);
         }
     }
 
-    public void RepopulateFromData()
+    // ------------------------------------------------------------------ details panel
+
+    private void SetupLabelDetailsPanel()
     {
-        if (locked)
-            return;
+        dataGridContexts.AutoGenerateColumns = false;
+        dataGridContexts.AllowUserToAddRows = true;
+        dataGridContexts.AllowUserToDeleteRows = true;
 
-        // Safety check - make sure we have data before proceeding
-        if (ProjectController == null || Data?.Labels?.Labels == null)
-            return;
-
-        if (dataTable == null)
+        dataGridContexts.Columns.Add(new DataGridViewTextBoxColumn
         {
-            InitializeDataTable();
-            if (dataTable == null)
-                return;
-        }
-
-        Optimization_SuspendDrawing(true);
-
-        dataTable.Clear();
-
-        var labelSearchConditions = new LabelSearchTerms(CurrentSearchTerm);
-        var filteredLabels = Data.Labels.Labels
-            .Where(x => labelSearchConditions.DoesLabelMatch(x.Key, x.Value));
-
-        foreach (var (snesAddress, label) in filteredLabels)
+            Name = "Context",
+            HeaderText = "Context",
+            DataPropertyName = nameof(ContextMapping.Context),
+            Width = 150
+        });
+        dataGridContexts.Columns.Add(new DataGridViewTextBoxColumn
         {
-            RawAdd(snesAddress, label);
-        }
-
-        var dataView = dataTable.DefaultView;
-        dataView.Sort = "Address ASC";
-
-        Optimization_SuspendDrawing(false); // restore
+            Name = "NameOverride",
+            HeaderText = "Name Override",
+            DataPropertyName = nameof(ContextMapping.NameOverride),
+            Width = 200
+        });
     }
 
-    public event EventHandler? OnFormClosed;
-
-    public void Close()
+    private void UpdateDetailsPanelFor(ILabelRowViewModel? row)
     {
-        OnFormClosed?.Invoke(this, EventArgs.Empty);
-    }
+        if (contextMappingsBindingList != null)
+            contextMappingsBindingList.ListChanged -= ContextMappingsBindingList_ListChanged;
 
-    public void BringFormToTop()
-    {
-        Focus();
-    }
+        selectedLabel = row != null ? Data?.Labels.GetLabel(row.SnesAddress) : null;
 
-    private void btnNewFromCurrentIA_Click(object sender, EventArgs e) =>
-        FocusOrCreateLabelAtSelectedRomOffsetIa();
+        txtDetailsLabelPrimaryName.DataBindings.Clear();
+        txtDetailsLabelComment.DataBindings.Clear();
 
-    public void FocusOrCreateLabelAtSelectedRomOffsetIa()
-    {
-        var selectedOffset = ProjectController?.ProjectView.SelectedOffset ?? -1;
-        if (selectedOffset == -1)
+        if (selectedLabel == null)
         {
-            MessageBox.Show("No offset selected in main form, or no project loaded.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            dataGridContexts.DataSource = null;
+            contextMappingsBindingList = null;
+            lblPanelName.Text = "Label Details";
+            groupBox1.Text = "Label Details";
             return;
         }
 
-        // whatever IA is selected on the main form, let's start editing a new label with that.
-        FocusOrCreateLabelAtRomOffsetIa(selectedOffset);
+        txtDetailsLabelPrimaryName.DataBindings.Add(new Binding("Text", selectedLabel,
+            nameof(selectedLabel.Name), formattingEnabled: false, DataSourceUpdateMode.OnPropertyChanged));
+
+        var commentBinding = new Binding("Text", selectedLabel, nameof(selectedLabel.Comment),
+            formattingEnabled: false, DataSourceUpdateMode.OnPropertyChanged);
+        commentBinding.Format += (_, args) =>
+        {
+            if (args.Value is string text)
+                args.Value = text.Replace("\r\n", "\n").Replace("\r", "\n").Replace("\n", Environment.NewLine);
+        };
+        commentBinding.Parse += (_, args) =>
+        {
+            if (args.Value is string text)
+                args.Value = text.Replace(Environment.NewLine, "\n");
+        };
+        txtDetailsLabelComment.DataBindings.Add(commentBinding);
+
+        contextMappingsBindingList = [];
+        foreach (var mapping in selectedLabel.ContextMappings)
+        {
+            contextMappingsBindingList.Add(mapping as ContextMapping ?? new ContextMapping
+            {
+                Context = mapping.Context,
+                NameOverride = mapping.NameOverride
+            });
+        }
+
+        contextMappingsBindingList.AllowNew = true;
+        contextMappingsBindingList.AllowRemove = true;
+        contextMappingsBindingList.AllowEdit = true;
+        contextMappingsBindingList.ListChanged += ContextMappingsBindingList_ListChanged;
+
+        dataGridContexts.DataSource = contextMappingsBindingList;
+        groupBox1.Text = $"Label Details - {row!.AddressText}";
     }
 
-    public void FocusOrCreateLabelAtRomOffsetIa(int selectedOffset)
+    private void ContextMappingsBindingList_ListChanged(object? sender, ListChangedEventArgs e)
     {
-        var snesData = Data?.GetSnesApi();
-        var snesIa = snesData?.GetIntermediateAddress(selectedOffset, resolve: true) ?? -1;
-        if (snesIa == -1)
-        {
-            MessageBox.Show(
-                "You have selected a row in the main grid that has no IA (Intermediate Address). Can't proceed",
-                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        if (selectedLabel?.ContextMappings == null || contextMappingsBindingList == null)
             return;
-        }
 
-        FocusOrCreateLabelAtSnesAddress(snesIa);
-    }
+        if (e.ListChangedType == ListChangedType.Reset || isUpdatingContextMappings)
+            return;
 
-    public void FocusOrCreateLabelAtSnesAddress(int snesAddress)
-    {
-        // optional: convert mirrored WRAM labels into un-mirrored address.
-        // will change i.e. $00xxxx addresses to $7Exxxx
-        snesAddress = RomUtil.NormalizeSnesWramAddress(snesAddress);
-
-        // finally clear our search
-        // for the code below to work, there must be NO FILTER or we could miss rows
-        if (txtSearch.Text != "")
+        try
         {
-            txtSearch.Clear();
-            RepopulateFromData();
+            isUpdatingContextMappings = true;
+
+            // clear and rebuild the model's collection; the row VM relays the change into
+            // the main grid's Contexts column automatically.
+            selectedLabel.ContextMappings.Clear();
+            foreach (var mapping in contextMappingsBindingList)
+            {
+                if (!string.IsNullOrWhiteSpace(mapping.Context))
+                    selectedLabel.ContextMappings.Add(mapping);
+            }
         }
-
-        // does it already exist?
-        var row = FindRowWithSnesAddress(snesAddress);
-
-        if (row == -1)
+        catch (Exception ex)
         {
-            // if not, create it
-            AddRow(snesAddress, new Label { Name = "New Label" });
-            row = FindRowWithSnesAddress(snesAddress);
+            System.Diagnostics.Debug.WriteLine($"Error syncing context mappings: {ex.Message}");
         }
-
-        dataGridView1.CurrentCell = dataGridView1.Rows[row].Cells[1]; // Select the name cell for editing
-        dataGridView1.BeginEdit(true);
-    }
-
-    private int FindRowWithSnesAddress(int snesAddress)
-    {
-        var snesAddressHexStr = Util.ToHexString6(snesAddress);
-
-        // Search through DataGridView rows instead of DataTable rows, to bypass all filtering/etc.
-        for (var i = 0; i < dataGridView1.Rows.Count; i++)
+        finally
         {
-            if (dataGridView1.Rows[i].IsNewRow)
-                continue;
-
-            var cellValue = dataGridView1.Rows[i].Cells[0].Value as string;
-            if (cellValue != snesAddressHexStr)
-                continue;
-
-            return i;
+            isUpdatingContextMappings = false;
         }
-
-        return -1;
-    }
-
-    private void normalizeWRAMLabelsToolStripMenuItem_Click(object sender, EventArgs e)
-    {
-        locked = true; // optimization, don't auto-repopulate with every little change
-        ProjectController?.NormalizeWramLabels();
-        locked = false;
-        RepopulateFromData();
-    }
-
-    private void table_KeyDown(object sender, KeyEventArgs e)
-    {
-        switch (e.KeyCode)
-        {
-            // might be better to use the built-in delete but...
-            case Keys.Delete:
-                if (dataGridView1.IsCurrentCellInEditMode)
-                    break;
-
-                var snesAddressOfSelectedLabel = GetSnesAddressOfCurrentlySelectedLabel();
-                if (snesAddressOfSelectedLabel == -1)
-                    break;
-
-                Data?.Labels.RemoveLabel(snesAddressOfSelectedLabel);
-
-                e.Handled = true;
-                break;
-        }
-    }
-
-    // INotifyPropertyChanged implementation
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

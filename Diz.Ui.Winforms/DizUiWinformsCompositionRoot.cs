@@ -19,7 +19,11 @@ namespace Diz.Ui.Winforms;
         serviceRegistry.Register<IImportRomDialogView, ImportRomDialog>("ImportRomView");
         serviceRegistry.Register<IProgressView, ProgressDialog>("ProgressBarView");
         serviceRegistry.Register<ILogCreatorSettingsEditorView, LogCreatorSettingsEditorForm>("ExportDisassemblyView");
-        serviceRegistry.Register<ILabelEditorView, AliasList>("LabelEditorView");
+        // the interface implementation is the LabelsViewControl hosted inside an AliasList
+        // window (the form itself is a plain host since step 3 of the new-ui plan). the
+        // control's Show()/BringFormToTop() operate on its host form, so callers see the
+        // same behavior as when AliasList implemented the interface directly.
+        serviceRegistry.Register<ILabelEditorView>(_ => new AliasList().LabelEditor, "LabelEditorView");
         serviceRegistry.Register<IRegionListView, RegionList>("RegionEditorView");
         
         serviceRegistry.RegisterSingleton<IDizAppSettings, DizAppSettingsProvider>(); // TODO: probably move this out of this project into app.common

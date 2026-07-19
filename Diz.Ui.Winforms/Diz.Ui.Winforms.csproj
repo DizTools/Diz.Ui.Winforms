@@ -89,6 +89,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\Diz.Controllers\Diz.Controllers\Diz.Controllers.csproj" />
         <ProjectReference Include="..\..\Diz.Core\Diz.Core.csproj" />
+        <ProjectReference Include="..\..\Diz.Ui.ViewModels\Diz.Ui.ViewModels.csproj" />
     </ItemGroup>
 
     <ItemGroup>
