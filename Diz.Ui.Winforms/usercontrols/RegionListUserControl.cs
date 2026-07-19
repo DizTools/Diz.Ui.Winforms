@@ -3,6 +3,8 @@ using Diz.Core.Interfaces;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Diz.Core.util;
 
 namespace Diz.Ui.Winforms.usercontrols;
@@ -143,6 +145,16 @@ private void SetupColumns()
             HeaderText = "Asset Name",
             Width = 150
         },
+        new DataGridViewTextBoxColumn
+        {
+            Name = "AssetOptions",
+            DataPropertyName = "AssetOptions",
+            HeaderText = "Asset Options (JSON)",
+            ToolTipText = "Free-form JSON merged into the manifest under \"options\", overriding " +
+                          "the \"gfx\" block. Leave blank normally. " +
+                          "e.g. {\"cell_h\": 12} or {\"view\": {\"order\": \"column_major\", \"rows\": 12}}",
+            Width = 200
+        },
         new DataGridViewButtonColumn
         {
             Name = "Actions",
@@ -243,7 +255,7 @@ private void ApplyAssetCellStyling(DataGridViewCellFormattingEventArgs e)
 }
 
 private static bool IsAssetColumn(string columnName) =>
-    columnName is "AssetType" or "AssetVersion" or "AssetName";
+    columnName is "AssetType" or "AssetVersion" or "AssetName" or "AssetOptions";
 
 // read the ExportType cell back out as an enum. cells can hold either the enum or its
 // string form depending on whether the user just edited it, so handle both.
@@ -440,12 +452,51 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
                 return;
             }
 
-            // 8 rows, bpp/2 bitplane pairs, 2 bytes per row per pair = bpp*8 bytes per tile.
-            // a partial tile at the end would silently produce garbage graphics, so reject it here.
-            var tileSizeInBytes = bpp * 8;
+            // Asset Options is free-form and Diz doesn't own its vocabulary, so validate only
+            // that it parses as a JSON object -- plus cell_h, which the length check below needs.
+            var optionsText = row.Cells["AssetOptions"].Value?.ToString() ?? "";
+            var cellHeight = 8;
+            if (!string.IsNullOrWhiteSpace(optionsText))
+            {
+                JsonNode? options;
+                try
+                {
+                    options = JsonNode.Parse(optionsText);
+                }
+                catch (JsonException ex)
+                {
+                    ShowErrorMessage($"Asset Options is not valid JSON: {ex.Message}");
+                    e.Cancel = true;
+                    return;
+                }
+
+                if (options is not JsonObject optionsObj)
+                {
+                    ShowErrorMessage("Asset Options must be a JSON object, e.g. {\"cell_h\": 12}.");
+                    e.Cancel = true;
+                    return;
+                }
+
+                if (optionsObj.TryGetPropertyValue("cell_h", out var cellHeightNode) && cellHeightNode != null)
+                {
+                    if (cellHeightNode.GetValueKind() != JsonValueKind.Number
+                        || !cellHeightNode.AsValue().TryGetValue(out cellHeight)
+                        || cellHeight < 1)
+                    {
+                        ShowErrorMessage("Asset Options: cell_h must be an integer >= 1.");
+                        e.Cancel = true;
+                        return;
+                    }
+                }
+            }
+
+            // bpp/2 bitplane pairs, 2 bytes per row per pair, cellHeight rows.
+            // a partial cell at the end would silently produce garbage graphics, so reject it here.
+            var cellSizeInBytes = bpp * cellHeight;
             var regionLength = endSnesAddr - startSnesAddr;
-            if (regionLength % tileSizeInBytes != 0) {
-                ShowErrorMessage($"Region length ({regionLength} bytes) must be a whole multiple of {tileSizeInBytes} bytes (one {bpp}bpp tile) when Asset Type is '{assetType}'.");
+            if (regionLength % cellSizeInBytes != 0) {
+                var what = cellHeight == 8 ? $"one {bpp}bpp tile" : $"one {bpp}bpp 8x{cellHeight} cell";
+                ShowErrorMessage($"Region length ({regionLength} bytes) must be a whole multiple of {cellSizeInBytes} bytes ({what}) when Asset Type is '{assetType}'.");
                 e.Cancel = true;
                 return;
             }
