@@ -445,23 +445,29 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
         if (exportType == RegionExportType.Asset)
         {
             var assetType = row.Cells["AssetType"].Value?.ToString() ?? "";
-            if (!ValidAssetTypes.TryGetValue(assetType, out var bpp))
+
+            // Route to the descriptor that owns this AssetType family, the same way the codec
+            // dispatch does downstream (Diz.LogWriter BinaryAssetExporterBase / BuildToolBinding).
+            var descriptor = AssetTypeUiValidators.FirstOrDefault(d => d.Matches(assetType));
+            if (descriptor == null)
             {
-                ShowErrorMessage($"Asset Type is required when Export Type is 'Asset'. Expected one of: {string.Join(", ", ValidAssetTypes.Keys)}.");
+                var known = string.Join(", ", AssetTypeUiValidators.SelectMany(d => d.ExampleTypes));
+                ShowErrorMessage($"Asset Type is required when Export Type is 'Asset'. Expected one of: {known}.");
                 e.Cancel = true;
                 return;
             }
 
-            // Asset Options is free-form and Diz doesn't own its vocabulary, so validate only
-            // that it parses as a JSON object -- plus cell_h, which the length check below needs.
+            // Asset Options is free-form and Diz doesn't own its vocabulary, so at this generic
+            // layer we validate only that it parses as a JSON object; the descriptor reads
+            // whatever type-specific keys (e.g. cell_h) it needs.
             var optionsText = row.Cells["AssetOptions"].Value?.ToString() ?? "";
-            var cellHeight = 8;
+            JsonObject? options = null;
             if (!string.IsNullOrWhiteSpace(optionsText))
             {
-                JsonNode? options;
+                JsonNode? parsed;
                 try
                 {
-                    options = JsonNode.Parse(optionsText);
+                    parsed = JsonNode.Parse(optionsText);
                 }
                 catch (JsonException ex)
                 {
@@ -470,47 +476,100 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
                     return;
                 }
 
-                if (options is not JsonObject optionsObj)
+                if (parsed is not JsonObject optionsObj)
                 {
                     ShowErrorMessage("Asset Options must be a JSON object, e.g. {\"cell_h\": 12}.");
                     e.Cancel = true;
                     return;
                 }
 
-                if (optionsObj.TryGetPropertyValue("cell_h", out var cellHeightNode) && cellHeightNode != null)
-                {
-                    if (cellHeightNode.GetValueKind() != JsonValueKind.Number
-                        || !cellHeightNode.AsValue().TryGetValue(out cellHeight)
-                        || cellHeight < 1)
-                    {
-                        ShowErrorMessage("Asset Options: cell_h must be an integer >= 1.");
-                        e.Cancel = true;
-                        return;
-                    }
-                }
+                options = optionsObj;
             }
 
-            // bpp/2 bitplane pairs, 2 bytes per row per pair, cellHeight rows.
-            // a partial cell at the end would silently produce garbage graphics, so reject it here.
-            var cellSizeInBytes = bpp * cellHeight;
-            var regionLength = endSnesAddr - startSnesAddr;
-            if (regionLength % cellSizeInBytes != 0) {
-                var what = cellHeight == 8 ? $"one {bpp}bpp tile" : $"one {bpp}bpp 8x{cellHeight} cell";
-                ShowErrorMessage($"Region length ({regionLength} bytes) must be a whole multiple of {cellSizeInBytes} bytes ({what}) when Asset Type is '{assetType}'.");
+            // NOTE: length stays exclusive (end - start) exactly as before this refactor. The
+            // End-inclusive convention (plan step 2) did NOT touch this UI check; changing the
+            // arithmetic here is out of step-7 scope. See handoff/report.
+            var context = new AssetTypeValidationContext(assetType, endSnesAddr - startSnesAddr, options);
+            var error = descriptor.Validate(context);
+            if (error != null)
+            {
+                ShowErrorMessage(error);
                 e.Cancel = true;
                 return;
             }
         }
     }
 
-    // asset types Diz knows how to write a manifest for, mapped to their bits-per-pixel.
-    // keep in sync with RegionAssetUtil.ParseSnesGfxBpp in Diz.LogWriter.
-    private static readonly Dictionary<string, int> ValidAssetTypes = new()
+    // ---- per-asset-type UI validation ------------------------------------------------------
+    // Each descriptor owns a family of AssetType strings and knows how to sanity-check a region's
+    // length + options for that family. Replaces the old gfx-only bpp table so a new type (e.g.
+    // "audio."/BRR) is added by registering another descriptor rather than editing RowValidating.
+    // Mirrors the codec dispatch in Diz.LogWriter (routing by AssetType prefix).
+
+    private sealed record AssetTypeValidationContext(string AssetType, int RegionLength, JsonObject? Options);
+
+    private sealed class AssetTypeUiValidator
     {
-        { "gfx.snes.2bpp", 2 },
-        { "gfx.snes.4bpp", 4 },
-        { "gfx.snes.8bpp", 8 },
-    };
+        /// <summary>Does this descriptor own the given AssetType string?</summary>
+        public Func<string, bool> Matches { get; init; } = _ => false;
+
+        /// <summary>Example type strings, surfaced in the "expected one of" error.</summary>
+        public IReadOnlyList<string> ExampleTypes { get; init; } = [];
+
+        /// <summary>Returns null when valid, else a user-facing error message.</summary>
+        public Func<AssetTypeValidationContext, string?> Validate { get; init; } = _ => null;
+    }
+
+    private static readonly IReadOnlyList<AssetTypeUiValidator> AssetTypeUiValidators =
+    [
+        BuildGfxAssetValidator(),
+    ];
+
+    // SNES graphics: gfx.snes.{2,4,8}bpp. bpp/2 bitplane pairs, 2 bytes per row per pair,
+    // cell_h rows; a partial cell at the end would silently produce garbage graphics, so reject.
+    // Kept in sync (by shape) with RegionAssetUtil.ParseSnesGfxBpp in Diz.LogWriter.
+    private static AssetTypeUiValidator BuildGfxAssetValidator()
+    {
+        var validBpp = new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            { "gfx.snes.2bpp", 2 },
+            { "gfx.snes.4bpp", 4 },
+            { "gfx.snes.8bpp", 8 },
+        };
+
+        return new AssetTypeUiValidator
+        {
+            Matches = validBpp.ContainsKey,
+            ExampleTypes = validBpp.Keys.ToList(),
+            Validate = ctx =>
+            {
+                var bpp = validBpp[ctx.AssetType];
+
+                var cellHeight = 8;
+                if (ctx.Options != null
+                    && ctx.Options.TryGetPropertyValue("cell_h", out var cellHeightNode)
+                    && cellHeightNode != null)
+                {
+                    if (cellHeightNode.GetValueKind() != JsonValueKind.Number
+                        || !cellHeightNode.AsValue().TryGetValue(out cellHeight)
+                        || cellHeight < 1)
+                    {
+                        return "Asset Options: cell_h must be an integer >= 1.";
+                    }
+                }
+
+                var cellSizeInBytes = bpp * cellHeight;
+                if (ctx.RegionLength % cellSizeInBytes != 0)
+                {
+                    var what = cellHeight == 8 ? $"one {bpp}bpp tile" : $"one {bpp}bpp 8x{cellHeight} cell";
+                    return $"Region length ({ctx.RegionLength} bytes) must be a whole multiple of " +
+                           $"{cellSizeInBytes} bytes ({what}) when Asset Type is '{ctx.AssetType}'.";
+                }
+
+                return null;
+            },
+        };
+    }
 
     private void DeleteRegion(int rowIndex)
     {
