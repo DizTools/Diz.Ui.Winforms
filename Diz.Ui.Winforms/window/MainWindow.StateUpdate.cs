@@ -164,6 +164,7 @@ public partial class MainWindow
     {
         importUsageMapToolStripMenuItem.Enabled = importerMenuItemsEnabled;
         importCDLToolStripMenuItem.Enabled = importerMenuItemsEnabled;
+        importMesen2CDLToolStripMenuItem.Enabled = importerMenuItemsEnabled;
         importTraceLogBinary.Enabled = importerMenuItemsEnabled;
         importTraceLogText.Enabled = importerMenuItemsEnabled;
     }

@@ -6,29 +6,39 @@ namespace Diz.Ui.Winforms.window;
 
 public partial class MainWindow
 {
-    private void ImportBizhawkCDL()
+    private void ImportBizhawkCdl()
     {
-        var filename = PromptOpenBizhawkCDLFile();
-        if (filename != null && filename == "") return;
-        ImportBizHawkCdl(filename);
+        var filename = PromptOpenCdlFile("Open Bizhawk SNES CDL File");
+        if (filename == "") 
+            return;
+
+        try {
+            ProjectController.ImportBizHawkCdl(filename);
+        } catch (Exception ex)  {
+            ShowError(ex.Message);
+        }
+
         UpdateSomeUI2();
     }
 
-    private void ImportBizHawkCdl(string filename)
+    private void ImportMesen2Cdl()
     {
-        try
-        {
-            ProjectController.ImportBizHawkCdl(filename);
+        var filename = PromptOpenCdlFile("Open Mesen2 (NES) CDL File");
+        if (filename == "") 
+            return;
+
+        try {
+            ProjectController.ImportMesen2Cdl(filename);
+        } catch (Exception ex) {
+            ShowError(ex.Message);
         }
-        catch (Exception ex)
-        {
-            ShowError(ex.Message, "Error");
-        }
+
+        UpdateSomeUI2();
     }
 
     private void ImportBsnesTraceLogText()
     {
-        if (!PromptForImportBSNESTraceLogFile()) 
+        if (!PromptForImportBsnesTraceLogFile()) 
             return;
             
         var (numModifiedFlags, numFiles) = ImportBsnesTraceLogs();
