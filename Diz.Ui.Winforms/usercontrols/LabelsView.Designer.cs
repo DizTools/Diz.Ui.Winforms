@@ -29,8 +29,6 @@ partial class LabelsViewControl
     private void InitializeComponent()
     {
         DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
-        openFileDialog1 = new OpenFileDialog();
-        saveFileDialog1 = new SaveFileDialog();
         dataGridView1 = new DataGridView();
         menuStrip1 = new MenuStrip();
         dataToolStripMenuItem = new ToolStripMenuItem();
@@ -68,17 +66,9 @@ partial class LabelsViewControl
         groupBox1.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dataGridContexts).BeginInit();
         SuspendLayout();
-        // 
-        // openFileDialog1
-        // 
-        openFileDialog1.Filter = "Comma Separated Value Files|*.csv|BSNES Symbols Map|*.cpu.sym|Text Files|*.txt|All Files|*.*";
-        // 
-        // saveFileDialog1
-        // 
-        saveFileDialog1.Filter = "Comma Separated Value Files|*.csv|Text Files|*.txt|All Files|*.*";
-        // 
+        //
         // dataGridView1
-        // 
+        //
         dataGridView1.AllowUserToResizeColumns = false;
         dataGridView1.AllowUserToResizeRows = false;
         dataGridView1.BorderStyle = BorderStyle.None;
@@ -387,8 +377,6 @@ partial class LabelsViewControl
     }
 
     #endregion
-    private System.Windows.Forms.OpenFileDialog openFileDialog1;
-    private System.Windows.Forms.SaveFileDialog saveFileDialog1;
     private DataGridView dataGridView1;
     private MenuStrip menuStrip1;
     private ToolStripMenuItem dataToolStripMenuItem;

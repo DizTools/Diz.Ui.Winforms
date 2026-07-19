@@ -23,8 +23,19 @@ namespace Diz.Ui.Winforms;
         // window (the form itself is a plain host since step 3 of the new-ui plan). the
         // control's Show()/BringFormToTop() operate on its host form, so callers see the
         // same behavior as when LabelEditorForm implemented the interface directly.
-        serviceRegistry.Register<ILabelEditorView>(_ => new LabelEditorForm().LabelEditor, "LabelEditorView");
+        // step 4: the control prompts for import/export paths through IFileDialogService,
+        // so hand it the container's instance (its default is the same WinForms impl).
+        serviceRegistry.Register<ILabelEditorView>(factory =>
+        {
+            var labelEditor = new LabelEditorForm().LabelEditor;
+            labelEditor.FileDialogService = factory.GetInstance<IFileDialogService>();
+            return labelEditor;
+        }, "LabelEditorView");
         serviceRegistry.Register<IRegionListView, RegionList>("RegionEditorView");
+
+        // the file-dialog seam (new-ui plan step 4): each UI toolkit registers its own.
+        // singleton: the service is stateless (a fresh dialog per call).
+        serviceRegistry.RegisterSingleton<IFileDialogService, WinformsFileDialogService>();
         
         serviceRegistry.RegisterSingleton<IDizAppSettings, DizAppSettingsProvider>(); // TODO: probably move this out of this project into app.common
     }

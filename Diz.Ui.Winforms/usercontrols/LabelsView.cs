@@ -25,6 +25,18 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public IProjectController? ProjectController { get; set; }
 
+    // step 4: file paths come from this seam now (WinForms impl wraps the classic dialogs).
+    // default = the local toolkit implementation so the control works when constructed
+    // outside DI (e.g. the designer); the composition root injects the container's instance.
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public IFileDialogService FileDialogService { get; set; } = new WinformsFileDialogService();
+
+    // same filter strings the old designer-instantiated openFileDialog1/saveFileDialog1 used
+    private const string LabelImportFilter =
+        "Comma Separated Value Files|*.csv|BSNES Symbols Map|*.cpu.sym|Text Files|*.txt|All Files|*.*";
+    private const string LabelExportFilter =
+        "Comma Separated Value Files|*.csv|Text Files|*.txt|All Files|*.*";
+
     private Data? Data => ProjectController?.Project?.Data;
 
     private ILabelEditorViewModel? viewModel;
@@ -341,11 +353,8 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
 
     // ------------------------------------------------------------------ menu commands
 
-    private void importCSVAppendToolStripMenuItem_Click(object sender, EventArgs e)
+    private async void importCSVAppendToolStripMenuItem_Click(object sender, EventArgs e)
     {
-        if (ProjectController == null)
-            return;
-
         const string msg = "Info: Items in CSV will:\n" +
                    "1) CSV items will be added if their address doesn't already exist in this list\n" +
                    "2) CSV items will replace anything with the same address as items in the list\n" +
@@ -353,23 +362,35 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
                    "\n" +
                    "Continue?\n";
 
-        if (!PromptWarning(msg))
-            return;
-
-        ProjectController.ImportLabelsCsv(this, false);
+        await ImportLabelsCsv(msg, replaceAll: false);
     }
 
-    private void importCSVToolStripMenuItem_Click(object sender, EventArgs e)
+    private async void importCSVToolStripMenuItem_Click(object sender, EventArgs e) =>
+        await ImportLabelsCsv(
+            "Info: All list items will be deleted and replaced with the CSV file.\n" +
+            "\n" +
+            "Continue?\n",
+            replaceAll: true);
+
+    // step 4: same flow the user always saw (warning prompt -> file dialog -> import),
+    // but the view obtains the path itself and hands the controller a plain string.
+    // the controller no longer touches the view: it surfaces parse errors via ICommonGui
+    // (identical dialog), and the VM re-syncs from provider events instead of the old
+    // RepopulateFromData callback.
+    private async Task ImportLabelsCsv(string warningMsg, bool replaceAll)
     {
         if (ProjectController == null)
             return;
 
-        if (!PromptWarning("Info: All list items will be deleted and replaced with the CSV file.\n" +
-                   "\n" +
-                   "Continue?\n"))
+        if (!PromptWarning(warningMsg))
             return;
 
-        ProjectController.ImportLabelsCsv(this, true);
+        // empty title = keep the OS default ("Open"), like the old openFileDialog1
+        var importFilename = await FileDialogService.PromptOpenFileAsync("", LabelImportFilter);
+        if (string.IsNullOrEmpty(importFilename))
+            return;
+
+        ProjectController.ImportLabelsCsv(importFilename, replaceAll);
     }
 
     private static bool PromptWarning(string msg) =>
@@ -380,15 +401,16 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
         if (viewModel == null)
             return;
 
-        var result = saveFileDialog1.ShowDialog();
-        if (result != DialogResult.OK || saveFileDialog1.FileName == "")
+        // empty title = keep the OS default ("Save As"), like the old saveFileDialog1
+        var exportFilename = await FileDialogService.PromptSaveFileAsync("", LabelExportFilter);
+        if (string.IsNullOrEmpty(exportFilename))
             return;
 
         try
         {
             // step 1's exporter: same non-RFC-4180 dialect the importer reads; sanitizes
             // (and reports) what the old hand-rolled writer silently exported broken.
-            await viewModel.ExportLabelsAsync(saveFileDialog1.FileName);
+            await viewModel.ExportLabelsAsync(exportFilename);
         }
         catch (Exception)
         {
@@ -402,18 +424,8 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
         SuspendDrawingDuring(() => ProjectController?.NormalizeWramLabels());
 
     // ------------------------------------------------------------------ ILabelEditorView
-    // (interface reshaping is step 4; these keep the existing contract working.)
-
-    public string PromptForCsvFilename()
-    {
-        var result = openFileDialog1.ShowDialog();
-        return result != DialogResult.OK || openFileDialog1.FileName == ""
-            ? ""
-            : openFileDialog1.FileName;
-    }
-
-    public void ShowLineItemError(string exMessage, int errLine) =>
-        WinformsGuiUtil.ShowLineItemError(exMessage, errLine);
+    // (step 4 dropped the prompt-shaped members PromptForCsvFilename/ShowLineItemError;
+    // dialogs now go through FileDialogService / the controller's ICommonGui.)
 
     public void SetProjectController(IProjectController? projectController) =>
         ProjectController = projectController;
