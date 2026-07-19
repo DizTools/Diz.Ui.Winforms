@@ -7,16 +7,16 @@ namespace Diz.Ui.Winforms.dialogs;
 // of its own: hide instead of close, so reopening the editor is instant and state is kept.
 [SuppressMessage("ReSharper", "UnusedType.Global")]
 [SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
-public partial class AliasList : Form
+public partial class LabelEditorForm : Form
 {
-    public AliasList()
+    public LabelEditorForm()
     {
         InitializeComponent();
     }
 
     internal usercontrols.LabelsViewControl LabelEditor => labelsViewControl1;
 
-    private void AliasList_FormClosing(object sender, FormClosingEventArgs e)
+    private void LabelEditorForm_FormClosing(object sender, FormClosingEventArgs e)
     {
         if (e.CloseReason != CloseReason.UserClosing) return;
         e.Cancel = true;

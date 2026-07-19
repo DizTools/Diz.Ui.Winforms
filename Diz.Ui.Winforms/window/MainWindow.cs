@@ -186,7 +186,7 @@ public partial class MainWindow : Form, IMainGridWindowView
 
     public void OnProjectOpened(string filename)
     {
-        // TODO: do this with aliaslist too.
+        // TODO: do this with the label editor form too.
         CloseAndDisposeOtherViews();
 
         UpdateSaveOptionStates(saveEnabled: true, saveAsEnabled: true, closeEnabled: true);

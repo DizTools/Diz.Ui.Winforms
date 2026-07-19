@@ -54,7 +54,7 @@
         <Compile Update="dialogs\ImportROMDialog.cs">
           <SubType>Form</SubType>
         </Compile>
-        <Compile Update="dialogs\AliasList.cs">
+        <Compile Update="dialogsabeleditorform.cs">
           <SubType>Form</SubType>
         </Compile>
         <Compile Update="dialogs\NavigationForm.cs">
