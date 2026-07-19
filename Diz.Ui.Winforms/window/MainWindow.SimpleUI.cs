@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using System.Threading.Tasks;
 using Diz.Core.commands;
 using Diz.Core.Interfaces;
 using Diz.Core.util;
@@ -9,63 +10,82 @@ namespace Diz.Ui.Winforms.window;
 
 public partial class MainWindow
 {
-    private void MainWindow_FormClosing(object sender, FormClosingEventArgs e) =>
-        e.Cancel = !PromptContinueEvenIfUnsavedChanges();
+    // async-close pattern (new-ui plan step 6): the unsaved-changes prompt can now await an
+    // async save, so we cancel this close, decide asynchronously, and re-issue Close() only if
+    // the user approved. Without this, FormClosing would read a not-yet-finished save decision.
+    private bool forceClose;
+    private async void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
+    {
+        if (forceClose)
+            return; // second pass: the async confirm already ran and approved closing.
+
+        e.Cancel = true;
+        if (!await PromptContinueEvenIfUnsavedChanges())
+            return; // user cancelled -> stay open.
+
+        forceClose = true;
+        Close();
+    }
 
     private void MainWindow_SizeChanged(object sender, EventArgs e) => UpdatePanels();
     private void MainWindow_ResizeEnd(object sender, EventArgs e) => UpdateDataGridView();
     private void MainWindow_Load(object sender, EventArgs e) => Init();
-    private void newProjectToolStripMenuItem_Click(object sender, EventArgs e) => CreateNewProject();
-    private void openProjectToolStripMenuItem_Click(object sender, EventArgs e) => OpenProject();
+    private async void newProjectToolStripMenuItem_Click(object sender, EventArgs e) => await CreateNewProject();
+    private async void openProjectToolStripMenuItem_Click(object sender, EventArgs e) => await OpenProject();
 
-    private void saveProjectToolStripMenuItem_Click(object sender, EventArgs e) => 
-        SaveProject(askFilenameIfNotSet: true, alwaysAsk: false); // save
+    private async void saveProjectToolStripMenuItem_Click(object sender, EventArgs e) =>
+        await SaveProject(askFilenameIfNotSet: true, alwaysAsk: false); // save
 
-    private void saveProjectAsToolStripMenuItem_Click(object sender, EventArgs e) => 
-        SaveProject(askFilenameIfNotSet: true, alwaysAsk: true); // save as
-        
-    private bool EnsureProjectFileExistsOnDisk()
+    private async void saveProjectAsToolStripMenuItem_Click(object sender, EventArgs e) =>
+        await SaveProject(askFilenameIfNotSet: true, alwaysAsk: true); // save as
+
+    private async Task<bool> EnsureProjectFileExistsOnDisk()
     {
         // must have saved the project at least once first
         // (otherwise relative export paths can get screwy).
         // does NOT MEAN we saved recently, just that it was ONCE ever saved.
-        if (!string.IsNullOrEmpty(Project.ProjectFileName)) 
+        if (!string.IsNullOrEmpty(Project.ProjectFileName))
             return true;
-            
+
         MessageBox.Show("Project file must be saved first before exporting. Please save it now.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            
-        return SaveProject(askFilenameIfNotSet: true, alwaysAsk: true);
+
+        return await SaveProject(askFilenameIfNotSet: true, alwaysAsk: true);
     }
-        
-    private void toolStrip_exportDisassemblyUseCurrentSettings_Click(object sender, System.EventArgs e)
+
+    private async void toolStrip_exportDisassemblyUseCurrentSettings_Click(object sender, System.EventArgs e)
     {
-        if (!EnsureProjectFileExistsOnDisk())
+        if (!await EnsureProjectFileExistsOnDisk())
             return;
 
-        RunOperationWithUiHidden(() => 
-            ProjectController.ExportAssemblyWithCurrentSettings()
-        );
-    }
-    
-    private void toolStrip_exportDisassemblyEditSettingsFirst_Click(object sender, EventArgs e)
-    {
-        if (!EnsureProjectFileExistsOnDisk())
-            return;
-            
-        RunOperationWithUiHidden(() => 
-            ProjectController.ConfirmSettingsThenExportAssembly()
+        await RunOperationWithUiHidden(() =>
+            ProjectController.ExportAssemblyWithCurrentSettingsAsync()
         );
     }
 
-    private bool RunOperationWithUiHidden(Func<bool> action)
+    private async void toolStrip_exportDisassemblyEditSettingsFirst_Click(object sender, EventArgs e)
+    {
+        if (!await EnsureProjectFileExistsOnDisk())
+            return;
+
+        await RunOperationWithUiHidden(() =>
+            ProjectController.ConfirmSettingsThenExportAssemblyAsync()
+        );
+    }
+
+    private async Task<bool> RunOperationWithUiHidden(Func<Task<bool>> action)
     {
         // hide the UI so it doesn't try and update while we're doing intense stuff (like exporting)
         // this could mess up internal operations and iterate through collections being modified/etc.
         Hide();
-        var result = action();
-        Show(); 
-        BringFormToTop();
-        return result;
+        try
+        {
+            return await action();
+        }
+        finally
+        {
+            Show();
+            BringFormToTop();
+        }
     }
 
     private void toolStrip_openExportDirectory_Click(object sender, EventArgs e) =>
@@ -195,9 +215,9 @@ public partial class MainWindow
         // TODO
     }
 
-    private void importCDLToolStripMenuItem_Click_1(object sender, EventArgs e) => ImportBizhawkCDL();
+    private async void importCDLToolStripMenuItem_Click_1(object sender, EventArgs e) => await ImportBizhawkCDL();
 
-    private void importBsnesTracelogText_Click(object sender, EventArgs e) => ImportBsnesTraceLogText();
+    private async void importBsnesTracelogText_Click(object sender, EventArgs e) => await ImportBsnesTraceLogText();
 
     private void graphicsWindowToolStripMenuItem_Click(object sender, EventArgs e)
     {
@@ -205,13 +225,13 @@ public partial class MainWindow
         // graphics view window
     }
 
-    private void toolStripOpenLast_Click(object sender, EventArgs e)
+    private async void toolStripOpenLast_Click(object sender, EventArgs e)
     {
-        OpenLastProject();
+        await OpenLastProject();
     }
 
     private void rescanForInOutPointsToolStripMenuItem_Click(object sender, EventArgs e) => UiRescanForInOut();
-    private void importUsageMapToolStripMenuItem_Click_1(object sender, EventArgs e) => UiImportBsnesUsageMap();
+    private async void importUsageMapToolStripMenuItem_Click_1(object sender, EventArgs e) => await UiImportBsnesUsageMap();
     private void table_MouseWheel(object sender, MouseEventArgs e) => 
         ScrollTableBy(e.Delta != 0 
             ? e.Delta/0x18 

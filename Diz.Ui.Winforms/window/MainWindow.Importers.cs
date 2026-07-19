@@ -1,4 +1,5 @@
-﻿using Diz.Cpu._65816;
+﻿using System.Threading.Tasks;
+using Diz.Cpu._65816;
 using Diz.Import.bsnes.tracelog;
 using Diz.Ui.Winforms.dialogs;
 
@@ -6,9 +7,9 @@ namespace Diz.Ui.Winforms.window;
 
 public partial class MainWindow
 {
-    private void ImportBizhawkCDL()
+    private async Task ImportBizhawkCDL()
     {
-        var filename = PromptOpenBizhawkCDLFile();
+        var filename = await PromptOpenBizhawkCDLFile();
         if (filename != null && filename == "") return;
         ImportBizHawkCdl(filename);
         UpdateSomeUI2();
@@ -26,31 +27,31 @@ public partial class MainWindow
         }
     }
 
-    private void ImportBsnesTraceLogText()
+    private async Task ImportBsnesTraceLogText()
     {
-        if (!PromptForImportBSNESTraceLogFile()) 
+        if (!PromptForImportBSNESTraceLogFile())
             return;
-            
-        var (numModifiedFlags, numFiles) = ImportBsnesTraceLogs();
-            
+
+        var (numModifiedFlags, numFiles) = await ImportBsnesTraceLogs();
+
         RefreshUi();
         ReportNumberFlagsModified(numModifiedFlags, numFiles);
     }
 
-    private void UiImportBsnesUsageMap()
+    private async Task UiImportBsnesUsageMap()
     {
         if (openUsageMapFile.ShowDialog() != DialogResult.OK)
             return;
 
-        var numModifiedFlags = ProjectController.ImportBsnesUsageMap(openUsageMapFile.FileName);
-            
+        var numModifiedFlags = await ProjectController.ImportBsnesUsageMapAsync(openUsageMapFile.FileName);
+
         RefreshUi();
         ShowInfo($"Modified total {numModifiedFlags} flags!", "Done");
     }
 
-    private (long numBytesModified, int numFiles) ImportBsnesTraceLogs()
+    private async Task<(long numBytesModified, int numFiles)> ImportBsnesTraceLogs()
     {
-        var numBytesModified = ProjectController.ImportBsnesTraceLogs(openTraceLogDialog.FileNames);
+        var numBytesModified = await ProjectController.ImportBsnesTraceLogsAsync(openTraceLogDialog.FileNames);
         return (numBytesModified, openTraceLogDialog.FileNames.Length);
     }
 

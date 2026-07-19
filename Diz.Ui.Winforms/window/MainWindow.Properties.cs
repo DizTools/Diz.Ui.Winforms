@@ -1,4 +1,7 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
+using System.Threading;
+using System.Threading.Tasks;
 using Diz.Controllers.controllers;
 using Diz.Controllers.interfaces;
 using Diz.Core.Interfaces;
@@ -23,9 +26,35 @@ public partial class MainWindow
     // not sure if this will be the final place this lives. OK for now. -Dom
     public IProjectController ProjectController { get; }
 
-    public ILongRunningTaskHandler.LongRunningTaskHandler TaskHandler =>
-        ProgressBarJob.RunAndWaitForCompletion;
-        
+    public ILongRunningTaskHandler.LongRunningTaskHandler TaskHandler => RunLongRunningTaskAsync;
+
+    // new-ui plan step 6: replaces ProgressBarJob.RunAndWaitForCompletion (raw Thread + STA +
+    // spin-wait on View.IsVisible()). Shows the progress window non-modally, runs the work on a
+    // background Task, and closes the window when it finishes. Awaited from an async void UI
+    // handler, so the WinForms message loop keeps pumping -- the window animates and the app
+    // stays responsive with no worker thread poking the UI and no blocking ShowDialog().
+    private async Task RunLongRunningTaskAsync(
+        Action<IProgress<int>, CancellationToken> work, string description, bool isMarquee)
+    {
+        var dialog = viewFactory.GetProgressBarView();
+        dialog.IsMarquee = isMarquee;
+        dialog.TextOverride = description;
+
+        // cancellation is plumbed end-to-end but no cancel button is surfaced yet (optional per
+        // the plan). The dialog itself (IProgress<int>) marshals Report(...) to the UI thread.
+        using var cts = new CancellationTokenSource();
+        dialog.Show();
+        try
+        {
+            await Task.Run(() => work(dialog, cts.Token));
+        }
+        finally
+        {
+            dialog.Close();
+        }
+    }
+
+
     // sub windows
     private readonly ILabelEditorView labelsView;
     private readonly IRegionListView regionsView;

@@ -55,13 +55,8 @@ public static class WinformsGuiUtil
         return open.ShowDialog() == DialogResult.OK ? open.FileName : null;
     }
     
-    public static void ShowLineItemError(string msg, int errLine)
-    {
-        PromptDialog.Show(
-            "An error occurred while parsing the file.\n" + msg +
-            (errLine > 0 ? $" (Check line {errLine}.)" : ""),
-            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-    }
+    // (ShowLineItemError used to live here; new-ui step 4 moved the label-import error
+    // dialog into ProjectController via ICommonGui.ShowError with identical text.)
 
     // prompt the user to confirm they'd like to do something. if yes, call 'confirmAction'
     public static T? PromptToConfirmAction<T>(string promptSubject, string promptText, Func<T> confirmAction)

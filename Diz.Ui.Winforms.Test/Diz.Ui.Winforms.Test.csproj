@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net9.0-windows</TargetFramework>
+        <TargetFramework>net10.0-windows</TargetFramework>
         <UseWindowsForms>true</UseWindowsForms>
         <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
@@ -74,6 +74,7 @@
     <ItemGroup>
         <ProjectReference Include="..\..\Diz.Test\Diz.Test.csproj" />
         <ProjectReference Include="..\..\Diz.Controllers\Diz.Controllers\Diz.Controllers.csproj" />
+        <ProjectReference Include="..\Diz.Ui.Winforms\Diz.Ui.Winforms.csproj" />
     </ItemGroup>
 
 </Project>

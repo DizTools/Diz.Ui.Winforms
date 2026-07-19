@@ -67,13 +67,12 @@ public partial class ProgressDialog : Form, IProgressView
         lblStatusText.Text = $@"{percentDone}%";
     }
 
-    public bool IsVisible() => Visible;
-
-    public void SignalJobIsDone() => this.InvokeIfRequired(Close);
-    public bool PromptDialog()
+    // new-ui plan step 6: shown non-modally by the long-running-task handler (MainWindow), which
+    // closes it when the background Task completes. No more ShowDialog()/spin-wait.
+    public new void Show()
     {
+        base.Show();
         BringFormToTop();
-        return ShowDialog() == DialogResult.OK;
     }
 
     public event EventHandler? OnFormClosed;

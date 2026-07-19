@@ -15,8 +15,15 @@ public partial class MainWindow
         labelsView.RebindProject();
         regionsView.RebindProject();
             
-        if (Project?.Data.Labels != null) 
+        if (Project?.Data.Labels != null)
+        {
+            // ProjectController_ProjectChanged calls RebindProject() on EVERY change type,
+            // including Saved -- where the Labels instance is unchanged. without the -= the
+            // same handler accumulates on that instance once per save.
+            // (-= on a not-yet-subscribed handler is a no-op, so this is safe on first bind.)
+            Project.Data.Labels.OnLabelChanged -= LabelsOnOnLabelChanged;
             Project.Data.Labels.OnLabelChanged += LabelsOnOnLabelChanged;
+        }
     }
 
     private void UpdatePanels()
