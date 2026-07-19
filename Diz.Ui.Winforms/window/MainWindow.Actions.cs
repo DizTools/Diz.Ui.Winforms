@@ -194,7 +194,7 @@ public partial class MainWindow
         if (snesOffset == -1)
             return;
             
-        SelectOffset(snesOffset, 1, new ISnesNavigation.HistoryArgs {Description = "GoTo Intermediate Addr"});
+        SelectOffset(snesOffset, -1, new ISnesNavigation.HistoryArgs {Description = "GoTo Intermediate Addr"}, overshootAmount: standardOvershootAmount);
     }
 
     public void GoTo(int offset)
@@ -215,7 +215,7 @@ public partial class MainWindow
         if (!FindUnreached(SelectedOffset, fromStartOrEnd, forwardDirection, out var unreached))
             return;
 
-        SelectOffset(unreached, 1, BuildUnreachedHistoryArgs(fromStartOrEnd, forwardDirection));
+        SelectOffset(unreached, -1, BuildUnreachedHistoryArgs(fromStartOrEnd, forwardDirection), overshootAmount: standardOvershootAmount);
     }
     
     private void GoToNextUnreachedBranchPoint(int offset)
@@ -423,6 +423,13 @@ public partial class MainWindow
         // this property grid is generic and can display anything. here we'll use it to show the project settings.
         var propertyEditorForm = new GenericPropertyEditorForm(ProjectController.Project.ProjectSettings);
         propertyEditorForm.ShowDialog();
+    }
+    
+    private void ShowProjectUserSettings()
+    {
+        var propertyEditorForm = new GenericPropertyEditorForm(ProjectController.Project.ProjectUserSettings);
+        propertyEditorForm.ShowDialog();
+        RefreshUi();
     }
 
     private void SetMarkerLabel(FlagType flagType)

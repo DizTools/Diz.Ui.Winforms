@@ -125,6 +125,19 @@ public partial class MainWindow
 
         importerMenuItemsEnabled = true;
         UpdateImporterEnabledStatus();
+        UpdateColumnHeaderLabels();
+    }
+
+    private void UpdateColumnHeaderLabels()
+    {
+        foreach (DataGridViewColumn column in table.Columns)
+        {
+            if (column.Name == "ColumnPC")
+            {
+                column.HeaderText = Project.ProjectUserSettings.DisplayOffsetsInGrid ? "ROM" : "PC";
+                break;
+            }
+        }
     }
 
     private void ClampViewOffsetToRomSize()
@@ -147,6 +160,7 @@ public partial class MainWindow
     private void EnableSubWindows()
     {
         projectSettingsToolStripMenuItem.Enabled = true;
+        projectUserSettingsToolStripMenuItem.Enabled = true;
     }
 
     public void UpdateSaveOptionStates(bool saveEnabled, bool saveAsEnabled, bool closeEnabled)

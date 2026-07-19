@@ -61,11 +61,23 @@ public partial class MainWindow
     }
 
     private void SetRow(int rowIndex) => 
-        table.CurrentCell = table.Rows[rowIndex].Cells[table.CurrentCell.ColumnIndex];
+        table.CurrentCell = table.Rows[rowIndex].Cells[table.CurrentCell?.ColumnIndex ?? 0];
 
 
     private void table_MouseDown(object sender, MouseEventArgs e)
     {
+        switch (e.Button)
+        {
+            // handle mouse extra buttons: "back" and "forward" for navigation
+            // note: might need to remap these for some mice.
+            case MouseButtons.XButton1:  // Back
+                NavigateBackwards();
+                break;
+            case MouseButtons.XButton2:  // Forward
+                NavigateForwards();
+                break;
+        }
+
         InvalidateTable();
     }
 
@@ -259,14 +271,16 @@ public partial class MainWindow
         var snesData = Project.Data.GetSnesApi();
         if (romByte == null || snesData == null)
             return;
+
+        var snesAddressOfRow = Project.Data.ConvertPCtoSnes(row);
         
         switch ((ColumnType) e.ColumnIndex)
         {
             case ColumnType.Label:
-                e.Value = Project.Data.Labels.GetLabelName(Project.Data.ConvertPCtoSnes(row));
+                e.Value = Project.Data.Labels.GetLabelName(snesAddressOfRow);
                 break;
             case ColumnType.Offset:
-                e.Value = Util.NumberToBaseString(Project.Data.ConvertPCtoSnes(row), Util.NumberBase.Hexadecimal, 6);
+                e.Value = Util.NumberToBaseString(Project.ProjectUserSettings.DisplayOffsetsInGrid ? row : snesAddressOfRow, Util.NumberBase.Hexadecimal, 6);
                 break;
             case ColumnType.AsciiCharRep:
                 e.Value = (char)romByte;
@@ -301,7 +315,7 @@ public partial class MainWindow
                 e.Value = RomUtil.BoolToSize(snesData.GetXFlag(row));
                 break;
             case ColumnType.Comment:
-                e.Value = Project.Data.GetCommentText(Project.Data.ConvertPCtoSnes(row));
+                e.Value = Project.Data.GetCommentText(snesAddressOfRow);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -642,9 +656,10 @@ public partial class MainWindow
         InvalidateTable();
     }
 
+    // column == -1 means: use (don't change) current column
     private void InternalSelectOffset(int pcOffset, int column)
     {
-        var col = column == -1 ? table.CurrentCell.ColumnIndex : column;
+        var col = column == -1 ? table.CurrentCell?.ColumnIndex ?? 0 : column;
         if (pcOffset < ViewOffset)
         {
             ViewOffset = pcOffset;

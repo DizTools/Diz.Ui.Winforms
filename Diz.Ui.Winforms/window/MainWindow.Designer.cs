@@ -136,6 +136,7 @@ partial class MainWindow
         this.moveWithStepToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         this.openLastProjectAutomaticallyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         this.projectSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+        this.projectUserSettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         this.importCaptureToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
         this.importTraceLogBinary = new System.Windows.Forms.ToolStripMenuItem();
         this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -954,6 +955,7 @@ partial class MainWindow
             this.constantsToolStripMenuItem,
             this.optionsToolStripMenuItem,
             this.projectSettingsToolStripMenuItem,
+            this.projectUserSettingsToolStripMenuItem,
             this.importCaptureToolStripMenuItem});
         this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
         this.viewToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
@@ -1044,6 +1046,14 @@ partial class MainWindow
         this.projectSettingsToolStripMenuItem.Size = new System.Drawing.Size(213, 22);
         this.projectSettingsToolStripMenuItem.Text = "Project Settings";
         this.projectSettingsToolStripMenuItem.Click += new System.EventHandler(this.projectSettingsToolStripMenuItem_Click);
+        // 
+        // projectUserSettingsToolStripMenuItem
+        // 
+        this.projectUserSettingsToolStripMenuItem.Enabled = false;
+        this.projectUserSettingsToolStripMenuItem.Name = "projectUserSettingsToolStripMenuItem";
+        this.projectUserSettingsToolStripMenuItem.Size = new System.Drawing.Size(213, 22);
+        this.projectUserSettingsToolStripMenuItem.Text = "User Settings";
+        this.projectUserSettingsToolStripMenuItem.Click += new System.EventHandler(this.projectUserSettingsToolStripMenuItem_Click);
         // 
         // importCaptureToolStripMenuItem
         // 
@@ -1252,6 +1262,7 @@ partial class MainWindow
     private System.Windows.Forms.OpenFileDialog openUsageMapFile;
     public System.Windows.Forms.OpenFileDialog openTraceLogDialog;
     private System.Windows.Forms.ToolStripMenuItem projectSettingsToolStripMenuItem;
+    private System.Windows.Forms.ToolStripMenuItem projectUserSettingsToolStripMenuItem;
     private System.Windows.Forms.OpenFileDialog openCDLDialog;
     private System.Windows.Forms.ToolStripMenuItem toolStripOpenLast;
     private System.Windows.Forms.ToolStripMenuItem openLastProjectAutomaticallyToolStripMenuItem;
