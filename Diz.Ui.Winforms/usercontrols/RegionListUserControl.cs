@@ -486,9 +486,10 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
                 options = optionsObj;
             }
 
-            // NOTE: length stays exclusive (end - start) exactly as before this refactor. The
-            // End-inclusive convention (plan step 2) did NOT touch this UI check; changing the
-            // arithmetic here is out of step-7 scope. See handoff/report.
+            // NOTE: length stays exclusive (end - start) here. Regions treat EndSnesAddress as
+            // inclusive, but this UI check deliberately keeps the exclusive arithmetic it has
+            // always used; the per-asset-type validators below adjust by +1 where they need the
+            // true inclusive byte count.
             var context = new AssetTypeValidationContext(assetType, endSnesAddr - startSnesAddr, options);
             var error = descriptor.Validate(context);
             if (error != null)
@@ -523,7 +524,41 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
     private static readonly IReadOnlyList<AssetTypeUiValidator> AssetTypeUiValidators =
     [
         BuildGfxAssetValidator(),
+        BuildBrrAssetValidator(),
     ];
+
+    // SNES BRR audio: audio.snes.brr. The stream is 9-byte ADPCM blocks (1 header + 8 data),
+    // so its length must be a whole multiple of 9. Mirrors BrrRegionAssetExporter.Validate in
+    // Diz.LogWriter. NOTE: the region must cover ONLY the BRR stream; if the sample has a
+    // length/header prefix before the stream, that prefix stays in the parent region's assembly.
+    private static AssetTypeUiValidator BuildBrrAssetValidator()
+    {
+        const string brrType = "audio.snes.brr";
+        const int brrBlock = 9;
+
+        return new AssetTypeUiValidator
+        {
+            Matches = t => string.Equals(t, brrType, StringComparison.Ordinal),
+            ExampleTypes = [brrType],
+            Validate = ctx =>
+            {
+                // ctx.RegionLength is exclusive (end - start) here, matching the rest of this
+                // grid's arithmetic (see the pre-existing off-by-one note above RowValidating);
+                // the true inclusive byte count is that + 1, and it's the inclusive length that
+                // must divide by 9.
+                var inclusiveLength = ctx.RegionLength + 1;
+                if (inclusiveLength <= 0 || inclusiveLength % brrBlock != 0)
+                {
+                    return $"Region length ({inclusiveLength} bytes) must be a whole multiple of " +
+                           $"{brrBlock} bytes (one BRR ADPCM block) when Asset Type is '{brrType}'. " +
+                           "The region must cover ONLY the BRR stream -- if the sample has a " +
+                           "length/header prefix before the stream, exclude it.";
+                }
+
+                return null;
+            },
+        };
+    }
 
     // SNES graphics: gfx.snes.{2,4,8}bpp. bpp/2 bitplane pairs, 2 bytes per row per pair,
     // cell_h rows; a partial cell at the end would silently produce garbage graphics, so reject.
