@@ -1,4 +1,5 @@
-﻿using Diz.Controllers.controllers;
+﻿using System.Threading.Tasks;
+using Diz.Controllers.controllers;
 using Diz.Core.commands;
 using Diz.Cpu._65816;
 using Diz.LogWriter;
@@ -9,7 +10,7 @@ namespace Diz.Ui.Winforms.window;
 
 public partial class MainWindow
 {
-    private bool PromptContinueEvenIfUnsavedChanges()
+    private async Task<bool> PromptContinueEvenIfUnsavedChanges()
     {
         if (Project == null || !(Project.Session?.UnsavedChanges ?? true))
             return true;
@@ -19,8 +20,8 @@ public partial class MainWindow
             "Unsaved Changes", MessageBoxButtons.YesNoCancel);
 
         if (result == DialogResult.Yes)
-            SaveProject(askFilenameIfNotSet: true, alwaysAsk: false);
-            
+            await SaveProject(askFilenameIfNotSet: true, alwaysAsk: false);
+
         return result != DialogResult.Cancel;
     }
 
@@ -41,9 +42,9 @@ public partial class MainWindow
             PromptDialog.Show("Disassembly files exported successfully!", "Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
-    private bool PromptForOpenProjectFilename()
+    private async Task<bool> PromptForOpenProjectFilename()
     {
-        if (!PromptContinueEvenIfUnsavedChanges())
+        if (!await PromptContinueEvenIfUnsavedChanges())
             return false;
 
         openProjectFile.InitialDirectory = Project?.ProjectFileName;
@@ -67,13 +68,13 @@ public partial class MainWindow
     private void githubToolStripMenuItem_Click(object sender, EventArgs e) =>
         WinformsGuiUtil.OpenExternalProcess("https://github.com/Isofrieze/DiztinGUIsh");
 
-    private string PromptOpenBizhawkCDLFile()
+    private async Task<string> PromptOpenBizhawkCDLFile()
     {
         openCDLDialog.InitialDirectory = Project.ProjectFileName;
         if (openCDLDialog.ShowDialog() != DialogResult.OK)
             return "";
 
-        return !PromptContinueEvenIfUnsavedChanges() ? "" : openCDLDialog.FileName;
+        return !await PromptContinueEvenIfUnsavedChanges() ? "" : openCDLDialog.FileName;
     }
 
     private static void ReportNumberFlagsModified(long numModifiedFlags, int numFiles = 1)

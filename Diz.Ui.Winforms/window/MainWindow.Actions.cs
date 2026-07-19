@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Threading.Tasks;
 using Diz.Controllers.controllers;
 using Diz.Controllers.interfaces;
 using Diz.Core.commands;
@@ -18,7 +19,10 @@ public partial class MainWindow
     // arbitrary: increase if using bigger grid sizes. ideally, this would be dynamically generated in the future based on a % of the grid
     private const int standardOvershootAmount = 12;
     
-    private void OpenLastProject()
+    // new-ui plan step 6: OpenProject/SaveProject/etc. are async now (the progress handler no
+    // longer blocks). WinForms edges are async void / async Task and await the controller so
+    // nothing reads a result before the task finishes.
+    private async Task OpenLastProject()
     {
         if (Document.LastProjectFilename == "")
             return;
@@ -30,20 +34,20 @@ public partial class MainWindow
         var projectToOpen = Document.LastProjectFilename;
         Document.LastProjectFilename = "";
 
-        ProjectController.OpenProject(projectToOpen);
+        await ProjectController.OpenProjectAsync(projectToOpen);
     }
 
-    private void OpenProject()
+    private async Task OpenProject()
     {
-        if (!PromptForOpenProjectFilename()) 
+        if (!await PromptForOpenProjectFilename())
             return;
 
-        ProjectController.OpenProject(openProjectFile.FileName);
+        await ProjectController.OpenProjectAsync(openProjectFile.FileName);
     }
 
-    private void CreateNewProject()
+    private async Task CreateNewProject()
     {
-        if (!PromptContinueEvenIfUnsavedChanges())
+        if (!await PromptContinueEvenIfUnsavedChanges())
             return;
 
         var romFilename = PromptForOpenFilename();
@@ -361,21 +365,21 @@ public partial class MainWindow
         ShowInfo("Scan complete!", "Done!");
     }
 
-    private bool SaveProject(bool askFilenameIfNotSet = true, bool alwaysAsk = false)
+    private async Task<bool> SaveProject(bool askFilenameIfNotSet = true, bool alwaysAsk = false)
     {
-        var showPrompt = 
-            askFilenameIfNotSet && string.IsNullOrEmpty(Project.ProjectFileName) || 
+        var showPrompt =
+            askFilenameIfNotSet && string.IsNullOrEmpty(Project.ProjectFileName) ||
             alwaysAsk;
 
         var promptedFilename = "";
         if (showPrompt)
         {
             saveProjectFile.InitialDirectory = Project.AttachedRomFilename;
-            
+
             // if it doesn't already have a filename set, make a reasonable guess based on the ROM
             if (string.IsNullOrEmpty(Project.ProjectFileName))
                 saveProjectFile.FileName = Path.GetFileNameWithoutExtension(Project.AttachedRomFilename) + ".diz";
-            
+
             if (saveProjectFile.ShowDialog() != DialogResult.OK || string.IsNullOrEmpty(saveProjectFile.FileName))
                 return false;
 
@@ -386,9 +390,9 @@ public partial class MainWindow
         if (!string.IsNullOrEmpty(promptedFilename))
             Project.ProjectFileName = promptedFilename;
 
-        var err = ProjectController.SaveProject(Project.ProjectFileName);
+        var err = await ProjectController.SaveProjectAsync(Project.ProjectFileName);
 
-        if (err == null) 
+        if (err == null)
             return true;
             
         Project.ProjectFileName = origFilename;
