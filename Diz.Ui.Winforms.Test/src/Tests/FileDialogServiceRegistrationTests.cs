@@ -16,7 +16,7 @@ public class FileDialogServiceRegistrationTests
     public void WinformsCompositionRoot_ResolvesFileDialogService()
     {
         using var container = new ServiceContainer();
-        container.RegisterFrom<DizUiWinformsCompositionRoot>();
+        container.RegisterFrom<DizUiWinformsBackendCompositionRoot>();
 
         container.GetInstance<IFileDialogService>()
             .Should().BeOfType<WinformsFileDialogService>();
@@ -26,7 +26,7 @@ public class FileDialogServiceRegistrationTests
     public void LabelEditorView_ReceivesTheContainerFileDialogServiceInstance()
     {
         using var container = new ServiceContainer();
-        container.RegisterFrom<DizUiWinformsCompositionRoot>();
+        container.RegisterFrom<DizUiWinformsBackendCompositionRoot>();
 
         // resolving the named registration constructs the real LabelEditorForm host +
         // LabelsViewControl (fine headless: no handle is created until Show).

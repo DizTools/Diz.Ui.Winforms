@@ -144,7 +144,7 @@ public partial class MainWindow : Form, IMainGridWindowView
         UpdateUiFromSettings();
 
         if (appSettings.OpenLastFileAutomatically)
-            OpenLastProject();
+            _ = OpenLastProject(); // fire-and-forget at startup; the open shows its own progress UI.
     }
 
 
