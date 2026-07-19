@@ -118,21 +118,25 @@ public partial class MainWindow
     private void markOneToolStripMenuItem_Click(object sender, EventArgs e) => 
         Mark(SelectedOffset);
         
+    
+    
     private void markManyToolStripMenuItem_Click(object sender, EventArgs e) => 
-        MarkMany(SelectedOffset, MarkCommand.MarkManyProperty.Flag);
-        
+        MarkMany();
+
     private void setDataBankToolStripMenuItem_Click(object sender, EventArgs e) => 
-        MarkMany(SelectedOffset, MarkCommand.MarkManyProperty.DataBank);
+        MarkMany(initialPropertySelected: MarkCommand.MarkManyProperty.DataBank);
         
     private void setDirectPageToolStripMenuItem_Click(object sender, EventArgs e) => 
-        MarkMany(SelectedOffset, MarkCommand.MarkManyProperty.DirectPage);
+        MarkMany(initialPropertySelected: MarkCommand.MarkManyProperty.DirectPage);
 
     private void toggleAccumulatorSizeMToolStripMenuItem_Click(object sender, EventArgs e) => 
-        MarkMany(SelectedOffset, MarkCommand.MarkManyProperty.MFlag);
+        MarkMany(initialPropertySelected: MarkCommand.MarkManyProperty.MFlag);
 
     private void toggleIndexSizeToolStripMenuItem_Click(object sender, EventArgs e) => 
-        MarkMany(SelectedOffset, MarkCommand.MarkManyProperty.XFlag);
+        MarkMany(initialPropertySelected: MarkCommand.MarkManyProperty.XFlag);
         
+    
+    
     private void addCommentToolStripMenuItem_Click(object sender, EventArgs e) => 
         BeginEditingComment();
 
