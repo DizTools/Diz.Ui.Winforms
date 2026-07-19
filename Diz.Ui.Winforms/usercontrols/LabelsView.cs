@@ -674,7 +674,12 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView, INotifyP
     public void RebindProject()
     {
         if (Data?.Labels != null)
+        {
+            // see MainWindow.StateUpdate.RebindProject(): this runs on every project change,
+            // so unsubscribe first to avoid stacking duplicate handlers on the same instance.
+            Data.Labels.OnLabelChanged -= LabelsOnOnLabelChanged;
             Data.Labels.OnLabelChanged += LabelsOnOnLabelChanged;
+        }
 
         SafeEndEdit();
         RepopulateFromData();
