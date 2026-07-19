@@ -36,16 +36,17 @@
             regionListUserControl1.Dock = DockStyle.Fill;
             regionListUserControl1.Location = new Point(0, 0);
             regionListUserControl1.Name = "regionListUserControl1";
-            regionListUserControl1.Size = new Size(800, 450);
+            regionListUserControl1.Size = new Size(1000, 450);
             regionListUserControl1.TabIndex = 0;
-            // 
+            //
             // RegionList
-            // 
+            //
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(1000, 450);
             Controls.Add(regionListUserControl1);
-            FormBorderStyle = FormBorderStyle.FixedToolWindow;
+            FormBorderStyle = FormBorderStyle.SizableToolWindow;
+            MinimumSize = new Size(500, 250);
             Name = "RegionList";
             Text = "Regions List";
             ResumeLayout(false);

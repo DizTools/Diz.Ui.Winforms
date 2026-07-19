@@ -3,6 +3,8 @@ using Diz.Core.Interfaces;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Diz.Core.util;
 
 namespace Diz.Ui.Winforms.usercontrols;
@@ -76,6 +78,19 @@ private void SetupColumns()
         Width = 100
     };
     
+    // ExportType is an enum: bind the combobox items to the enum values themselves (not strings)
+    // so the selected item round-trips straight back through the binding source without conversion.
+    var exportTypeColumn = new DataGridViewComboBoxColumn
+    {
+        Name = "ExportType",
+        DataPropertyName = "ExportType",
+        HeaderText = "Export Type",
+        Width = 90,
+        ValueType = typeof(RegionExportType),
+        DataSource = Enum.GetValues(typeof(RegionExportType)),
+        FlatStyle = FlatStyle.Flat
+    };
+
     regionGridView.Columns.AddRange(new DataGridViewColumn[]
     {
         startAddressColumn,
@@ -107,6 +122,38 @@ private void SetupColumns()
             DataPropertyName = "ExportSeparateFile",
             HeaderText = "Export Separate File", 
             Width = 50 // for header
+        },
+        exportTypeColumn,
+        new DataGridViewTextBoxColumn
+        {
+            Name = "AssetType",
+            DataPropertyName = "AssetType",
+            HeaderText = "Asset Type",
+            Width = 110
+        },
+        new DataGridViewTextBoxColumn
+        {
+            Name = "AssetVersion",
+            DataPropertyName = "AssetVersion",
+            HeaderText = "Asset Version",
+            Width = 80
+        },
+        new DataGridViewTextBoxColumn
+        {
+            Name = "AssetName",
+            DataPropertyName = "AssetName",
+            HeaderText = "Asset Name",
+            Width = 150
+        },
+        new DataGridViewTextBoxColumn
+        {
+            Name = "AssetOptions",
+            DataPropertyName = "AssetOptions",
+            HeaderText = "Asset Options (JSON)",
+            ToolTipText = "Free-form JSON merged into the manifest under \"options\", overriding " +
+                          "the \"gfx\" block. Leave blank normally. " +
+                          "e.g. {\"cell_h\": 12} or {\"view\": {\"order\": \"column_major\", \"rows\": 12}}",
+            Width = 200
         },
         new DataGridViewButtonColumn
         {
@@ -180,6 +227,47 @@ private void RegionGridView_CellFormatting(object? sender, DataGridViewCellForma
         e.Value = Util.NumberToBaseString(intValue, Util.NumberBase.Hexadecimal, 6, showPrefix: false);
         e.FormattingApplied = true;
     }
+
+    ApplyAssetCellStyling(e);
+}
+
+// the asset columns only mean anything when we're not exporting as plain inline assembly.
+// grey them out + make them read-only per-row (rather than hiding the columns entirely,
+// which would make it non-obvious that the feature exists).
+private void ApplyAssetCellStyling(DataGridViewCellFormattingEventArgs e)
+{
+    if (!IsAssetColumn(regionGridView.Columns[e.ColumnIndex].Name))
+        return;
+
+    if (e.RowIndex < 0 || e.RowIndex >= regionGridView.Rows.Count)
+        return;
+
+    var row = regionGridView.Rows[e.RowIndex];
+    var disabled = GetRowExportType(row) == RegionExportType.Assembly;
+
+    row.Cells[e.ColumnIndex].ReadOnly = disabled;
+
+    if (!disabled)
+        return;
+
+    e.CellStyle.BackColor = SystemColors.Control;
+    e.CellStyle.ForeColor = SystemColors.GrayText;
+}
+
+private static bool IsAssetColumn(string columnName) =>
+    columnName is "AssetType" or "AssetVersion" or "AssetName" or "AssetOptions";
+
+// read the ExportType cell back out as an enum. cells can hold either the enum or its
+// string form depending on whether the user just edited it, so handle both.
+private static RegionExportType GetRowExportType(DataGridViewRow row)
+{
+    var value = row.Cells["ExportType"].Value;
+    if (value is RegionExportType exportType)
+        return exportType;
+
+    return Enum.TryParse<RegionExportType>(value?.ToString(), out var parsed)
+        ? parsed
+        : RegionExportType.Assembly;
 }
 
 private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingEventArgs e)
@@ -338,8 +426,186 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
                 return;
             }
         }
+
+        var exportType = GetRowExportType(row);
+
+        // asset name is used as a relative path under the asset root, so don't let it escape.
+        // empty is fine: the exporter falls back to RegionName.
+        var assetName = row.Cells["AssetName"].Value?.ToString() ?? "";
+        if (!string.IsNullOrWhiteSpace(assetName))
+        {
+            if (assetName.Contains('\\') || assetName.Contains("..") || assetName.StartsWith('/'))
+            {
+                ShowErrorMessage("Asset Name must be a relative path: no backslashes, no '..', and no leading '/'.");
+                e.Cancel = true;
+                return;
+            }
+        }
+
+        if (exportType == RegionExportType.Asset)
+        {
+            var assetType = row.Cells["AssetType"].Value?.ToString() ?? "";
+
+            // Route to the descriptor that owns this AssetType family, the same way the codec
+            // dispatch does downstream (Diz.LogWriter BinaryAssetExporterBase / BuildToolBinding).
+            var descriptor = AssetTypeUiValidators.FirstOrDefault(d => d.Matches(assetType));
+            if (descriptor == null)
+            {
+                var known = string.Join(", ", AssetTypeUiValidators.SelectMany(d => d.ExampleTypes));
+                ShowErrorMessage($"Asset Type is required when Export Type is 'Asset'. Expected one of: {known}.");
+                e.Cancel = true;
+                return;
+            }
+
+            // Asset Options is free-form and Diz doesn't own its vocabulary, so at this generic
+            // layer we validate only that it parses as a JSON object; the descriptor reads
+            // whatever type-specific keys (e.g. cell_h) it needs.
+            var optionsText = row.Cells["AssetOptions"].Value?.ToString() ?? "";
+            JsonObject? options = null;
+            if (!string.IsNullOrWhiteSpace(optionsText))
+            {
+                JsonNode? parsed;
+                try
+                {
+                    parsed = JsonNode.Parse(optionsText);
+                }
+                catch (JsonException ex)
+                {
+                    ShowErrorMessage($"Asset Options is not valid JSON: {ex.Message}");
+                    e.Cancel = true;
+                    return;
+                }
+
+                if (parsed is not JsonObject optionsObj)
+                {
+                    ShowErrorMessage("Asset Options must be a JSON object, e.g. {\"cell_h\": 12}.");
+                    e.Cancel = true;
+                    return;
+                }
+
+                options = optionsObj;
+            }
+
+            // NOTE: length stays exclusive (end - start) here. Regions treat EndSnesAddress as
+            // inclusive, but this UI check deliberately keeps the exclusive arithmetic it has
+            // always used; the per-asset-type validators below adjust by +1 where they need the
+            // true inclusive byte count.
+            var context = new AssetTypeValidationContext(assetType, endSnesAddr - startSnesAddr, options);
+            var error = descriptor.Validate(context);
+            if (error != null)
+            {
+                ShowErrorMessage(error);
+                e.Cancel = true;
+                return;
+            }
+        }
     }
-    
+
+    // ---- per-asset-type UI validation ------------------------------------------------------
+    // Each descriptor owns a family of AssetType strings and knows how to sanity-check a region's
+    // length + options for that family. Replaces the old gfx-only bpp table so a new type (e.g.
+    // "audio."/BRR) is added by registering another descriptor rather than editing RowValidating.
+    // Mirrors the codec dispatch in Diz.LogWriter (routing by AssetType prefix).
+
+    private sealed record AssetTypeValidationContext(string AssetType, int RegionLength, JsonObject? Options);
+
+    private sealed class AssetTypeUiValidator
+    {
+        /// <summary>Does this descriptor own the given AssetType string?</summary>
+        public Func<string, bool> Matches { get; init; } = _ => false;
+
+        /// <summary>Example type strings, surfaced in the "expected one of" error.</summary>
+        public IReadOnlyList<string> ExampleTypes { get; init; } = [];
+
+        /// <summary>Returns null when valid, else a user-facing error message.</summary>
+        public Func<AssetTypeValidationContext, string?> Validate { get; init; } = _ => null;
+    }
+
+    private static readonly IReadOnlyList<AssetTypeUiValidator> AssetTypeUiValidators =
+    [
+        BuildGfxAssetValidator(),
+        BuildBrrAssetValidator(),
+    ];
+
+    // SNES BRR audio: audio.snes.brr. The stream is 9-byte ADPCM blocks (1 header + 8 data),
+    // so its length must be a whole multiple of 9. Mirrors BrrRegionAssetExporter.Validate in
+    // Diz.LogWriter. NOTE: the region must cover ONLY the BRR stream; if the sample has a
+    // length/header prefix before the stream, that prefix stays in the parent region's assembly.
+    private static AssetTypeUiValidator BuildBrrAssetValidator()
+    {
+        const string brrType = "audio.snes.brr";
+        const int brrBlock = 9;
+
+        return new AssetTypeUiValidator
+        {
+            Matches = t => string.Equals(t, brrType, StringComparison.Ordinal),
+            ExampleTypes = [brrType],
+            Validate = ctx =>
+            {
+                // ctx.RegionLength is exclusive (end - start) here, matching the rest of this
+                // grid's arithmetic (see the pre-existing off-by-one note above RowValidating);
+                // the true inclusive byte count is that + 1, and it's the inclusive length that
+                // must divide by 9.
+                var inclusiveLength = ctx.RegionLength + 1;
+                if (inclusiveLength <= 0 || inclusiveLength % brrBlock != 0)
+                {
+                    return $"Region length ({inclusiveLength} bytes) must be a whole multiple of " +
+                           $"{brrBlock} bytes (one BRR ADPCM block) when Asset Type is '{brrType}'. " +
+                           "The region must cover ONLY the BRR stream -- if the sample has a " +
+                           "length/header prefix before the stream, exclude it.";
+                }
+
+                return null;
+            },
+        };
+    }
+
+    // SNES graphics: gfx.snes.{2,4,8}bpp. bpp/2 bitplane pairs, 2 bytes per row per pair,
+    // cell_h rows; a partial cell at the end would silently produce garbage graphics, so reject.
+    // Kept in sync (by shape) with RegionAssetUtil.ParseSnesGfxBpp in Diz.LogWriter.
+    private static AssetTypeUiValidator BuildGfxAssetValidator()
+    {
+        var validBpp = new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            { "gfx.snes.2bpp", 2 },
+            { "gfx.snes.4bpp", 4 },
+            { "gfx.snes.8bpp", 8 },
+        };
+
+        return new AssetTypeUiValidator
+        {
+            Matches = validBpp.ContainsKey,
+            ExampleTypes = validBpp.Keys.ToList(),
+            Validate = ctx =>
+            {
+                var bpp = validBpp[ctx.AssetType];
+
+                var cellHeight = 8;
+                if (ctx.Options != null
+                    && ctx.Options.TryGetPropertyValue("cell_h", out var cellHeightNode)
+                    && cellHeightNode != null)
+                {
+                    if (cellHeightNode.GetValueKind() != JsonValueKind.Number
+                        || !cellHeightNode.AsValue().TryGetValue(out cellHeight)
+                        || cellHeight < 1)
+                    {
+                        return "Asset Options: cell_h must be an integer >= 1.";
+                    }
+                }
+
+                var cellSizeInBytes = bpp * cellHeight;
+                if (ctx.RegionLength % cellSizeInBytes != 0)
+                {
+                    var what = cellHeight == 8 ? $"one {bpp}bpp tile" : $"one {bpp}bpp 8x{cellHeight} cell";
+                    return $"Region length ({ctx.RegionLength} bytes) must be a whole multiple of " +
+                           $"{cellSizeInBytes} bytes ({what}) when Asset Type is '{ctx.AssetType}'.";
+                }
+
+                return null;
+            },
+        };
+    }
+
     private void DeleteRegion(int rowIndex)
     {
         try
