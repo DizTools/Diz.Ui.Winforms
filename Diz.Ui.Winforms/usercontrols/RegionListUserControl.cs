@@ -78,6 +78,20 @@ private void SetupColumns()
         Width = 100
     };
     
+    // Unbound convenience column: Length is derived from Start/End rather than stored on IRegion.
+    // Editing it moves EndSnesAddress (start stays put); editing either address recomputes it.
+    // EndSnesAddress is INCLUSIVE across the codebase (see RegionRoles/RegionAssetExportService),
+    // so the byte count shown here is end - start + 1.
+    var lengthColumn = new DataGridViewTextBoxColumn
+    {
+        Name = "Length",
+        HeaderText = "Length [hex]",
+        ToolTipText = "Region size in bytes (hex), inclusive of the end address. " +
+                      "Type here to move the End SNES Address; editing either address recomputes this.",
+        ValueType = typeof(int),
+        Width = 90
+    };
+
     // ExportType is an enum: bind the combobox items to the enum values themselves (not strings)
     // so the selected item round-trips straight back through the binding source without conversion.
     var exportTypeColumn = new DataGridViewComboBoxColumn
@@ -95,6 +109,7 @@ private void SetupColumns()
     {
         startAddressColumn,
         endAddressColumn,
+        lengthColumn,
         new DataGridViewTextBoxColumn
         {
             Name = "RegionName",
@@ -174,6 +189,7 @@ private void AttachEventHandlers()
     regionGridView.DataError += RegionGridView_DataError;
     regionGridView.CellFormatting += RegionGridView_CellFormatting;
     regionGridView.CellParsing += RegionGridView_CellParsing;
+    regionGridView.CellValueChanged += RegionGridView_CellValueChanged;
 }
 
 private void RegionGridView_DataError(object? sender, DataGridViewDataErrorEventArgs e)
@@ -228,7 +244,68 @@ private void RegionGridView_CellFormatting(object? sender, DataGridViewCellForma
         e.FormattingApplied = true;
     }
 
+    FormatLengthCell(e);
     ApplyAssetCellStyling(e);
+}
+
+// Length is unbound, so its displayed value is always recomputed from the row's addresses here
+// rather than trusted from whatever the cell happens to be holding. That keeps it honest no
+// matter which of the three cells the user last touched.
+private void FormatLengthCell(DataGridViewCellFormattingEventArgs e)
+{
+    if (regionGridView.Columns[e.ColumnIndex].Name != "Length")
+        return;
+
+    if (e.RowIndex < 0 || e.RowIndex >= regionGridView.Rows.Count)
+        return;
+
+    var row = regionGridView.Rows[e.RowIndex];
+
+    // a brand-new row has no addresses yet; showing "1" there would be noise.
+    if (row.IsNewRow || !TryGetRegionLength(row, out var length))
+    {
+        e.Value = "";
+        e.FormattingApplied = true;
+        return;
+    }
+
+    e.Value = Util.NumberToBaseString(length, Util.NumberBase.Hexadecimal, 0, showPrefix: false);
+    e.FormattingApplied = true;
+}
+
+// EndSnesAddress is inclusive (the last byte IN the region), so the byte count is end - start + 1.
+private static bool TryGetRegionLength(DataGridViewRow row, out int length)
+{
+    length = 0;
+    if (!TryGetAddressCell(row, "StartSnesAddress", out var start) ||
+        !TryGetAddressCell(row, "EndSnesAddress", out var end))
+        return false;
+
+    length = end - start + 1;
+    return true;
+}
+
+// address cells hold ints once bound/parsed, but can transiently hold the raw string mid-edit.
+private static bool TryGetAddressCell(DataGridViewRow row, string columnName, out int value)
+{
+    value = 0;
+
+    switch (row.Cells[columnName].Value)
+    {
+        case int intValue:
+            value = intValue;
+            return true;
+
+        case string text when !string.IsNullOrWhiteSpace(text):
+            var toParse = text;
+            if (!ByteUtil.TryParseNum_Stripped(ref toParse, NumberStyles.HexNumber, out var parsed))
+                return false;
+            value = parsed;
+            return true;
+
+        default:
+            return false;
+    }
 }
 
 // the asset columns only mean anything when we're not exporting as plain inline assembly.
@@ -272,8 +349,14 @@ private static RegionExportType GetRowExportType(DataGridViewRow row)
 
 private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingEventArgs e)
 {
+    if (regionGridView.Columns[e.ColumnIndex].Name == "Length")
+    {
+        ParseLengthCell(e);
+        return;
+    }
+
     // Convert hex or decimal string back to int for storage
-    if ((regionGridView.Columns[e.ColumnIndex].Name == "StartSnesAddress" || 
+    if ((regionGridView.Columns[e.ColumnIndex].Name == "StartSnesAddress" ||
          regionGridView.Columns[e.ColumnIndex].Name == "EndSnesAddress") && 
         e.Value is string stringValue)
     {
@@ -305,7 +388,88 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
         }
     }
 }
-    
+
+// Length is typed in hex like the addresses. Parsing only turns the text into a number; the
+// actual write-back to EndSnesAddress happens in CellValueChanged, once the value is committed.
+private void ParseLengthCell(DataGridViewCellParsingEventArgs e)
+{
+    if (e.Value is not string stringValue)
+        return;
+
+    if (string.IsNullOrWhiteSpace(stringValue))
+    {
+        // blank means "leave the addresses alone" -- the display recomputes from them anyway.
+        e.Value = null;
+        e.ParsingApplied = true;
+        return;
+    }
+
+    if (!ByteUtil.TryParseNum_Stripped(ref stringValue, NumberStyles.HexNumber, out var length))
+    {
+        ShowErrorMessage($"Invalid length: '{stringValue}'. Please enter a valid hexadecimal number.");
+        e.ParsingApplied = false;
+        return;
+    }
+
+    if (length < 1)
+    {
+        ShowErrorMessage("Length must be at least 1 (zero-length regions are not allowed).");
+        e.ParsingApplied = false;
+        return;
+    }
+
+    e.Value = length;
+    e.ParsingApplied = true;
+    HideErrorMessage();
+}
+
+// Keeps the Start/End/Length trio consistent after any one of them is committed:
+//   - Length edited  -> move EndSnesAddress, keeping StartSnesAddress fixed
+//   - Start/End edited -> just repaint, since Length is recomputed during formatting
+private void RegionGridView_CellValueChanged(object? sender, DataGridViewCellEventArgs e)
+{
+    if (e.RowIndex < 0 || e.RowIndex >= regionGridView.Rows.Count || e.ColumnIndex < 0)
+        return;
+
+    var columnName = regionGridView.Columns[e.ColumnIndex].Name;
+    if (columnName is not ("Length" or "StartSnesAddress" or "EndSnesAddress"))
+        return;
+
+    var row = regionGridView.Rows[e.RowIndex];
+
+    if (columnName == "Length")
+    {
+        ApplyLengthToEndAddress(row);
+    }
+    else
+    {
+        // An address moved, so the length the user last typed is now stale. Clear the stored
+        // value (the display is derived, so nothing visibly changes) -- otherwise re-typing that
+        // same number later wouldn't raise CellValueChanged and the end address wouldn't move.
+        if (row.Cells["Length"].Value != null)
+            row.Cells["Length"].Value = null;
+    }
+
+    // Length's displayed text is derived, so force a repaint of the row to pick up the new value.
+    regionGridView.InvalidateRow(e.RowIndex);
+}
+
+private void ApplyLengthToEndAddress(DataGridViewRow row)
+{
+    if (row.Cells["Length"].Value is not int length || length < 1)
+        return;
+
+    if (!TryGetAddressCell(row, "StartSnesAddress", out var start))
+        return;
+
+    // inclusive end: a length of 1 means end == start.
+    var newEnd = start + length - 1;
+    if (TryGetAddressCell(row, "EndSnesAddress", out var currentEnd) && currentEnd == newEnd)
+        return;
+
+    row.Cells["EndSnesAddress"].Value = newEnd;
+}
+
     public void BringFormToTop() => Show();
 
     public void SetProjectController(IProjectController? controller)
@@ -486,11 +650,12 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
                 options = optionsObj;
             }
 
-            // NOTE: length stays exclusive (end - start) here. Regions treat EndSnesAddress as
-            // inclusive, but this UI check deliberately keeps the exclusive arithmetic it has
-            // always used; the per-asset-type validators below adjust by +1 where they need the
-            // true inclusive byte count.
-            var context = new AssetTypeValidationContext(assetType, endSnesAddr - startSnesAddr, options);
+            // EndSnesAddress is INCLUSIVE (the last byte IN the region), so the byte count is
+            // end - start + 1. This must match what the exporter actually extracts --
+            // RegionAssetExportService slices inclusively and the exporters validate against
+            // request.Bytes.Length -- otherwise the UI rejects regions the build accepts (and
+            // vice versa). Same number the grid's Length column shows.
+            var context = new AssetTypeValidationContext(assetType, endSnesAddr - startSnesAddr + 1, options);
             var error = descriptor.Validate(context);
             if (error != null)
             {
@@ -507,6 +672,10 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
     // "audio."/BRR) is added by registering another descriptor rather than editing RowValidating.
     // Mirrors the codec dispatch in Diz.LogWriter (routing by AssetType prefix).
 
+    /// <param name="RegionLength">
+    /// Inclusive byte count (end - start + 1) -- the number of bytes the exporter will actually
+    /// extract for this region.
+    /// </param>
     private sealed record AssetTypeValidationContext(string AssetType, int RegionLength, JsonObject? Options);
 
     private sealed class AssetTypeUiValidator
@@ -542,14 +711,9 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
             ExampleTypes = [brrType],
             Validate = ctx =>
             {
-                // ctx.RegionLength is exclusive (end - start) here, matching the rest of this
-                // grid's arithmetic (see the pre-existing off-by-one note above RowValidating);
-                // the true inclusive byte count is that + 1, and it's the inclusive length that
-                // must divide by 9.
-                var inclusiveLength = ctx.RegionLength + 1;
-                if (inclusiveLength <= 0 || inclusiveLength % brrBlock != 0)
+                if (ctx.RegionLength <= 0 || ctx.RegionLength % brrBlock != 0)
                 {
-                    return $"Region length ({inclusiveLength} bytes) must be a whole multiple of " +
+                    return $"Region length ({ctx.RegionLength} bytes) must be a whole multiple of " +
                            $"{brrBlock} bytes (one BRR ADPCM block) when Asset Type is '{brrType}'. " +
                            "The region must cover ONLY the BRR stream -- if the sample has a " +
                            "length/header prefix before the stream, exclude it.";
@@ -594,7 +758,7 @@ private void RegionGridView_CellParsing(object? sender, DataGridViewCellParsingE
                 }
 
                 var cellSizeInBytes = bpp * cellHeight;
-                if (ctx.RegionLength % cellSizeInBytes != 0)
+                if (ctx.RegionLength <= 0 || ctx.RegionLength % cellSizeInBytes != 0)
                 {
                     var what = cellHeight == 8 ? $"one {bpp}bpp tile" : $"one {bpp}bpp 8x{cellHeight} cell";
                     return $"Region length ({ctx.RegionLength} bytes) must be a whole multiple of " +
