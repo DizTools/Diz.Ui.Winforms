@@ -196,7 +196,10 @@ public partial class MainWindow
     public void OnProjectOpenWarnings(IEnumerable<string> warnings)
     {
         foreach (var warningMsg in warnings) {
-            MessageBox.Show(warningMsg, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            // Use PromptDialog (like every sibling prompt in this file) rather than a raw
+            // ownerless MessageBox.Show: PromptDialog's ctor calls BringWinFormToTop(), so it
+            // self-tops and can't hide behind the main window (which an ownerless MessageBox does).
+            PromptDialog.Show(warningMsg, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 }
