@@ -187,8 +187,15 @@ public partial class MainWindow
 
     public string AskToSelectNewRomFilename(string promptSubject, string promptText)
     {
+        // Called from the background project-open Task (RunLongRunningTaskAsync runs work on the
+        // thread pool). The confirm dialog AND OpenFileDialog are modal WinForms UI and must run
+        // on the STA UI thread -- marshal back to it or they throw ThreadStateException (swallowed
+        // by ProjectController's catch-all, so the picker silently never appears).
+        if (InvokeRequired)
+            return (string)Invoke(new Func<string>(() => AskToSelectNewRomFilename(promptSubject, promptText)));
+
         string initialDir = null; // TODO: Project.ProjectFileName
-        return WinformsGuiUtil.PromptToConfirmAction(promptSubject, promptText, 
+        return WinformsGuiUtil.PromptToConfirmAction(promptSubject, promptText,
             () => WinformsGuiUtil.PromptToSelectFile(initialDir)
         ) ?? "";
     }

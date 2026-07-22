@@ -53,6 +53,10 @@ public partial class RegionListUserControl : UserControl, IRegionListView
         regionGridView.AllowUserToDeleteRows = true;
         regionGridView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
 
+        // FullRowSelect makes the built-in Ctrl+C copy the whole row; we want just the focused
+        // cell, so disable the built-in copy and handle Ctrl+C ourselves (see RegionGridView_KeyDown).
+        regionGridView.ClipboardCopyMode = DataGridViewClipboardCopyMode.Disable;
+
         SetupColumns();
     }
 
@@ -190,6 +194,31 @@ private void AttachEventHandlers()
     regionGridView.CellFormatting += RegionGridView_CellFormatting;
     regionGridView.CellParsing += RegionGridView_CellParsing;
     regionGridView.CellValueChanged += RegionGridView_CellValueChanged;
+    regionGridView.KeyDown += RegionGridView_KeyDown;
+}
+
+// Copy ONLY the focused cell on Ctrl+C. The grid's own copy is disabled (ClipboardCopyMode.Disable
+// in ConfigureDataGridView) because FullRowSelect would otherwise copy the entire row.
+private void RegionGridView_KeyDown(object? sender, KeyEventArgs e)
+{
+    if (!e.Control || e.KeyCode != Keys.C)
+        return;
+
+    e.Handled = true;
+    e.SuppressKeyPress = true;
+
+    var text = regionGridView.CurrentCell?.Value?.ToString() ?? "";
+    try
+    {
+        if (string.IsNullOrEmpty(text))
+            Clipboard.Clear();
+        else
+            Clipboard.SetText(text);
+    }
+    catch (System.Runtime.InteropServices.ExternalException)
+    {
+        // clipboard momentarily locked by another process -- ignore rather than crash the editor.
+    }
 }
 
 private void RegionGridView_DataError(object? sender, DataGridViewDataErrorEventArgs e)
@@ -694,6 +723,7 @@ private void ApplyLengthToEndAddress(DataGridViewRow row)
     [
         BuildGfxAssetValidator(),
         BuildBrrAssetValidator(),
+        BuildTextAssetValidator(),
     ];
 
     // SNES BRR audio: audio.snes.brr. The stream is 9-byte ADPCM blocks (1 header + 8 data),
@@ -768,6 +798,74 @@ private void ApplyLengthToEndAddress(DataGridViewRow row)
                 return null;
             },
         };
+    }
+
+    // Fixed-width name tables: text.ct.mapped. Mirrors TextRegionAssetExporter in Diz.LogWriter:
+    // text assets REQUIRE options (tbl/record_width/pad have no defaults Diz could invent), and the
+    // region must be a whole number of record_width-byte records -- the records carry no terminator,
+    // so a ragged tail mis-frames every later record. Matched EXACTLY (like the gfx/brr validators),
+    // not by "text." prefix: a near-miss such as "text.ct.mapped2" has no codec downstream and must
+    // be rejected here, not accepted and then failed at build.
+    private static AssetTypeUiValidator BuildTextAssetValidator()
+    {
+        const string mappedType = "text.ct.mapped";
+        return new AssetTypeUiValidator
+        {
+            Matches = t => string.Equals(t, mappedType, StringComparison.Ordinal),
+            ExampleTypes = [mappedType],
+            Validate = ctx =>
+            {
+                if (ctx.Options == null)
+                    return "Text assets require Asset Options, e.g. " +
+                           "{\"tbl\": \"text/<table>.tbl\", \"record_width\": N, \"pad\": \"0xNN\"} " +
+                           "(plus an optional \"tokens\" map).";
+
+                if (!TryGetIntOption(ctx.Options, "record_width", out var recordWidth) || recordWidth < 1)
+                    return "Asset Options: \"record_width\" must be an integer >= 1.";
+
+                if (!TryGetNonEmptyStringOption(ctx.Options, "tbl", out _))
+                    return "Asset Options: \"tbl\" must be a non-empty string path to the .tbl font map.";
+
+                if (!TryGetNonEmptyStringOption(ctx.Options, "pad", out var pad) || !TryParseByteLiteral(pad, out _))
+                    return "Asset Options: \"pad\" must be a byte literal like \"0xEF\" (0..255).";
+
+                if (ctx.RegionLength <= 0 || ctx.RegionLength % recordWidth != 0)
+                    return $"Region length ({ctx.RegionLength} bytes) must be a whole multiple of " +
+                           $"record_width ({recordWidth}) when Asset Type is '{ctx.AssetType}'. " +
+                           "Fixed-width records have no terminator, so a ragged tail mis-frames " +
+                           "every later record -- adjust the bounds or record_width.";
+
+                return null;
+            },
+        };
+    }
+
+    private static bool TryGetIntOption(JsonObject options, string key, out int value)
+    {
+        value = 0;
+        return options.TryGetPropertyValue(key, out var node) && node != null
+            && node.GetValueKind() == JsonValueKind.Number
+            && node.AsValue().TryGetValue(out value);
+    }
+
+    private static bool TryGetNonEmptyStringOption(JsonObject options, string key, out string value)
+    {
+        value = "";
+        if (!options.TryGetPropertyValue(key, out var node) || node == null
+            || node.GetValueKind() != JsonValueKind.String)
+            return false;
+        value = node.GetValue<string>();
+        return !string.IsNullOrWhiteSpace(value);
+    }
+
+    // A byte literal like "0xEF" or "239" (0..255). Mirrors TextRegionAssetExporter.TryParseByteLiteral.
+    private static bool TryParseByteLiteral(string s, out int value)
+    {
+        s = s.Trim();
+        var ok = s.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+            ? int.TryParse(s.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out value)
+            : int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+        return ok && value is >= 0 and <= 0xFF;
     }
 
     private void DeleteRegion(int rowIndex)
