@@ -108,6 +108,8 @@ public partial class MainWindow : Form, IMainGridWindowView
     
     private static void InitializeConfiguration()
     {
+        Diz.Core.util.StartupTrace.Reset();
+        Diz.Core.util.StartupTrace.Log("MainWindow: config/window init");
         try
         {
             // hack: Try to access some of the settings to test configuration file works
@@ -144,7 +146,26 @@ public partial class MainWindow : Form, IMainGridWindowView
         UpdateUiFromSettings();
 
         if (appSettings.OpenLastFileAutomatically)
-            _ = OpenLastProject(); // fire-and-forget at startup; the open shows its own progress UI.
+        {
+            // Defer the auto-open via BeginInvoke so Init() (called from MainWindow_Load, where the
+            // handle already exists -- so BeginInvoke is valid) returns and the form finishes
+            // showing/painting FIRST; only then does the heavy synchronous first-run JIT prefix of
+            // the load stack run. Without this, that prefix runs before the first paint and the user
+            // stares at a frozen white void instead of the app window.
+            //
+            // NOTE: this only makes the window VISIBLE first; the residual first-run JIT stall itself
+            // is inherent to Debug builds -- Release / ReadyToRun / AOT is the real remedy.
+            BeginInvoke((Action)(() =>
+            {
+                // by the time this posted delegate runs, Load has returned and the framework has
+                // shown the window -- but WM_PAINT is low priority and may not have run yet. force a
+                // synchronous repaint of the now-visible client area BEFORE the heavy load prefix
+                // blocks the UI thread, so the user sees the real window, not a white void.
+                Update();
+                Diz.Core.util.StartupTrace.Log("MainWindow: deferred first-paint done, firing OpenLastProject");
+                _ = OpenLastProject(); // fire-and-forget at startup; the open shows its own progress UI.
+            }));
+        }
     }
 
 

@@ -56,6 +56,8 @@ namespace Diz.Ui.Winforms.dialogs
             btnBrowseOutputPath = new Button();
             label8 = new Label();
             chkGeneratePlusMinusLabels = new CheckBox();
+            lblExcludeLabelAuthors = new Label();
+            txtExcludeLabelAuthors = new TextBox();
             ((ISupportInitialize)numData).BeginInit();
             SuspendLayout();
             // 
@@ -323,15 +325,36 @@ namespace Diz.Ui.Winforms.dialogs
             chkGeneratePlusMinusLabels.Text = "Generate +/- local labels";
             chkGeneratePlusMinusLabels.UseVisualStyleBackColor = true;
             chkGeneratePlusMinusLabels.CheckedChanged += chkGeneratePlusMinusLabels_CheckedChanged;
-            // 
+            //
+            // lblExcludeLabelAuthors
+            //
+            lblExcludeLabelAuthors.AutoSize = true;
+            lblExcludeLabelAuthors.Location = new Point(25, 143);
+            lblExcludeLabelAuthors.Margin = new Padding(4, 0, 4, 0);
+            lblExcludeLabelAuthors.Name = "lblExcludeLabelAuthors";
+            lblExcludeLabelAuthors.Size = new Size(240, 15);
+            lblExcludeLabelAuthors.TabIndex = 23;
+            lblExcludeLabelAuthors.Text = "Exclude labels by author (comma-separated):";
+            //
+            // txtExcludeLabelAuthors
+            //
+            txtExcludeLabelAuthors.Location = new Point(300, 140);
+            txtExcludeLabelAuthors.Margin = new Padding(4, 3, 4, 3);
+            txtExcludeLabelAuthors.Name = "txtExcludeLabelAuthors";
+            txtExcludeLabelAuthors.Size = new Size(520, 23);
+            txtExcludeLabelAuthors.TabIndex = 24;
+            txtExcludeLabelAuthors.TextChanged += txtExcludeLabelAuthors_TextChanged;
+            //
             // LogCreatorSettingsEditorForm
-            // 
+            //
             AcceptButton = disassembleButton;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = cancel;
             ClientSize = new Size(907, 687);
             Controls.Add(chkGeneratePlusMinusLabels);
+            Controls.Add(lblExcludeLabelAuthors);
+            Controls.Add(txtExcludeLabelAuthors);
             Controls.Add(label8);
             Controls.Add(btnBrowseOutputPath);
             Controls.Add(label7);
@@ -394,5 +417,7 @@ namespace Diz.Ui.Winforms.dialogs
         private Button btnBrowseOutputPath;
         private Label label8;
         private CheckBox chkGeneratePlusMinusLabels;
+        private Label lblExcludeLabelAuthors;
+        private TextBox txtExcludeLabelAuthors;
     }
 }

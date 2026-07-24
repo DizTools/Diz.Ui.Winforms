@@ -49,6 +49,7 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
     private IAnnotationLabel? selectedLabel;
     private BindingList<ContextMapping>? contextMappingsBindingList;
     private bool isUpdatingContextMappings;
+    private bool isUpdatingConfidence;
 
     public LabelsViewControl()
     {
@@ -90,6 +91,8 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
 
         gridRows = new ObservableBindingList<ILabelRowViewModel, LabelGridRow>(
             viewModel.Rows, row => new LabelGridRow(row));
+
+        PopulateConfidenceOptions();
 
         SuspendDrawingDuring(() => bindingSource.DataSource = gridRows);
         toolStripStatusLabel1.Text = viewModel.StatusText;
@@ -519,6 +522,12 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
 
     private void SetupLabelDetailsPanel()
     {
+        // confidence dropdown: a DropDownList of display strings ("(unspecified)" + the project's
+        // confidence vocabulary). Items are populated when the VM is (re)created (PopulateConfidenceOptions);
+        // user picks are committed manually (not data-bound) so an off-vocabulary stored value is never
+        // clobbered just by displaying it.
+        cmbDetailsConfidence.SelectedIndexChanged += CmbDetailsConfidence_SelectedIndexChanged;
+
         dataGridContexts.AutoGenerateColumns = false;
         dataGridContexts.AllowUserToAddRows = true;
         dataGridContexts.AllowUserToDeleteRows = true;
@@ -539,6 +548,70 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
         });
     }
 
+    // confidence dropdown items = the VM's ConfidenceOptions ("(unspecified)" + the project
+    // vocabulary, in order). populated on VM (re)creation; the suppress flag keeps this from
+    // firing a commit.
+    private void PopulateConfidenceOptions()
+    {
+        isUpdatingConfidence = true;
+        try
+        {
+            cmbDetailsConfidence.Items.Clear();
+            if (viewModel == null)
+                return;
+            foreach (var option in viewModel.ConfidenceOptions)
+                cmbDetailsConfidence.Items.Add(option);
+        }
+        finally
+        {
+            isUpdatingConfidence = false;
+        }
+    }
+
+    // show the label's stored confidence in the combo WITHOUT writing anything back. an
+    // off-vocabulary stored value (not in ConfidenceOptions) is added to the item list so it can
+    // be shown and preserved; only an active user pick (CmbDetailsConfidence_SelectedIndexChanged)
+    // ever commits a change to the model.
+    private void SyncConfidenceComboFromLabel(IAnnotationLabel? label)
+    {
+        isUpdatingConfidence = true;
+        try
+        {
+            if (label == null)
+            {
+                cmbDetailsConfidence.SelectedIndex = -1;
+                return;
+            }
+
+            var display = LabelEditorViewModel.ConfidenceStoredToDisplay(label.Confidence ?? "");
+            if (!cmbDetailsConfidence.Items.Contains(display))
+                cmbDetailsConfidence.Items.Add(display);
+            cmbDetailsConfidence.SelectedItem = display;
+        }
+        finally
+        {
+            isUpdatingConfidence = false;
+        }
+    }
+
+    private void CmbDetailsConfidence_SelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (isUpdatingConfidence || viewModel == null)
+            return;
+
+        var row = viewModel.SelectedRow;
+        if (row == null || cmbDetailsConfidence.SelectedItem is not string display)
+            return;
+
+        // only commit a genuine change (compare stored values, not display strings).
+        if (LabelEditorViewModel.ConfidenceDisplayToStored(display) == (row.Confidence ?? ""))
+            return;
+
+        // defer past this event: CommitEdit does remove+add on the provider (row identity changes),
+        // which re-enters selection/binding -- same discipline as the grid cell commit.
+        BeginInvoke(() => viewModel?.CommitEdit(row, LabelField.Confidence, display));
+    }
+
     private void UpdateDetailsPanelFor(ILabelRowViewModel? row)
     {
         if (contextMappingsBindingList != null)
@@ -548,6 +621,9 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
 
         txtDetailsLabelPrimaryName.DataBindings.Clear();
         txtDetailsLabelComment.DataBindings.Clear();
+        txtDetailsAuthor.DataBindings.Clear();
+
+        SyncConfidenceComboFromLabel(selectedLabel);
 
         if (selectedLabel == null)
         {
@@ -574,6 +650,12 @@ public partial class LabelsViewControl : UserControl, ILabelEditorView
                 args.Value = text.Replace(Environment.NewLine, "\n");
         };
         txtDetailsLabelComment.DataBindings.Add(commentBinding);
+
+        // Author: same idiom as Name above -- bind straight to the live model label, writing back
+        // on every change. (Confidence is handled by SyncConfidenceComboFromLabel above, not a
+        // data binding, so an off-vocabulary stored value survives being displayed.)
+        txtDetailsAuthor.DataBindings.Add(new Binding("Text", selectedLabel,
+            nameof(selectedLabel.Author), formattingEnabled: false, DataSourceUpdateMode.OnPropertyChanged));
 
         contextMappingsBindingList = [];
         foreach (var mapping in selectedLabel.ContextMappings)
