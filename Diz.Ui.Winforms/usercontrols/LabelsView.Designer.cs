@@ -56,6 +56,10 @@ partial class LabelsViewControl
         label3 = new Label();
         txtDetailsLabelComment = new TextBox();
         label2 = new Label();
+        lblDetailsAuthor = new Label();
+        txtDetailsAuthor = new TextBox();
+        lblDetailsConfidence = new Label();
+        cmbDetailsConfidence = new ComboBox();
         ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
         menuStrip1.SuspendLayout();
         tableLayoutPanel1.SuspendLayout();
@@ -282,6 +286,10 @@ partial class LabelsViewControl
         groupBox1.Controls.Add(txtDetailsLabelComment);
         groupBox1.Controls.Add(txtDetailsLabelPrimaryName);
         groupBox1.Controls.Add(lblPanelName);
+        groupBox1.Controls.Add(lblDetailsAuthor);
+        groupBox1.Controls.Add(txtDetailsAuthor);
+        groupBox1.Controls.Add(lblDetailsConfidence);
+        groupBox1.Controls.Add(cmbDetailsConfidence);
         groupBox1.Controls.Add(dataGridContexts);
         groupBox1.Controls.Add(label3);
         groupBox1.Dock = DockStyle.Fill;
@@ -296,9 +304,10 @@ partial class LabelsViewControl
         // 
         dataGridContexts.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         dataGridContexts.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dataGridContexts.Location = new Point(6, 259);
+        dataGridContexts.Location = new Point(6, 303);
         dataGridContexts.Name = "dataGridContexts";
-        dataGridContexts.Size = new Size(356, 240);
+        dataGridContexts.RowHeadersVisible = false;
+        dataGridContexts.Size = new Size(356, 196);
         dataGridContexts.TabIndex = 3;
         // 
         // txtDetailsLabelPrimaryName
@@ -321,7 +330,7 @@ partial class LabelsViewControl
         // label3
         // 
         label3.AutoSize = true;
-        label3.Location = new Point(6, 241);
+        label3.Location = new Point(6, 285);
         label3.Name = "label3";
         label3.Size = new Size(105, 15);
         label3.TabIndex = 4;
@@ -333,7 +342,7 @@ partial class LabelsViewControl
         txtDetailsLabelComment.Location = new Point(6, 93);
         txtDetailsLabelComment.Multiline = true;
         txtDetailsLabelComment.Name = "txtDetailsLabelComment";
-        txtDetailsLabelComment.Size = new Size(356, 130);
+        txtDetailsLabelComment.Size = new Size(356, 90);
         txtDetailsLabelComment.TabIndex = 5;
         txtDetailsLabelComment.WordWrap = true;
         txtDetailsLabelComment.ScrollBars = ScrollBars.Vertical;
@@ -346,9 +355,45 @@ partial class LabelsViewControl
         label2.Size = new Size(92, 15);
         label2.TabIndex = 6;
         label2.Text = "Label Comment";
-        // 
+        //
+        // lblDetailsAuthor
+        //
+        lblDetailsAuthor.AutoSize = true;
+        lblDetailsAuthor.Location = new Point(6, 189);
+        lblDetailsAuthor.Name = "lblDetailsAuthor";
+        lblDetailsAuthor.Size = new Size(45, 15);
+        lblDetailsAuthor.TabIndex = 7;
+        lblDetailsAuthor.Text = "Author";
+        //
+        // txtDetailsAuthor
+        //
+        txtDetailsAuthor.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        txtDetailsAuthor.Location = new Point(6, 207);
+        txtDetailsAuthor.Name = "txtDetailsAuthor";
+        txtDetailsAuthor.Size = new Size(356, 23);
+        txtDetailsAuthor.TabIndex = 8;
+        //
+        // lblDetailsConfidence
+        //
+        lblDetailsConfidence.AutoSize = true;
+        lblDetailsConfidence.Location = new Point(6, 236);
+        lblDetailsConfidence.Name = "lblDetailsConfidence";
+        lblDetailsConfidence.Size = new Size(67, 15);
+        lblDetailsConfidence.TabIndex = 9;
+        lblDetailsConfidence.Text = "Confidence";
+        //
+        // cmbDetailsConfidence
+        //
+        cmbDetailsConfidence.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        cmbDetailsConfidence.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbDetailsConfidence.FormattingEnabled = true;
+        cmbDetailsConfidence.Location = new Point(6, 254);
+        cmbDetailsConfidence.Name = "cmbDetailsConfidence";
+        cmbDetailsConfidence.Size = new Size(356, 23);
+        cmbDetailsConfidence.TabIndex = 10;
+        //
         // LabelsViewControl
-        // 
+        //
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         Controls.Add(tableLayoutPanel2);
@@ -404,4 +449,8 @@ partial class LabelsViewControl
     private Label label3;
     private Label label2;
     private TextBox txtDetailsLabelComment;
+    private Label lblDetailsAuthor;
+    private TextBox txtDetailsAuthor;
+    private Label lblDetailsConfidence;
+    private ComboBox cmbDetailsConfidence;
 }

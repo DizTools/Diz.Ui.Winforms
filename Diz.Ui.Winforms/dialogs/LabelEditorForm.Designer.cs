@@ -38,14 +38,14 @@ partial class LabelEditorForm
         labelsViewControl1.Margin = new Padding(4, 3, 4, 3);
         labelsViewControl1.MinimumSize = new Size(250, 282);
         labelsViewControl1.Name = "labelsViewControl1";
-        labelsViewControl1.Size = new Size(1071, 551);
+        labelsViewControl1.Size = new Size(1161, 551);
         labelsViewControl1.TabIndex = 0;
         // 
         // LabelEditorForm
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(1071, 551);
+        ClientSize = new Size(1161, 551);
         Controls.Add(labelsViewControl1);
         FormBorderStyle = FormBorderStyle.SizableToolWindow;
         Margin = new Padding(4, 3, 4, 3);

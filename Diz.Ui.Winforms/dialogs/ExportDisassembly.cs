@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Linq;
 using Diz.Controllers.interfaces;
 using Diz.Core.export;
 using Diz.LogWriter;
@@ -59,6 +60,7 @@ public partial class LogCreatorSettingsEditorForm : Form, ILogCreatorSettingsEdi
         chkPrintLabelSpecificComments.Checked = Settings.PrintLabelSpecificComments;
         txtExportPath.Text = Settings.FileOrFolderOutPath;
         chkGeneratePlusMinusLabels.Checked = Settings.GeneratePlusMinusLabels;
+        txtExcludeLabelAuthors.Text = string.Join(", ", Settings.ExcludedLabelAuthors);
 
         var validFormat = LogCreatorLineFormatter.Validate(Settings.Format);
         
@@ -144,6 +146,16 @@ public partial class LogCreatorSettingsEditorForm : Form, ILogCreatorSettingsEdi
         
     private void chkGeneratePlusMinusLabels_CheckedChanged(object sender, EventArgs e) =>
         Settings = Settings with { GeneratePlusMinusLabels = chkGeneratePlusMinusLabels.Checked };
+
+    private void txtExcludeLabelAuthors_TextChanged(object sender, EventArgs e) =>
+        Settings = Settings with
+        {
+            ExcludedLabelAuthors = txtExcludeLabelAuthors.Text
+                .Split(',')
+                .Select(a => a.Trim())
+                .Where(a => a.Length > 0)
+                .ToList(),
+        };
 
     public event EventHandler? OnFormClosed;
 

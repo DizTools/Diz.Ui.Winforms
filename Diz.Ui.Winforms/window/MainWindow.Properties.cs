@@ -40,16 +40,35 @@ public partial class MainWindow
         dialog.IsMarquee = isMarquee;
         dialog.TextOverride = description;
 
+        // Make the progress dialog behave modal-like without ShowDialog() (which would block the
+        // message loop). The guards below are WinForms-local: only the WinForms ProgressDialog is a
+        // Form, so non-WinForms IProgressView backends (Avalonia/Eto) fall through unchanged.
+        //
+        //  - Owner = this: an owned form always renders above its owner and can't hide behind it.
+        //  - this.Enabled = false: blocks stray interaction with the frozen main window while work
+        //    runs (the owned dialog keeps its own enabled state, so it stays interactive). Re-enabled
+        //    in finally so a throw in work() can't leave the app permanently disabled.
+        if (dialog is Form dialogForm)
+        {
+            dialogForm.Owner = this;
+        }
+        this.Enabled = false;
+
         // cancellation is plumbed end-to-end but no cancel button is surfaced yet (optional per
         // the plan). The dialog itself (IProgress<int>) marshals Report(...) to the UI thread.
         using var cts = new CancellationTokenSource();
         dialog.Show();
+        // Force an immediate paint so the progress window renders fully before the UI thread gets
+        // busy -- otherwise the user sees a blank/half-painted dialog during the following stall.
+        if (dialog is Form shownForm)
+            shownForm.Update();
         try
         {
             await Task.Run(() => work(dialog, cts.Token));
         }
         finally
         {
+            this.Enabled = true;
             dialog.Close();
         }
     }
