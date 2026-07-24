@@ -142,6 +142,7 @@ public partial class MainWindow : Form, IMainGridWindowView
 
         UpdatePanels();
         UpdateUiFromSettings();
+        UpdateWindowTitle(); // show title-bar extras (--extraTitleBar / git worktree) right away
 
         if (appSettings.OpenLastFileAutomatically)
             _ = OpenLastProject(); // fire-and-forget at startup; the open shows its own progress UI.
