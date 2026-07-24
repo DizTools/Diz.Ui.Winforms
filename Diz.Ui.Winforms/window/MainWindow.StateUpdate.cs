@@ -37,10 +37,18 @@ public partial class MainWindow
 
     public void UpdateWindowTitle()
     {
+        // Project can be null before anything is opened (this runs once at startup so the title-bar
+        // extras show immediately). Show just the project file's name, not its full path, to keep the
+        // title short.
+        var projectPart = Project == null
+            ? "DiztinGUIsh"
+            : (Project.Session?.UnsavedChanges ?? true ? "*" : "") +
+              (string.IsNullOrEmpty(Project.ProjectFileName) ? "New Project" : Path.GetFileName(Project.ProjectFileName));
+
         Text =
-            (Project.Session?.UnsavedChanges ?? true ? "*" : "") +
-            (string.IsNullOrEmpty(Project.ProjectFileName) ? "New Project" : Project.ProjectFileName) +
-            $" - DIZ {appVersionInfo.GetVersionInfo(IAppVersionInfo.AppVersionInfoType.Version)}";
+            projectPart +
+            $" - DIZ {appVersionInfo.GetVersionInfo(IAppVersionInfo.AppVersionInfoType.Version)}" +
+            Diz.Ui.Winforms.util.MainWindowTitleExtras.Suffix;
     }
 
     private void UpdateUiFromSettings()

@@ -144,6 +144,7 @@ public partial class MainWindow : Form, IMainGridWindowView
 
         UpdatePanels();
         UpdateUiFromSettings();
+        UpdateWindowTitle(); // show title-bar extras (--extraTitleBar) right away
 
         if (appSettings.OpenLastFileAutomatically)
         {
