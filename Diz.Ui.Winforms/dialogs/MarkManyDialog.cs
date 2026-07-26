@@ -20,7 +20,10 @@ public partial class MarkManyDialog : Form
     // combo box contents, in the order the designer lists them. The combos show display text;
     // these arrays are the model values behind each index, so no index arithmetic leaks into
     // the ViewModel. "CPU architecture" is deliberately absent from the property combo: the
-    // ViewModel supports it, but this window has never offered it.
+    // ViewModel and the applier both support marking it, but this window has never offered it
+    // and nothing reaches it today. If it ever becomes relevant, add MarkManyProperty.CpuArch
+    // here and the matching display string to comboPropertyType.Items in the designer -- the
+    // architecture combo it selects is already built and wired.
     private static readonly MarkCommand.MarkManyProperty[] PropertyComboValues =
     [
         MarkCommand.MarkManyProperty.Flag,

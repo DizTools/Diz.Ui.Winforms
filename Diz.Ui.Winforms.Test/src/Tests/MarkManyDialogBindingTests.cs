@@ -97,6 +97,27 @@ public class MarkManyDialogBindingTests
             Util.NumberToBaseString(viewModel.DirectPageValue, Util.NumberBase.Hexadecimal, 0));
     }
 
+    [Fact]
+    public void AValueRememberedFromTheLastSessionIsWhatTheValueBoxShows()
+    {
+        var rom = MakeRom();
+
+        var firstTime = new MarkManyViewModel<ISnesData>(rom, 0x10, 0x10)
+        {
+            SelectedProperty = MarkCommand.MarkManyProperty.DataBank,
+        };
+        firstTime.DataBankValue.Should().NotBe(0x7F, "the ROM must disagree for this to prove anything");
+        firstTime.DataBankValue = 0x7F;
+
+        var reopened = new MarkManyViewModel<ISnesData>(rom, 0x10, 0x10);
+        reopened.RestoreSettings(firstTime.CaptureSettings());
+        using var dialog = new MarkManyDialog(reopened);
+
+        Widget<ComboBox>(dialog, "comboPropertyType").SelectedIndex.Should().Be(1); // Data Bank
+        Widget<TextBox>(dialog, "regValue").Text.Should().Be("7F");
+        reopened.DataBankValue.Should().Be(0x7F);
+    }
+
     // ------------------------------------------------------------------ widgets -> ViewModel
 
     [Fact]
