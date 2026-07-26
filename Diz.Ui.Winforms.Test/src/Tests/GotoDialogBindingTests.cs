@@ -137,6 +137,26 @@ public class GotoDialogBindingTests
     }
 
     [Fact]
+    public void TypingAnAddressWhoseRoundTripIsNotTheIdentityStillLeavesTheTypedTextAlone()
+    {
+        var (dialog, viewModel, _) = MakeDialog();
+        using var _2 = dialog;
+
+        var textROM = Widget<TextBox>(dialog, "textROM");
+
+        // A MIRROR BANK: HiROM ignores the top two bank bits, so $40:0018 and $C0:0018 are the
+        // same ROM byte. The offset box therefore holds a number that converts BACK to the
+        // canonical bank -- "C00018", not the bank that was typed. Only the other box may
+        // follow; a host that let the offset flow back in would retype the address under the
+        // user's caret, and the field would fight every keystroke of a mirrored address.
+        textROM.Text = "400018";
+
+        textROM.Text.Should().Be("400018");
+        Widget<TextBox>(dialog, "textPC").Text.Should().Be("18");
+        viewModel.ResultPcOffset.Should().Be(0x18);
+    }
+
+    [Fact]
     public void TypingARomFileOffsetMovesTheSnesBox()
     {
         var (dialog, viewModel, _) = MakeDialog();
