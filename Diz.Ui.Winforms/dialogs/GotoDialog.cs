@@ -1,20 +1,45 @@
-﻿using System.Globalization;
-using Diz.Core.model.snes;
-using Diz.Core.util;
+﻿using System.ComponentModel;
+using Diz.Ui.ViewModels.Goto;
 
 namespace Diz.Ui.Winforms.dialogs;
 
+/// <summary>
+/// Modal host for <see cref="GotoViewModel"/>: type a SNES address or a ROM file offset and
+/// press Go. Everything that decides where "there" is -- address conversion, hex/decimal
+/// parsing, label stripping, validation -- lives in the ViewModel. This file is widget wiring
+/// only, and the dialog never navigates: the caller reads <c>ResultPcOffset</c> off the
+/// ViewModel after a DialogResult.OK and moves the view itself.
+/// </summary>
 public partial class GotoDialog : Form
 {
-    private readonly Data data;
+    private readonly GotoViewModel viewModel;
     private readonly bool initiallySelectSnesAddr;
-    public GotoDialog(int offset, Data data, bool initiallySelectSnesAddr = true)
+
+    // true while widget values are being written FROM the ViewModel; the input handlers below
+    // bail out then, so a ViewModel-driven refresh can't be mistaken for the user typing.
+    private bool updatingWidgets;
+
+    /// <param name="viewModel">Holds both address projections and decides which are valid.</param>
+    /// <param name="initiallySelectSnesAddr">
+    /// Which box's text starts out selected, so typing replaces it. NOTE THE OBSERVED
+    /// BEHAVIOR, WHICH THE NAME DOES NOT DESCRIBE: true selects the ROM FILE OFFSET box and
+    /// false selects the SNES ADDRESS box. Preserved exactly as-is because the only caller
+    /// passes the negation of "the grid is displaying ROM file offsets", so the net effect on
+    /// screen is that the box selected is the one showing the address form the grid is NOT
+    /// showing -- and that net effect is what users have.
+    /// </param>
+    public GotoDialog(GotoViewModel viewModel, bool initiallySelectSnesAddr = true)
     {
-        InitializeComponent();
-        this.data = data;
+        ArgumentNullException.ThrowIfNull(viewModel);
+        this.viewModel = viewModel;
         this.initiallySelectSnesAddr = initiallySelectSnesAddr;
-        textROM.Text = Util.NumberToBaseString(data.ConvertPCtoSnes(offset), Util.NumberBase.Hexadecimal, 6);
-        textPC.Text = Util.NumberToBaseString(offset, Util.NumberBase.Hexadecimal, 0);
+
+        InitializeComponent();
+
+        viewModel.PropertyChanged += ViewModel_PropertyChanged;
+        FormClosed += (_, _) => viewModel.PropertyChanged -= ViewModel_PropertyChanged;
+
+        RefreshAllWidgets();
     }
 
     private void GotoDialog_Load(object sender, EventArgs e)
@@ -23,145 +48,130 @@ public partial class GotoDialog : Form
             textROM.SelectAll();
         else
             textPC.SelectAll();
-        
-        UpdateUi();
+
+        RefreshValidation();
     }
 
-    private int ParseOffset(string text)
+    // ------------------------------------------------------------------ ViewModel -> widgets
+
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        var style = radioDec.Checked ? NumberStyles.Number : NumberStyles.HexNumber;
-        return int.TryParse(text, style, null, out var offset) ? offset : -1;
-    }
-
-    public int GetPcOffset() => ParseOffset(textPC.Text);
-        
-
-    private bool currentlyUpdatingText;
-    private bool TryLockText()
-    {
-        if (currentlyUpdatingText) 
-            return false;
-            
-        currentlyUpdatingText = true;
-        return true;
-    }
-    private void UnlockText() => currentlyUpdatingText = false;
-
-    private void UpdateTextChanged(string txtChanged, Action<string, int, Util.NumberBase> onSuccess)
-    {
-        // don't allow UI callbacks to mess up what we're doing, lock further calls to this function til we're done
-        if (!TryLockText()) 
-            return;
-
-        UpdateTextChangedInternal(txtChanged, !radioDec.Checked, onSuccess);
-
-        UnlockText();
-    }
-
-    private static void UpdateTextChangedInternal(string txtChanged, bool formatAsHex, Action<string, int, Util.NumberBase> onSuccess)
-    {
-        var style = formatAsHex ? NumberStyles.HexNumber : NumberStyles.Number;
-
-        if (!ByteUtil.TryParseNum_Stripped(ref txtChanged, style, out var address) || address < 0) 
-            return;
-
-        onSuccess(
-            txtChanged, 
-            address, 
-            formatAsHex ? Util.NumberBase.Hexadecimal : Util.NumberBase.Decimal
-        );
-    }
-
-    // For both textbox TextChanged events:
-    // precondition: unvalidated input in textbox
-    // postcondtion: valid text is in both textboxes, or, button is greyed out and error message displayed.
-
-    private void UpdateUi()
-    {
-        var valid = true;
-        lblError.Text = "";
-
-        if (!IsPcOffsetValid())
+        switch (e.PropertyName)
         {
-            lblError.Text = "Invalid ROM File Offset";
-            valid = false;
+            case nameof(GotoViewModel.SnesText):
+                WriteText(textROM, viewModel.SnesText);
+                break;
+
+            case nameof(GotoViewModel.PcText):
+                WriteText(textPC, viewModel.PcText);
+                break;
+
+            case nameof(GotoViewModel.UseHexadecimal):
+                WriteWidgets(() =>
+                {
+                    radioHex.Checked = viewModel.UseHexadecimal;
+                    radioDec.Checked = !viewModel.UseHexadecimal;
+                });
+                break;
         }
 
-        if (!IsRomAddressValid())
-        {
-            lblError.Text = "Invalid SNES Address";
-            valid = false;
-        }
-
-        go.Enabled = valid;
+        RefreshValidation();
     }
 
-    private bool IsValidPcAddress(int pc) => 
-        pc >= 0 && pc < data.GetRomSize();
-
-    private bool IsPcOffsetValid() => 
-        IsValidPcAddress(GetPcOffset());
-
-    private bool IsRomAddressValid()
+    private void RefreshAllWidgets()
     {
-        var address = ParseOffset(textROM.Text);
-        return address >= 0 && IsValidPcAddress(data.ConvertSnesToPc(address));
-    }
-
-    private void textROM_TextChanged(object sender, EventArgs e)
-    {
-        UpdateTextChanged(textROM.Text,(finalText, address, noBase) =>
+        WriteWidgets(() =>
         {
-            var pc = data.ConvertSnesToPc(address);
-                
-            textROM.Text = finalText;
-            textPC.Text = Util.NumberToBaseString(pc, noBase, 0);
+            textROM.Text = viewModel.SnesText;
+            textPC.Text = viewModel.PcText;
+            radioHex.Checked = viewModel.UseHexadecimal;
+            radioDec.Checked = !viewModel.UseHexadecimal;
         });
 
-        UpdateUi();
+        RefreshValidation();
     }
 
-    private void textPC_TextChanged(object sender, EventArgs e)
+    /// <summary>
+    /// Go is available only while the ViewModel names a real destination, and the reason it
+    /// doesn't is shown verbatim. The view never re-derives validity; it only displays the
+    /// answer.
+    /// </summary>
+    private void RefreshValidation()
     {
-        UpdateTextChanged(textPC.Text, (finalText, offset, noBase) =>
-        {
-            var addr = data.ConvertPCtoSnes(offset);
-
-            textPC.Text = finalText;
-            textROM.Text = Util.NumberToBaseString(addr, noBase, 6);
-        });
-
-        UpdateUi();
+        go.Enabled = viewModel.CanConfirm;
+        lblError.Text = viewModel.ValidationMessage;
     }
-        
-    private void OnTextKeydown(KeyEventArgs e)
-    {
-        if (e.KeyCode == Keys.Enter && textROM.Text.Length > 0) 
-            Finish();
-    }
-        
-    private void Finish() => DialogResult = DialogResult.OK;
+
+    // ------------------------------------------------------------------ widgets -> ViewModel
+
+    private void textROM_TextChanged(object sender, EventArgs e) =>
+        PushToViewModel(() => viewModel.SnesText = textROM.Text);
+
+    private void textPC_TextChanged(object sender, EventArgs e) =>
+        PushToViewModel(() => viewModel.PcText = textPC.Text);
+
+    // the radio pair reports through the button losing its check as well as the one gaining
+    // it, so this one handler covers both directions.
+    private void radioHex_CheckedChanged(object sender, EventArgs e) =>
+        PushToViewModel(() => viewModel.UseHexadecimal = radioHex.Checked);
 
     private void go_Click(object sender, EventArgs e) => Finish();
+
+    private void cancel_Click(object sender, EventArgs e) => Close();
 
     private void textROM_KeyDown(object sender, KeyEventArgs e) => OnTextKeydown(e);
 
     private void textPC_KeyDown(object sender, KeyEventArgs e) => OnTextKeydown(e);
-        
-    private void cancel_Click(object sender, EventArgs e) => Close();
 
-    private void radioHex_CheckedChanged(object sender, EventArgs e)
+    private void OnTextKeydown(KeyEventArgs e)
     {
-        if (radioHex.Checked) {
-            if (int.TryParse(textPC.Text, out var result))
-            {
-                textPC.Text = Util.NumberToBaseString(result, Util.NumberBase.Hexadecimal, 0);
-            }
-        } else {
-            if (int.TryParse(textPC.Text, NumberStyles.HexNumber, null, out var result))
-            {
-                textPC.Text = result.ToString();
-            }
+        if (e.KeyCode == Keys.Enter)
+            Finish();
+    }
+
+    /// <summary>
+    /// Confirm. Refused while the boxes don't name a place to go, so Enter can't act on a
+    /// destination the user never successfully typed.
+    /// </summary>
+    private void Finish()
+    {
+        if (!viewModel.CanConfirm)
+            return;
+
+        DialogResult = DialogResult.OK;
+    }
+
+    // ------------------------------------------------------------------ plumbing
+
+    /// <summary>Run a user-input handler, unless the change came from the ViewModel in the first place.</summary>
+    private void PushToViewModel(Action push)
+    {
+        if (updatingWidgets)
+            return;
+
+        push();
+    }
+
+    /// <summary>Write widget state without the input handlers treating it as user input.</summary>
+    private void WriteWidgets(Action write)
+    {
+        var previous = updatingWidgets;
+        updatingWidgets = true;
+        try
+        {
+            write();
+        }
+        finally
+        {
+            updatingWidgets = previous;
         }
     }
+
+    /// <summary>
+    /// Push text into a box, INCLUDING the one being typed into. That is deliberate here: the
+    /// ViewModel already withholds the notification for text it accepted unchanged, so the only
+    /// time the edited box is written is when accepting rewrote it -- pasting the label
+    /// "CODE_C012AB" leaves "C012AB" behind -- and that rewrite has to be visible.
+    /// </summary>
+    private void WriteText(TextBox textBox, string text) => WriteWidgets(() => textBox.Text = text);
 }

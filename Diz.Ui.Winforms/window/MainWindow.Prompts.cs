@@ -3,6 +3,7 @@ using Diz.Controllers.interfaces;
 using Diz.Core.commands;
 using Diz.Cpu._65816;
 using Diz.LogWriter;
+using Diz.Ui.ViewModels.Goto;
 using Diz.Ui.ViewModels.MarkMany;
 using Diz.Ui.Winforms.dialogs;
 using Diz.Ui.Winforms.util;
@@ -96,22 +97,35 @@ public partial class MainWindow
         ShowError("That offset is out of range.", "Error");
     }
 
+    /// <summary>
+    /// Ask the user where to go. Returns the ROM file offset, or -1 for "nowhere" -- which
+    /// covers cancelling, no ROM loaded, and any state the dialog refused to confirm.
+    /// </summary>
     private int PromptForGotoOffset()
     {
         if (!RomDataPresent())
             return -1;
 
-        var go = new GotoDialog(
-            ViewOffset + table.CurrentCell?.RowIndex ?? 0, 
-            Project.Data, 
-            initiallySelectSnesAddr: !Project.ProjectUserSettings.DisplayOffsetsInGrid 
+        var snesData = Project.Data.GetSnesApi()
+                       ?? throw new InvalidOperationException("No snes data present");
+
+        // no notification marshaller: this ViewModel does no background work, so every
+        // notification it raises is a direct consequence of a widget event already on the UI
+        // thread.
+        var viewModel = new GotoViewModel(
+            snesData,
+            snesData.GetRomSize(),
+            startPcOffset: ViewOffset + table.CurrentCell?.RowIndex ?? 0);
+
+        using var go = new GotoDialog(
+            viewModel,
+            initiallySelectSnesAddr: !Project.ProjectUserSettings.DisplayOffsetsInGrid
         );
-        
-        var result = go.ShowDialog();
-        if (result != DialogResult.OK)
+
+        if (go.ShowDialog() != DialogResult.OK)
             return -1;
-            
-        return go.GetPcOffset();
+
+        return viewModel.ResultPcOffset ?? -1;
     }
 
     private static void ShowError(string errorMsg, string caption = "Error")
