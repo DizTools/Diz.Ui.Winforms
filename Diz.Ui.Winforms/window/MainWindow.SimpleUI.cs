@@ -113,9 +113,11 @@ public partial class MainWindow
     private void stepInToolStripMenuItem_Click(object sender, EventArgs e) => StepIn(SelectedOffset);
     private void autoStepSafeToolStripMenuItem_Click(object sender, EventArgs e) => AutoStepSafe(SelectedOffset);
     private void autoStepHarshToolStripMenuItem_Click(object sender, EventArgs e) => AutoStepHarsh(SelectedOffset);
-    private void gotoToolStripMenuItem_Click(object sender, EventArgs e)
+    // async void: this is an event handler, and PromptForGotoOffset awaits a view service whose
+    // window may not be able to block (see PromptForGotoOffset).
+    private async void gotoToolStripMenuItem_Click(object sender, EventArgs e)
     {
-        var gotoOffset = PromptForGotoOffset();
+        var gotoOffset = await PromptForGotoOffset();
         if (gotoOffset != -1)
             GoTo(gotoOffset);
     }

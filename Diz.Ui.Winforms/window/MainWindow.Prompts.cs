@@ -99,9 +99,13 @@ public partial class MainWindow
 
     /// <summary>
     /// Ask the user where to go. Returns the ROM file offset, or -1 for "nowhere" -- which
-    /// covers cancelling, no ROM loaded, and any state the dialog refused to confirm.
+    /// covers cancelling, no ROM loaded, and any state the window refused to confirm.
+    ///
+    /// Async because the goto window is a per-toolkit view service and not every toolkit can
+    /// offer a blocking modal call. The WinForms one does, so on that backend this method still
+    /// runs start to finish without ever yielding to the message loop.
     /// </summary>
-    private int PromptForGotoOffset()
+    private async Task<int> PromptForGotoOffset()
     {
         if (!RomDataPresent())
             return -1;
@@ -117,15 +121,14 @@ public partial class MainWindow
             snesData.GetRomSize(),
             startPcOffset: ViewOffset + table.CurrentCell?.RowIndex ?? 0);
 
-        using var go = new GotoDialog(
+        // which window shows up is a per-toolkit registration; the ViewModel is the whole
+        // contract. Awaiting the WinForms implementation continues synchronously, because its
+        // modal call has already finished by the time it returns a task.
+        var confirmed = await viewFactory.GetGotoView().EditAsync(
             viewModel,
-            initiallySelectSnesAddr: !Project.ProjectUserSettings.DisplayOffsetsInGrid
-        );
+            initiallySelectSnesAddr: !Project.ProjectUserSettings.DisplayOffsetsInGrid);
 
-        if (go.ShowDialog() != DialogResult.OK)
-            return -1;
-
-        return viewModel.ResultPcOffset ?? -1;
+        return confirmed ? viewModel.ResultPcOffset ?? -1 : -1;
     }
 
     private static void ShowError(string errorMsg, string caption = "Error")
