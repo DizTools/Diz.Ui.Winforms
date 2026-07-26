@@ -1,377 +1,367 @@
-﻿using System.ComponentModel;
-using System.Diagnostics;
+using System.ComponentModel;
 using System.Globalization;
-using Diz.Controllers.interfaces;
-using Diz.Core;
 using Diz.Core.commands;
 using Diz.Core.Interfaces;
-using Diz.Core.model;
 using Diz.Core.util;
-
-// be careful modifying anything in this class, it's extremely fragile and hardcoded.
-// TODO: fix nullable junk
+using Diz.Cpu._65816;
+using Diz.Ui.ViewModels.MarkMany;
 
 namespace Diz.Ui.Winforms.dialogs;
 
-public partial class MarkManyView<TDataSource> : Form, IMarkManyView<TDataSource> 
-    where TDataSource : 
-    IRomSize, 
-    IRomByteFlagsGettable, 
-    ISnesAddressConverter
+/// <summary>
+/// Modal host for <see cref="MarkManyViewModel{TDataSource}"/>: pick a property, a value and a
+/// run of bytes, then press OK. Everything that decides what gets marked -- range math, address
+/// conversion, hex/decimal parsing, validation, session memory -- lives in the ViewModel. This
+/// file is widget wiring only, and the dialog never applies the command: the caller reads
+/// <c>BuildMarkCommand()</c> off the ViewModel after a DialogResult.OK and applies it.
+/// </summary>
+public partial class MarkManyDialog : Form
 {
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public IMarkManyController<TDataSource>? Controller { get; set; }
-    
-    private TDataSource? Data => Controller!.Data;
-        
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    private int PropertyMaxIntVal => Property == MarkCommand.MarkManyProperty.DataBank 
-        ? 0x100 
-        : 0x10000;
+    // combo box contents, in the order the designer lists them. The combos show display text;
+    // these arrays are the model values behind each index, so no index arithmetic leaks into
+    // the ViewModel. "CPU architecture" is deliberately absent from the property combo: the
+    // ViewModel supports it, but this window has never offered it.
+    private static readonly MarkCommand.MarkManyProperty[] PropertyComboValues =
+    [
+        MarkCommand.MarkManyProperty.Flag,
+        MarkCommand.MarkManyProperty.DataBank,
+        MarkCommand.MarkManyProperty.DirectPage,
+        MarkCommand.MarkManyProperty.MFlag,
+        MarkCommand.MarkManyProperty.XFlag,
+    ];
 
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public MarkCommand.MarkManyProperty Property
+    private static readonly FlagType[] FlagComboValues =
+    [
+        FlagType.Unreached, FlagType.Opcode, FlagType.Operand, FlagType.Data8Bit,
+        FlagType.Graphics, FlagType.Music, FlagType.Empty, FlagType.Data16Bit,
+        FlagType.Pointer16Bit, FlagType.Data24Bit, FlagType.Pointer24Bit,
+        FlagType.Data32Bit, FlagType.Pointer32Bit, FlagType.Text,
+    ];
+
+    private static readonly Architecture[] ArchComboValues =
+    [
+        Architecture.Cpu65C816, Architecture.Apuspc700, Architecture.GpuSuperFx,
+    ];
+
+    // mxCombo: index 0 = "16-Bit", index 1 = "8-Bit"
+    private const int MxComboIndex16Bit = 0;
+    private const int MxComboIndex8Bit = 1;
+
+    private readonly MarkManyViewModel<ISnesData> viewModel;
+
+    private readonly ErrorProvider validationErrors = new()
     {
-        get => (MarkCommand.MarkManyProperty) comboPropertyType.SelectedIndex;
-        set
+        BlinkStyle = ErrorBlinkStyle.NeverBlink,
+    };
+
+    // true while widget values are being written FROM the ViewModel; the input handlers below
+    // bail out then, so a ViewModel-driven refresh can't be mistaken for the user typing.
+    private bool updatingWidgets;
+
+    // the control the user is currently typing into. Text is never pushed back into it while
+    // it holds the caret -- reformatting a field under the caret fights the user. (The range
+    // ViewModel already withholds notifications for the field being edited; this covers the
+    // register value box, which shares no such rule.)
+    private Control? controlBeingEdited;
+
+    public MarkManyDialog(MarkManyViewModel<ISnesData> viewModel)
+    {
+        ArgumentNullException.ThrowIfNull(viewModel);
+        this.viewModel = viewModel;
+
+        InitializeComponent();
+
+        validationErrors.ContainerControl = this;
+
+        // value combos have no designer-wired handlers (the old dialog only read them when OK
+        // was pressed); they push to the ViewModel now, so wire them here.
+        flagCombo.SelectedIndexChanged += FlagCombo_SelectedIndexChanged;
+        mxCombo.SelectedIndexChanged += MxCombo_SelectedIndexChanged;
+        archCombo.SelectedIndexChanged += ArchCombo_SelectedIndexChanged;
+
+        viewModel.PropertyChanged += ViewModel_PropertyChanged;
+        viewModel.Range.PropertyChanged += Range_PropertyChanged;
+
+        FormClosed += (_, _) =>
         {
-            UpdatePropertyIndex(value);
-            UpdateVisibility();
-            UpdateTextUi();
-        }
+            viewModel.PropertyChanged -= ViewModel_PropertyChanged;
+            viewModel.Range.PropertyChanged -= Range_PropertyChanged;
+            validationErrors.Dispose();
+        };
+
+        RefreshAllWidgets();
     }
-        
-    private Util.NumberBase NoBase => 
-        radioDec.Checked ? Util.NumberBase.Decimal : Util.NumberBase.Hexadecimal;
-    private int DigitCount => NoBase == Util.NumberBase.Hexadecimal && radioSNES.Checked ? 6 : 0;
-        
-    private int PropertyValueAsInt => 
-        comboPropertyType.SelectedIndex == 1 ? 
-            Data.GetDataBank(Controller.DataRange.StartIndex) : 
-            Data.GetDirectPage(Controller.DataRange.StartIndex);
-        
-    private int propertyValueIntDpOrD;
-    private bool isUpdatingText;
+
+    // ------------------------------------------------------------------ ViewModel -> widgets
+
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(MarkManyViewModel<ISnesData>.SelectedProperty):
+                WriteWidgets(() =>
+                {
+                    comboPropertyType.SelectedIndex = Array.IndexOf(PropertyComboValues, viewModel.SelectedProperty);
+                });
+                break;
+
+            case nameof(MarkManyViewModel<ISnesData>.IsFlagValueUsed):
+            case nameof(MarkManyViewModel<ISnesData>.IsRegisterValueUsed):
+            case nameof(MarkManyViewModel<ISnesData>.IsRegisterWidthUsed):
+            case nameof(MarkManyViewModel<ISnesData>.IsArchitectureValueUsed):
+                RefreshValueWidgetVisibility();
+                break;
+
+            case nameof(MarkManyViewModel<ISnesData>.RegisterValueMaxTextLength):
+                WriteWidgets(() => regValue.MaxLength = viewModel.RegisterValueMaxTextLength);
+                break;
+
+            case nameof(MarkManyViewModel<ISnesData>.DataBankValue):
+            case nameof(MarkManyViewModel<ISnesData>.DirectPageValue):
+                RefreshRegisterValueText();
+                break;
+
+            case nameof(MarkManyViewModel<ISnesData>.FlagValue):
+                WriteWidgets(() =>
+                {
+                    flagCombo.SelectedIndex = Array.IndexOf(FlagComboValues, viewModel.FlagValue);
+                });
+                break;
+
+            case nameof(MarkManyViewModel<ISnesData>.RegisterWidthIs8Bit):
+                WriteWidgets(() =>
+                {
+                    mxCombo.SelectedIndex = viewModel.RegisterWidthIs8Bit ? MxComboIndex8Bit : MxComboIndex16Bit;
+                });
+                break;
+
+            case nameof(MarkManyViewModel<ISnesData>.ArchitectureValue):
+                WriteWidgets(() =>
+                {
+                    archCombo.SelectedIndex = Array.IndexOf(ArchComboValues, viewModel.ArchitectureValue);
+                });
+                break;
+        }
+
+        RefreshValidation();
+    }
+
+    private void Range_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(AddressRangeViewModel.StartText):
+                WriteText(textStart, viewModel.Range.StartText);
+                break;
+
+            case nameof(AddressRangeViewModel.EndText):
+                WriteText(textEnd, viewModel.Range.EndText);
+                break;
+
+            case nameof(AddressRangeViewModel.CountText):
+                WriteText(textCount, viewModel.Range.CountText);
+                break;
+
+            case nameof(AddressRangeViewModel.UseHexadecimal):
+                // the register value box shares the range's number base
+                WriteWidgets(() => radioHex.Checked = viewModel.Range.UseHexadecimal);
+                RefreshRegisterValueText();
+                break;
+
+            case nameof(AddressRangeViewModel.UseSnesAddresses):
+                WriteWidgets(() => radioSNES.Checked = viewModel.Range.UseSnesAddresses);
+                break;
+        }
+
+        RefreshValidation();
+    }
+
+    private void RefreshAllWidgets()
+    {
+        WriteWidgets(() =>
+        {
+            comboPropertyType.SelectedIndex = Array.IndexOf(PropertyComboValues, viewModel.SelectedProperty);
+            flagCombo.SelectedIndex = Array.IndexOf(FlagComboValues, viewModel.FlagValue);
+            archCombo.SelectedIndex = Array.IndexOf(ArchComboValues, viewModel.ArchitectureValue);
+            mxCombo.SelectedIndex = viewModel.RegisterWidthIs8Bit ? MxComboIndex8Bit : MxComboIndex16Bit;
+
+            radioSNES.Checked = viewModel.Range.UseSnesAddresses;
+            radioPC.Checked = !viewModel.Range.UseSnesAddresses;
+            radioHex.Checked = viewModel.Range.UseHexadecimal;
+            radioDec.Checked = !viewModel.Range.UseHexadecimal;
+
+            textStart.Text = viewModel.Range.StartText;
+            textEnd.Text = viewModel.Range.EndText;
+            textCount.Text = viewModel.Range.CountText;
+
+            regValue.MaxLength = viewModel.RegisterValueMaxTextLength;
+            regValue.Text = RegisterValueText();
+        });
+
+        RefreshValueWidgetVisibility();
+        RefreshValidation();
+    }
+
+    private void RefreshValueWidgetVisibility() =>
+        WriteWidgets(() =>
+        {
+            flagCombo.Visible = viewModel.IsFlagValueUsed;
+            regValue.Visible = viewModel.IsRegisterValueUsed;
+            mxCombo.Visible = viewModel.IsRegisterWidthUsed;
+            archCombo.Visible = viewModel.IsArchitectureValueUsed;
+        });
+
+    private void RefreshRegisterValueText() => WriteText(regValue, RegisterValueText());
+
+    private string RegisterValueText() =>
+        Util.NumberToBaseString(
+            viewModel.SelectedProperty == MarkCommand.MarkManyProperty.DirectPage
+                ? viewModel.DirectPageValue
+                : viewModel.DataBankValue,
+            NumberBase,
+            0);
 
     /// <summary>
-    /// Dialog that lets us mark many of a particular column on the data grid form
+    /// OK is available only when the ViewModel can actually build a command. When it can't, the
+    /// reason is attached to the input most likely responsible: an empty range is about the byte
+    /// count, anything else while a register is selected is about the register value.
     /// </summary>
-    public MarkManyView()
+    private void RefreshValidation()
     {
-        InitializeComponent();
-        InitCombos();
-    }
+        var result = viewModel.Validate();
+        okay.Enabled = result.IsValid;
 
-    private void InitCombos()
-    {
-        flagCombo.SelectedIndex = 3;
-        archCombo.SelectedIndex = 0;
-        mxCombo.SelectedIndex = 0;
-    }
-        
-    private void UpdatePropertyIndex(MarkCommand.MarkManyProperty eProperty)
-    {
-        // TODO: woof. fixme :) very, very hardcoded. real bad to do it this way
-        comboPropertyType.SelectedIndex = (int) eProperty;
-    }
-        
-    private void ClampPropertyValue() => 
-        propertyValueIntDpOrD = Util.ClampIndex(propertyValueIntDpOrD, PropertyMaxIntVal);
+        validationErrors.SetError(textCount, null);
+        validationErrors.SetError(regValue, null);
+        validationErrors.SetError(comboPropertyType, null);
 
-    // oof. extremely hardcoded, replace this
-    public FlagType GetFlagTypeFromComboBox() =>
-        flagCombo.SelectedIndex switch
-        {
-            0 => FlagType.Unreached,
-            1 => FlagType.Opcode,
-            2 => FlagType.Operand,
-            3 => FlagType.Data8Bit,
-            4 => FlagType.Graphics,
-            5 => FlagType.Music,
-            6 => FlagType.Empty,
-            7 => FlagType.Data16Bit,
-            8 => FlagType.Pointer16Bit,
-            9 => FlagType.Data24Bit,
-            10 => FlagType.Pointer24Bit,
-            11 => FlagType.Data32Bit,
-            12 => FlagType.Pointer32Bit,
-            13 => FlagType.Text,
-            _ => 0
-        };
-        
-    // oof. extremely hardcoded, replace this
-    public int GetComboxBoxIndexFromFlagType(FlagType flagType) =>
-        flagType switch
-        {
-            FlagType.Unreached => 0,
-            FlagType.Opcode => 1,
-            FlagType.Operand => 2,
-            FlagType.Data8Bit => 3,
-            FlagType.Graphics => 4,
-            FlagType.Music => 5,
-            FlagType.Empty => 6,
-            FlagType.Data16Bit => 7,
-            FlagType.Pointer16Bit => 8,
-            FlagType.Data24Bit => 9,
-            FlagType.Pointer24Bit => 10,
-            FlagType.Data32Bit => 11,
-            FlagType.Pointer32Bit => 12,
-            FlagType.Text => 13,
-            _ => 0
-        };
-
-    // oof. extremely hardcoded, replace this
-    public Architecture GetCpuArchFromComboBox() =>
-        archCombo.SelectedIndex switch
-        {
-            0 => Architecture.Cpu65C816,
-            1 => Architecture.Apuspc700,
-            2 => Architecture.GpuSuperFx,
-            _ => 0
-        };
-        
-    // oof. extremely hardcoded, replace this
-    public int GetComboBoxFromCpuArch(Architecture arch) =>
-        arch switch
-        {
-            Architecture.Cpu65C816 => 0,
-            Architecture.Apuspc700 => 1,
-            Architecture.GpuSuperFx => 2,
-            _ => 0
-        };
-        
-    private int GetPropertyValueRaw() => 
-        propertyValueIntDpOrD;
-
-    private bool GetMorXFromComboBox() => mxCombo.SelectedIndex != 0;
-    private int GetComboBoxFromMorX(bool flag) => flag ? 1 : 0;
-
-    // this.... sucks. woof. need to rewrite
-    public object GetPropertyValue() => 
-        GetPropertyValue(comboPropertyType.SelectedIndex);
-
-    // oof. extremely hardcoded, replace this
-    private object GetPropertyValue(int whichProperty)
-    {
-        // ReSharper disable once HeapView.BoxingAllocation
-        return whichProperty switch
-        {
-            0 => GetFlagTypeFromComboBox(),
-            1 => GetPropertyValueRaw(),
-            2 => GetPropertyValueRaw(),
-            3 => GetMorXFromComboBox(),
-            4 => GetMorXFromComboBox(),
-            5 => GetCpuArchFromComboBox(),
-            _ => 0
-        };
-    }
-
-    public void RestoreUiFromSettings(MarkCommand.MarkManyProperty markProperty, object markValue)
-    {
-        // this is still kind of heinous
-        try
-        {
-            switch (markProperty)
-            {
-                case MarkCommand.MarkManyProperty.Flag:
-                    flagCombo.SelectedIndex = GetComboxBoxIndexFromFlagType((FlagType) markValue);
-                    break;
-                case MarkCommand.MarkManyProperty.DataBank:
-                case MarkCommand.MarkManyProperty.DirectPage:
-                    propertyValueIntDpOrD = (int) markValue;
-                    break;
-                case MarkCommand.MarkManyProperty.MFlag:
-                case MarkCommand.MarkManyProperty.XFlag:
-                    mxCombo.SelectedIndex = GetComboBoxFromMorX((bool) markValue);
-                    break;
-                case MarkCommand.MarkManyProperty.CpuArch:
-                    archCombo.SelectedIndex = GetComboBoxFromCpuArch((Architecture) markValue);
-                    break;
-            }
-        }
-        catch (Exception)
-        {
-            // NOP
-        }
-    }
-
-    public void RestoreUiFromSettings(MarkManyViewSettings settings)
-    {
-        foreach (var (settingsProperty, settingsValue) in settings.AllSettings) {
-            RestoreUiFromSettings(settingsProperty, settingsValue);
-        }
-
-        Property = settings.SelectedProperty;
-    }
-
-    public MarkManyViewSettings BuildSettingsFromUi()
-    {
-        var outputSettings = new MarkManyViewSettings {
-            SelectedProperty = Property,
-        };
-
-        for (var i = 0; i < comboPropertyType.Items.Count; ++i) {
-            var val = GetPropertyValue(i); // this suckkks
-            outputSettings.AllSettings.Add((MarkCommand.MarkManyProperty) i, val);
-        }
-
-        return outputSettings;
-    }
-
-    public bool PromptDialog() => ShowDialog() == DialogResult.OK;
-
-    private void UpdateVisibility()
-    {
-        var property = Property;
-            
-        flagCombo.Visible = 
-            property == MarkCommand.MarkManyProperty.Flag;
-            
-        regValue.Visible = 
-            property == MarkCommand.MarkManyProperty.DataBank || 
-            property == MarkCommand.MarkManyProperty.DirectPage;
-            
-        mxCombo.Visible = 
-            property == MarkCommand.MarkManyProperty.MFlag || 
-            property == MarkCommand.MarkManyProperty.XFlag;
-            
-        archCombo.Visible = 
-            property == MarkCommand.MarkManyProperty.CpuArch;
-
-        regValue.MaxLength = 
-            property == MarkCommand.MarkManyProperty.DataBank ? 3 : 5;
-            
-        propertyValueIntDpOrD = PropertyValueAsInt;
-    }
-
-    private void UpdateTextUi(TextBox? selected = null)
-    {
-        ClampPropertyValue();
-            
-        isUpdatingText = true;
-        if (selected != textStart) UpdateStartText();
-        if (selected != textEnd) UpdateEndText();
-        if (selected != textCount) UpdateCountText();
-        if (selected != regValue) UpdateRegValueText();
-        isUpdatingText = false;
-    }
-
-    private void UpdateRegValueText() => 
-        regValue.Text = Util.NumberToBaseString(propertyValueIntDpOrD, NoBase, 0);
-
-    private void UpdateCountText() => 
-        textCount.Text = Util.NumberToBaseString(Controller.DataRange.RangeCount, NoBase, 0);
-
-    private void UpdateEndText() => 
-        textEnd.Text = Util.NumberToBaseString(radioSNES.Checked ? Data.ConvertPCtoSnes(Controller.DataRange.EndIndex) : Controller.DataRange.EndIndex, NoBase, DigitCount);
-
-    private void UpdateStartText() =>
-        textStart.Text =
-            Util.NumberToBaseString(radioSNES.Checked ? Data.ConvertPCtoSnes(Controller.DataRange.StartIndex) : Controller.DataRange.StartIndex, NoBase, DigitCount);
-
-    private void property_SelectedIndexChanged(object sender, EventArgs e) => UpdateVisibility();
-
-    private bool IsSNESAddress => radioSNES.Checked;
-    private int ConvertToRomPcOffsetIfNeeded(int v) => IsSNESAddress ? Data.ConvertSnesToPc(v) : v;
-        
-    private void regValue_TextChanged(object sender, EventArgs e)
-    {
-        var style = radioDec.Checked ? NumberStyles.Number : NumberStyles.HexNumber;
-
-        if (!int.TryParse(regValue.Text, style, null, out var result)) 
-            return;
-            
-        propertyValueIntDpOrD = result;
-    }
-        
-    private void OnTextChanged(TextBox textBox, Action<int> onResult)
-    {        
-        if (isUpdatingText)
+        if (result.IsValid)
             return;
 
-        isUpdatingText = true;
-        var style = radioDec.Checked ? NumberStyles.Number : NumberStyles.HexNumber;
+        var offendingControl =
+            viewModel.Range.Count <= 0 ? textCount :
+            viewModel.IsRegisterValueUsed ? regValue :
+            (Control) comboPropertyType;
 
-        if (int.TryParse(textBox.Text, style, null, out var result))
-            onResult(result);
-            
-        UpdateTextUi(textBox);
+        validationErrors.SetError(offendingControl, result.Error);
     }
-        
-        
-    private void radioHex_CheckedChanged(object sender, EventArgs e) => UpdateTextUi();
-    private void radioROM_CheckedChanged(object sender, EventArgs e) => UpdateTextUi();
 
-    private void okay_Click(object sender, EventArgs e) => DialogResult = DialogResult.OK;
-    private void cancel_Click(object sender, EventArgs e) => Close();
+    // ------------------------------------------------------------------ widgets -> ViewModel
 
-        
-    #region Range Actual Updates
-
-    private void textCount_TextChanged(object sender, EventArgs e) => 
-        OnTextChanged(textCount, newCount =>
+    private void property_SelectedIndexChanged(object sender, EventArgs e) =>
+        PushToViewModel(null, () =>
         {
-            SetRangeValuesManually(Controller.DataRange, 
-                -1, -1, newCount);
+            if (comboPropertyType.SelectedIndex >= 0)
+                viewModel.SelectedProperty = PropertyComboValues[comboPropertyType.SelectedIndex];
         });
+
+    private void FlagCombo_SelectedIndexChanged(object? sender, EventArgs e) =>
+        PushToViewModel(null, () =>
+        {
+            if (flagCombo.SelectedIndex >= 0)
+                viewModel.FlagValue = FlagComboValues[flagCombo.SelectedIndex];
+        });
+
+    private void MxCombo_SelectedIndexChanged(object? sender, EventArgs e) =>
+        PushToViewModel(null, () =>
+        {
+            if (mxCombo.SelectedIndex >= 0)
+                viewModel.RegisterWidthIs8Bit = mxCombo.SelectedIndex == MxComboIndex8Bit;
+        });
+
+    private void ArchCombo_SelectedIndexChanged(object? sender, EventArgs e) =>
+        PushToViewModel(null, () =>
+        {
+            if (archCombo.SelectedIndex >= 0)
+                viewModel.ArchitectureValue = ArchComboValues[archCombo.SelectedIndex];
+        });
+
+    private void textStart_TextChanged(object sender, EventArgs e) =>
+        PushToViewModel(textStart, () => viewModel.Range.StartText = textStart.Text);
 
     private void textEnd_TextChanged(object sender, EventArgs e) =>
-        OnTextChanged(textEnd, newEndIndex =>
+        PushToViewModel(textEnd, () => viewModel.Range.EndText = textEnd.Text);
+
+    private void textCount_TextChanged(object sender, EventArgs e) =>
+        PushToViewModel(textCount, () => viewModel.Range.CountText = textCount.Text);
+
+    private void regValue_TextChanged(object sender, EventArgs e) =>
+        PushToViewModel(regValue, () =>
         {
-            SetRangeValuesManually(Controller.DataRange, 
-                -1, ConvertToRomPcOffsetIfNeeded(newEndIndex), -1);
+            // unparseable text is ignored outright, exactly as this box has always behaved:
+            // the last good number stays in effect until something parseable is typed.
+            if (!int.TryParse(regValue.Text, NumberStyle, CultureInfo.InvariantCulture, out var value))
+                return;
+
+            switch (viewModel.SelectedProperty)
+            {
+                case MarkCommand.MarkManyProperty.DataBank:
+                    viewModel.DataBankValue = value;
+                    break;
+                case MarkCommand.MarkManyProperty.DirectPage:
+                    viewModel.DirectPageValue = value;
+                    break;
+            }
         });
 
-    private void textStart_TextChanged(object sender, EventArgs e) => 
-        OnTextChanged(textStart, newStartIndex =>
-        {
-            SetRangeValuesManually(Controller.DataRange, 
-                ConvertToRomPcOffsetIfNeeded(newStartIndex), -1, -1);
-        });
+    // both radio pairs report through the control that is losing its check as well as the one
+    // gaining it, so one handler per pair covers both directions.
+    private void radioROM_CheckedChanged(object sender, EventArgs e) =>
+        PushToViewModel(null, () => viewModel.Range.UseSnesAddresses = radioSNES.Checked);
 
-    public static void SetRangeValuesManually(IDataRange dataRange, int newStartIndex = -1, int newEndIndex = -1, int newCount = -1)
+    private void radioHex_CheckedChanged(object sender, EventArgs e) =>
+        PushToViewModel(null, () => viewModel.Range.UseHexadecimal = radioHex.Checked);
+
+    private void okay_Click(object sender, EventArgs e) => DialogResult = DialogResult.OK;
+
+    private void cancel_Click(object sender, EventArgs e) => Close();
+
+    // ------------------------------------------------------------------ plumbing
+
+    private Util.NumberBase NumberBase =>
+        viewModel.Range.UseHexadecimal ? Util.NumberBase.Hexadecimal : Util.NumberBase.Decimal;
+
+    private NumberStyles NumberStyle =>
+        viewModel.Range.UseHexadecimal ? NumberStyles.HexNumber : NumberStyles.Number;
+
+    /// <summary>Run a user-input handler, unless the change came from the ViewModel in the first place.</summary>
+    private void PushToViewModel(Control? sourceControl, Action push)
     {
-        if (dataRange == null)
+        if (updatingWidgets)
             return;
-            
-        // info: "DataRange" has a start, end, and a count. if you change one,
-        // the other 2 reflect that change. neat. however, the implementation ends up
-        // not being the most UX friendly so, we're going to control it more directly here.
-        //
-        // let's do everything in terms of the StartIndex
 
-        var oldEndIndex = dataRange.EndIndex;
-        var oldStartIndex = dataRange.StartIndex;
-
-        if (newStartIndex != -1)
+        var previous = controlBeingEdited;
+        controlBeingEdited = sourceControl;
+        try
         {
-            Debug.Assert(newEndIndex == -1 && newCount == -1);
-
-            // if changing START.  leave END, change # of bytes.
-            var updatedCount = oldEndIndex - newStartIndex + 1;
-            if (updatedCount < 0)
-                updatedCount = 1;
-
-            dataRange.ManualUpdate(newStartIndex, updatedCount);
-        } 
-        else if (newEndIndex != -1)
-        {
-            //if changing END, leave START, change # of bytes.
-            Debug.Assert(newCount == -1);
-                
-            var updatedCount = newEndIndex - oldStartIndex + 1;
-            if (updatedCount < 0)
-                updatedCount = 1;
-                
-            dataRange.ManualUpdate(oldStartIndex, updatedCount);
+            push();
         }
-        else if (newCount != -1)
+        finally
         {
-            // if changing # bytes, leave START, change END
-            // var updatedEndIndex = oldStartIndex + (newCount - 1);
-
-            dataRange.ManualUpdate(oldStartIndex, newCount);
+            controlBeingEdited = previous;
         }
     }
-    #endregion
+
+    /// <summary>Write widget state without the input handlers treating it as user input.</summary>
+    private void WriteWidgets(Action write)
+    {
+        var previous = updatingWidgets;
+        updatingWidgets = true;
+        try
+        {
+            write();
+        }
+        finally
+        {
+            updatingWidgets = previous;
+        }
+    }
+
+    private void WriteText(TextBox textBox, string text)
+    {
+        if (ReferenceEquals(textBox, controlBeingEdited))
+            return;
+
+        WriteWidgets(() => textBox.Text = text);
+    }
 }

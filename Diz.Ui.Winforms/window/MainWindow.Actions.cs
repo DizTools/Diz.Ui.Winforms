@@ -189,16 +189,7 @@ public partial class MainWindow
         if (snesApi == null)
             return;
             
-        var newNavigatedOffset = command.Property switch
-        {
-            MarkCommand.MarkManyProperty.Flag => snesApi.MarkTypeFlag(command.Start, (FlagType) command.Value, command.Count),
-            MarkCommand.MarkManyProperty.DataBank => snesApi.MarkDataBank(command.Start, (int) command.Value, command.Count),
-            MarkCommand.MarkManyProperty.DirectPage => snesApi.MarkDirectPage(command.Start, (int) command.Value, command.Count),
-            MarkCommand.MarkManyProperty.MFlag => snesApi.MarkMFlag(command.Start, (bool) command.Value, command.Count),
-            MarkCommand.MarkManyProperty.XFlag => snesApi.MarkXFlag(command.Start, (bool) command.Value, command.Count),
-            MarkCommand.MarkManyProperty.CpuArch => snesApi.MarkArchitecture(command.Start, (Architecture) command.Value, command.Count),
-            _ => -1
-        };
+        var newNavigatedOffset = snesApi.ApplyMarkCommand(command);
 
         ProjectController.MarkChanged();
 

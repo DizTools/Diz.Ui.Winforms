@@ -1,9 +1,9 @@
 ﻿using System.Threading.Tasks;
-using Diz.Controllers.controllers;
 using Diz.Controllers.interfaces;
 using Diz.Core.commands;
 using Diz.Cpu._65816;
 using Diz.LogWriter;
+using Diz.Ui.ViewModels.MarkMany;
 using Diz.Ui.Winforms.dialogs;
 using Diz.Ui.Winforms.util;
 
@@ -134,34 +134,31 @@ public partial class MainWindow
     
     // -----------------------
     
-    private MarkManyViewSettings savedMarkManySettings = new();
+    // what the user picked in the mark-many window last time, remembered for the rest of the
+    // session so repeat marking doesn't mean re-typing the same choices.
+    private MarkManySettings savedMarkManySettings = new();
 
     private MarkCommand? PromptBuildMarkManyCommand(int offset, int count, MarkCommand.MarkManyProperty? property = null)
     {
+        var snesData = Project.Data.GetSnesApi()
+                       ?? throw new InvalidOperationException("No snes data present");
+
         var settingToUse = savedMarkManySettings;
         if (property != null)
             settingToUse.SelectedProperty = property.Value;
-        
-        var markManyController = CreateMarkManyController();
-        var markCommand = markManyController.Show(startOffset: offset, count: count, inputSettings: settingToUse);
 
-        if (markCommand == null)
+        // no notification marshaller: this ViewModel does no background work, and the window is
+        // modal, so every notification it raises is already on the UI thread.
+        var viewModel = new MarkManyViewModel<ISnesData>(snesData, startOffset: offset, count: count);
+        viewModel.RestoreSettings(settingToUse);
+
+        using var dialog = new MarkManyDialog(viewModel);
+        if (dialog.ShowDialog() != DialogResult.OK)
             return null;
-            
+
         // save a copy of previous UI settings, so we can restore them next time
-        savedMarkManySettings = markManyController.GetCurrentSettings();
-        return markCommand;
-    }
-        
-    private MarkManyController<ISnesData> CreateMarkManyController()
-    {
-        // TODO: replace view creation with dependency injection
-        var view = new MarkManyView<ISnesData>();
-        var snesData = Project.Data.GetSnesApi();
-        
-        return snesData == null 
-            ? throw new InvalidOperationException("No snes data present") 
-            : new MarkManyController<ISnesData>(snesData, view);
+        savedMarkManySettings = viewModel.CaptureSettings();
+        return viewModel.BuildMarkCommand();
     }
 
     private bool PromptForMisalignmentCheck()
