@@ -155,7 +155,10 @@ public partial class MainWindow
         UpdateUi_TimerAndPercent();
     }
 
-    private bool MarkMany(MarkCommand.MarkManyProperty? initialPropertySelected = null)
+    // async because the mark-many window is a per-toolkit view service and not every toolkit
+    // can offer a blocking modal call. The WinForms one does, so on that backend this method
+    // still runs start to finish without ever yielding to the message loop.
+    private async Task<bool> MarkMany(MarkCommand.MarkManyProperty? initialPropertySelected = null)
     {
         if (!RomDataPresent()) 
             return false;
@@ -173,7 +176,7 @@ public partial class MainWindow
             count = multiEndOffset - multiStartOffset + 1;
         }
 
-        var markCommandToExecute = PromptBuildMarkManyCommand(startOffset, count, initialPropertySelected);
+        var markCommandToExecute = await PromptBuildMarkManyCommand(startOffset, count, initialPropertySelected);
         if (markCommandToExecute == null)
             return false;
 

@@ -138,7 +138,7 @@ public partial class MainWindow
     // session so repeat marking doesn't mean re-typing the same choices.
     private MarkManySettings savedMarkManySettings = new();
 
-    private MarkCommand? PromptBuildMarkManyCommand(int offset, int count, MarkCommand.MarkManyProperty? property = null)
+    private async Task<MarkCommand?> PromptBuildMarkManyCommand(int offset, int count, MarkCommand.MarkManyProperty? property = null)
     {
         var snesData = Project.Data.GetSnesApi()
                        ?? throw new InvalidOperationException("No snes data present");
@@ -147,13 +147,16 @@ public partial class MainWindow
         if (property != null)
             settingToUse.SelectedProperty = property.Value;
 
-        // no notification marshaller: this ViewModel does no background work, and the window is
-        // modal, so every notification it raises is already on the UI thread.
+        // no notification marshaller: this ViewModel does no background work, so every
+        // notification it raises is a direct consequence of a widget event already on the UI
+        // thread.
         var viewModel = new MarkManyViewModel<ISnesData>(snesData, startOffset: offset, count: count);
         viewModel.RestoreSettings(settingToUse);
 
-        using var dialog = new MarkManyDialog(viewModel);
-        if (dialog.ShowDialog() != DialogResult.OK)
+        // which window shows up is a per-toolkit registration; the ViewModel is the whole
+        // contract. Awaiting the WinForms implementation continues synchronously, because its
+        // modal call has already finished by the time it returns a task.
+        if (!await viewFactory.GetMarkManyView().EditAsync(viewModel))
             return null;
 
         // save a copy of previous UI settings, so we can restore them next time

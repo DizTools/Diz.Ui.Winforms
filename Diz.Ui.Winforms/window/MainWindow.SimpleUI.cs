@@ -140,20 +140,22 @@ public partial class MainWindow
         
     
     
-    private void markManyToolStripMenuItem_Click(object sender, EventArgs e) => 
-        MarkMany();
+    // async void: these are event handlers, and MarkMany awaits a view service whose window
+    // may not be able to block (see MarkMany).
+    private async void markManyToolStripMenuItem_Click(object sender, EventArgs e) =>
+        await MarkMany();
 
-    private void setDataBankToolStripMenuItem_Click(object sender, EventArgs e) => 
-        MarkMany(initialPropertySelected: MarkCommand.MarkManyProperty.DataBank);
-        
-    private void setDirectPageToolStripMenuItem_Click(object sender, EventArgs e) => 
-        MarkMany(initialPropertySelected: MarkCommand.MarkManyProperty.DirectPage);
+    private async void setDataBankToolStripMenuItem_Click(object sender, EventArgs e) =>
+        await MarkMany(initialPropertySelected: MarkCommand.MarkManyProperty.DataBank);
 
-    private void toggleAccumulatorSizeMToolStripMenuItem_Click(object sender, EventArgs e) => 
-        MarkMany(initialPropertySelected: MarkCommand.MarkManyProperty.MFlag);
+    private async void setDirectPageToolStripMenuItem_Click(object sender, EventArgs e) =>
+        await MarkMany(initialPropertySelected: MarkCommand.MarkManyProperty.DirectPage);
 
-    private void toggleIndexSizeToolStripMenuItem_Click(object sender, EventArgs e) => 
-        MarkMany(initialPropertySelected: MarkCommand.MarkManyProperty.XFlag);
+    private async void toggleAccumulatorSizeMToolStripMenuItem_Click(object sender, EventArgs e) =>
+        await MarkMany(initialPropertySelected: MarkCommand.MarkManyProperty.MFlag);
+
+    private async void toggleIndexSizeToolStripMenuItem_Click(object sender, EventArgs e) =>
+        await MarkMany(initialPropertySelected: MarkCommand.MarkManyProperty.XFlag);
         
     
     

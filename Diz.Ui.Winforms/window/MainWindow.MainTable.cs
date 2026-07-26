@@ -293,11 +293,11 @@ public partial class MainWindow
         OnMultiSelectCompleted();
     }
 
-    private void OnMultiSelectCompleted()
+    private async void OnMultiSelectCompleted()
     {
         // do something with the multiselect range we just confirmed.
         // we can do whatever, but for now we'll just do the MarkMany
-        MarkMany();
+        await MarkMany();
 
         CancelMultiSelect();
     }

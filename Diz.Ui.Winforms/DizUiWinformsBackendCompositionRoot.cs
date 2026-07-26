@@ -9,8 +9,8 @@ using LightInject;
 namespace Diz.Ui.Winforms;
 
 /// <summary>
-/// The WinForms LABEL-EDITOR BACKEND: exactly the three backend-selectable registrations
-/// (LabelEditorView, ProgressBarView, IFileDialogService). The app registers EITHER this root
+/// The WinForms LABEL-EDITOR BACKEND: exactly the backend-selectable registrations
+/// (LabelEditorView, MarkManyView, ProgressBarView, IFileDialogService). The app registers EITHER this root
 /// OR <c>DizUiAvaloniaCompositionRoot</c> via an explicit if/else branch in
 /// DizWinformsRegisterServices -- never both (new-ui plan step 6, replacing the old
 /// last-registration-wins ordering trick). Non-selectable WinForms views stay in
@@ -35,6 +35,10 @@ namespace Diz.Ui.Winforms;
             labelEditor.FileDialogService = factory.GetInstance<IFileDialogService>();
             return labelEditor;
         }, "LabelEditorView");
+
+        // the mark-many window. A fresh instance per resolve: the view is created, used for one
+        // edit, and discarded.
+        serviceRegistry.Register<IMarkManyView, WinformsMarkManyView>("MarkManyView");
 
         // the file-dialog seam (new-ui plan step 4): each UI toolkit registers its own.
         // singleton: the service is stateless (a fresh dialog per call).
