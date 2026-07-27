@@ -94,27 +94,27 @@ public class GotoDialogBindingTests
     }
 
     [Fact]
-    public void TheFlagBeingTrueSelectsTheRomFileOffsetBoxNotTheSnesOne()
+    public void TheFlagBeingTrueSelectsTheSnesAddressBox()
     {
         var (dialog, _, _) = MakeDialog(initiallySelectSnesAddr: true);
         using var _2 = dialog;
 
         RaiseLoad(dialog);
 
-        Widget<TextBox>(dialog, "textPC").SelectionLength.Should().Be("10".Length);
-        Widget<TextBox>(dialog, "textROM").SelectionLength.Should().Be(0);
+        Widget<TextBox>(dialog, "textROM").SelectionLength.Should().Be("C00010".Length);
+        Widget<TextBox>(dialog, "textPC").SelectionLength.Should().Be(0);
     }
 
     [Fact]
-    public void TheFlagBeingFalseSelectsTheSnesAddressBox()
+    public void TheFlagBeingFalseSelectsTheRomFileOffsetBox()
     {
         var (dialog, _, _) = MakeDialog(initiallySelectSnesAddr: false);
         using var _2 = dialog;
 
         RaiseLoad(dialog);
 
-        Widget<TextBox>(dialog, "textROM").SelectionLength.Should().Be("C00010".Length);
-        Widget<TextBox>(dialog, "textPC").SelectionLength.Should().Be(0);
+        Widget<TextBox>(dialog, "textPC").SelectionLength.Should().Be("10".Length);
+        Widget<TextBox>(dialog, "textROM").SelectionLength.Should().Be(0);
     }
 
     // ------------------------------------------------------------------ mutual updating

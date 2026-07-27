@@ -21,12 +21,11 @@ public partial class GotoDialog : Form
 
     /// <param name="viewModel">Holds both address projections and decides which are valid.</param>
     /// <param name="initiallySelectSnesAddr">
-    /// Which box's text starts out selected, so typing replaces it. NOTE THE OBSERVED
-    /// BEHAVIOR, WHICH THE NAME DOES NOT DESCRIBE: true selects the ROM FILE OFFSET box and
-    /// false selects the SNES ADDRESS box. Preserved exactly as-is because the only caller
-    /// passes the negation of "the grid is displaying ROM file offsets", so the net effect on
-    /// screen is that the box selected is the one showing the address form the grid is NOT
-    /// showing -- and that net effect is what users have.
+    /// Which box's text starts out selected, so typing replaces it. True selects the SNES
+    /// ADDRESS box (widget <c>textROM</c> -- legacy widget name, it holds the SNES address);
+    /// false selects the ROM FILE OFFSET box (<c>textPC</c>). This is the deliberate 2026-07-26
+    /// un-inversion of a legacy quirk (the flag used to mean the opposite of its name); see
+    /// <see cref="Diz.Controllers.interfaces.IGotoView"/> for the contract.
     /// </param>
     public GotoDialog(GotoViewModel viewModel, bool initiallySelectSnesAddr = true)
     {
@@ -44,7 +43,7 @@ public partial class GotoDialog : Form
 
     private void GotoDialog_Load(object sender, EventArgs e)
     {
-        if (!initiallySelectSnesAddr)
+        if (initiallySelectSnesAddr)
             textROM.SelectAll();
         else
             textPC.SelectAll();
