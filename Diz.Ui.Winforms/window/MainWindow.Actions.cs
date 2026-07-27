@@ -121,12 +121,16 @@ public partial class MainWindow
         UpdateUi_TimerAndPercent();
     }
 
-    private void AutoStepHarsh(int offset)
+    // async because the harsh-auto-step window is a per-toolkit view service and not every
+    // toolkit can offer a blocking modal call. The WinForms one does, so on that backend this
+    // method still runs start to finish without ever yielding to the message loop. The ROM guard
+    // stays ahead of the first await, so nothing can have changed underneath it by then.
+    private async Task AutoStepHarsh(int offset)
     {
-        if (!RomDataPresent()) 
+        if (!RomDataPresent())
             return;
-            
-        var command = PromptHarshAutoStep(offset);
+
+        var command = await PromptHarshAutoStep(offset);
         if (command == null)
             return;
 

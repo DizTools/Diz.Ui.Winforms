@@ -141,8 +141,12 @@ public partial class MainWindow
     /// Ask the user which run of bytes to decode as instructions. Returns the command describing
     /// that request, or null for "step nothing" -- which covers cancelling and any range the
     /// window refused to confirm. Applying the command is the caller's job.
+    ///
+    /// Async because the harsh-auto-step window is a per-toolkit view service and not every
+    /// toolkit can offer a blocking modal call. The WinForms one does, so on that backend this
+    /// method still runs start to finish without ever yielding to the message loop.
     /// </summary>
-    private AutoStepHarshCommand? PromptHarshAutoStep(int offset)
+    private async Task<AutoStepHarshCommand?> PromptHarshAutoStep(int offset)
     {
         var snesData = Project.Data.GetSnesApi()
                        ?? throw new InvalidOperationException("No snes data present");
@@ -155,8 +159,10 @@ public partial class MainWindow
             snesData.GetRomSize(),
             startPcOffset: offset);
 
-        using var dialog = new HarshAutoStepDialog(viewModel);
-        return dialog.ShowDialog() != DialogResult.OK
+        // which window shows up is a per-toolkit registration; the ViewModel is the whole
+        // contract. Awaiting the WinForms implementation continues synchronously, because its
+        // modal call has already finished by the time it returns a task.
+        return !await viewFactory.GetHarshAutoStepView().EditAsync(viewModel)
             ? null
             : viewModel.BuildAutoStepHarshCommand();
     }

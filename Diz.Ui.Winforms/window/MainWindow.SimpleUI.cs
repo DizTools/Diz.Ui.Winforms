@@ -112,7 +112,10 @@ public partial class MainWindow
     private void stepOverToolStripMenuItem_Click(object sender, EventArgs e) => Step(SelectedOffset);
     private void stepInToolStripMenuItem_Click(object sender, EventArgs e) => StepIn(SelectedOffset);
     private void autoStepSafeToolStripMenuItem_Click(object sender, EventArgs e) => AutoStepSafe(SelectedOffset);
-    private void autoStepHarshToolStripMenuItem_Click(object sender, EventArgs e) => AutoStepHarsh(SelectedOffset);
+    // async void: this is an event handler, and AutoStepHarsh awaits a view service whose window
+    // may not be able to block (see PromptHarshAutoStep).
+    private async void autoStepHarshToolStripMenuItem_Click(object sender, EventArgs e) =>
+        await AutoStepHarsh(SelectedOffset);
     // async void: this is an event handler, and PromptForGotoOffset awaits a view service whose
     // window may not be able to block (see PromptForGotoOffset).
     private async void gotoToolStripMenuItem_Click(object sender, EventArgs e)
