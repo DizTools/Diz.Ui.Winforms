@@ -1,6 +1,6 @@
 ﻿namespace Diz.Ui.Winforms.dialogs
 {
-    partial class HarshAutoStep
+    partial class HarshAutoStepDialog
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(HarshAutoStep));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(HarshAutoStepDialog));
             this.label1 = new System.Windows.Forms.Label();
             this.radioHex = new System.Windows.Forms.RadioButton();
             this.cancel = new System.Windows.Forms.Button();
@@ -82,7 +82,7 @@
             // 
             // go
             // 
-            this.go.Location = new System.Drawing.Point(212, 243);
+            this.go.Location = new System.Drawing.Point(232, 243);
             this.go.Name = "go";
             this.go.Size = new System.Drawing.Size(75, 23);
             this.go.TabIndex = 2;
@@ -102,7 +102,7 @@
             this.group.Controls.Add(this.textCount);
             this.group.Location = new System.Drawing.Point(12, 132);
             this.group.Name = "group";
-            this.group.Size = new System.Drawing.Size(275, 101);
+            this.group.Size = new System.Drawing.Size(295, 101);
             this.group.TabIndex = 1;
             this.group.TabStop = false;
             this.group.Text = "Disassemble Region";
@@ -110,7 +110,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(16, 27);
+            this.label5.Location = new System.Drawing.Point(27, 27);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(85, 13);
             this.label5.TabIndex = 2;
@@ -118,8 +118,8 @@
             // 
             // textStart
             // 
-            this.textStart.Location = new System.Drawing.Point(103, 24);
-            this.textStart.MaxLength = 6;
+            this.textStart.Location = new System.Drawing.Point(118, 24);
+            this.textStart.MaxLength = 40;
             this.textStart.Name = "textStart";
             this.textStart.Size = new System.Drawing.Size(61, 20);
             this.textStart.TabIndex = 3;
@@ -128,7 +128,7 @@
             // radioPC
             // 
             this.radioPC.AutoSize = true;
-            this.radioPC.Location = new System.Drawing.Point(176, 48);
+            this.radioPC.Location = new System.Drawing.Point(191, 48);
             this.radioPC.Name = "radioPC";
             this.radioPC.Size = new System.Drawing.Size(70, 17);
             this.radioPC.TabIndex = 1;
@@ -139,7 +139,7 @@
             // 
             this.radioSNES.AutoSize = true;
             this.radioSNES.Checked = true;
-            this.radioSNES.Location = new System.Drawing.Point(176, 25);
+            this.radioSNES.Location = new System.Drawing.Point(191, 25);
             this.radioSNES.Name = "radioSNES";
             this.radioSNES.Size = new System.Drawing.Size(91, 17);
             this.radioSNES.TabIndex = 0;
@@ -150,8 +150,8 @@
             // 
             // textEnd
             // 
-            this.textEnd.Location = new System.Drawing.Point(103, 48);
-            this.textEnd.MaxLength = 6;
+            this.textEnd.Location = new System.Drawing.Point(118, 48);
+            this.textEnd.MaxLength = 40;
             this.textEnd.Name = "textEnd";
             this.textEnd.Size = new System.Drawing.Size(61, 20);
             this.textEnd.TabIndex = 5;
@@ -160,7 +160,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(13, 75);
+            this.label4.Location = new System.Drawing.Point(24, 75);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(88, 13);
             this.label4.TabIndex = 6;
@@ -169,16 +169,16 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(24, 51);
+            this.label6.Location = new System.Drawing.Point(12, 51);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(77, 13);
+            this.label6.Size = new System.Drawing.Size(100, 13);
             this.label6.TabIndex = 4;
-            this.label6.Text = "Up to Address:";
+            this.label6.Text = "Up to and including:";
             // 
             // textCount
             // 
-            this.textCount.Location = new System.Drawing.Point(103, 72);
-            this.textCount.MaxLength = 6;
+            this.textCount.Location = new System.Drawing.Point(118, 72);
+            this.textCount.MaxLength = 40;
             this.textCount.Name = "textCount";
             this.textCount.Size = new System.Drawing.Size(61, 20);
             this.textCount.TabIndex = 7;
@@ -194,13 +194,13 @@
             this.radioDec.Text = "Dec";
             this.radioDec.UseVisualStyleBackColor = true;
             // 
-            // HarshAutoStep
+            // HarshAutoStepDialog
             // 
             this.AcceptButton = this.go;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancel;
-            this.ClientSize = new System.Drawing.Size(299, 278);
+            this.ClientSize = new System.Drawing.Size(319, 278);
             this.Controls.Add(this.group);
             this.Controls.Add(this.go);
             this.Controls.Add(this.cancel);
@@ -208,7 +208,7 @@
             this.Controls.Add(this.radioDec);
             this.Controls.Add(this.label1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
-            this.Name = "HarshAutoStep";
+            this.Name = "HarshAutoStepDialog";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Harsh Auto Step";

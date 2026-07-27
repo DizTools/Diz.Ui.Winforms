@@ -4,6 +4,7 @@ using Diz.Core.commands;
 using Diz.Cpu._65816;
 using Diz.LogWriter;
 using Diz.Ui.ViewModels.Goto;
+using Diz.Ui.ViewModels.HarshAutoStep;
 using Diz.Ui.ViewModels.MarkMany;
 using Diz.Ui.Winforms.dialogs;
 using Diz.Ui.Winforms.util;
@@ -136,17 +137,28 @@ public partial class MainWindow
         PromptDialog.Show(errorMsg, caption);
     }
 
-    private bool PromptHarshAutoStep(int offset, out int newOffset, out int count)
+    /// <summary>
+    /// Ask the user which run of bytes to decode as instructions. Returns the command describing
+    /// that request, or null for "step nothing" -- which covers cancelling and any range the
+    /// window refused to confirm. Applying the command is the caller's job.
+    /// </summary>
+    private AutoStepHarshCommand? PromptHarshAutoStep(int offset)
     {
-        newOffset = count = -1;
-            
-        var harsh = new HarshAutoStep(offset, Project.Data);
-        if (harsh.ShowDialog() != DialogResult.OK)
-            return false;
-            
-        newOffset = harsh.StartRomOffset;
-        count = harsh.Count;
-        return true;
+        var snesData = Project.Data.GetSnesApi()
+                       ?? throw new InvalidOperationException("No snes data present");
+
+        // no notification marshaller: this ViewModel does no background work, so every
+        // notification it raises is a direct consequence of a widget event already on the UI
+        // thread.
+        var viewModel = new HarshAutoStepViewModel(
+            snesData,
+            snesData.GetRomSize(),
+            startPcOffset: offset);
+
+        using var dialog = new HarshAutoStepDialog(viewModel);
+        return dialog.ShowDialog() != DialogResult.OK
+            ? null
+            : viewModel.BuildAutoStepHarshCommand();
     }
     
     // -----------------------

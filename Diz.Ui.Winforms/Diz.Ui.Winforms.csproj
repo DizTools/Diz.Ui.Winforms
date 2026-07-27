@@ -42,7 +42,7 @@
         <Compile Update="dialogs\BSNESTraceLogBinaryMonitorForm.UI.cs">
           <SubType>Form</SubType>
         </Compile>
-        <Compile Update="dialogs\HarshAutoStep.cs">
+        <Compile Update="dialogs\HarshAutoStepDialog.cs">
           <SubType>Form</SubType>
         </Compile>
         <Compile Update="dialogs\MarkManyDialog.cs">

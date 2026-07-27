@@ -126,11 +126,12 @@ public partial class MainWindow
         if (!RomDataPresent()) 
             return;
             
-        if (!PromptHarshAutoStep(offset, out var newOffset, out var count))
+        var command = PromptHarshAutoStep(offset);
+        if (command == null)
             return;
 
         ProjectController.MarkChanged();
-        var destination = Project.Data.GetSnesApi().AutoStepHarsh(newOffset, count);
+        var destination = Project.Data.GetSnesApi().ApplyAutoStepHarshCommand(command);
             
         if (moveWithStep) 
             SelectOffset(destination, -1, new ISnesNavigation.HistoryArgs {Description = "AutoStep (Harsh)"}, overshootAmount: standardOvershootAmount);
