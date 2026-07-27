@@ -60,6 +60,7 @@ public partial class LogCreatorSettingsEditorForm : Form, ILogCreatorSettingsEdi
         chkPrintLabelSpecificComments.Checked = Settings.PrintLabelSpecificComments;
         txtExportPath.Text = Settings.FileOrFolderOutPath;
         chkGeneratePlusMinusLabels.Checked = Settings.GeneratePlusMinusLabels;
+        chkGenerateAssetLabels.Checked = Settings.GenerateAssetLabels;
         txtExcludeLabelAuthors.Text = string.Join(", ", Settings.ExcludedLabelAuthors);
 
         var validFormat = LogCreatorLineFormatter.Validate(Settings.Format);
@@ -146,6 +147,9 @@ public partial class LogCreatorSettingsEditorForm : Form, ILogCreatorSettingsEdi
         
     private void chkGeneratePlusMinusLabels_CheckedChanged(object sender, EventArgs e) =>
         Settings = Settings with { GeneratePlusMinusLabels = chkGeneratePlusMinusLabels.Checked };
+
+    private void chkGenerateAssetLabels_CheckedChanged(object sender, EventArgs e) =>
+        Settings = Settings with { GenerateAssetLabels = chkGenerateAssetLabels.Checked };
 
     private void txtExcludeLabelAuthors_TextChanged(object sender, EventArgs e) =>
         Settings = Settings with
