@@ -10,8 +10,8 @@ namespace Diz.Ui.Winforms;
 
 /// <summary>
 /// The WinForms LABEL-EDITOR BACKEND: exactly the backend-selectable registrations
-/// (LabelEditorView, MarkManyView, GotoView, HarshAutoStepView, ProgressBarView,
-/// IFileDialogService). The app registers EITHER this root
+/// (LabelEditorView, MarkManyView, GotoView, HarshAutoStepView, MisalignmentCheckerView,
+/// InOutPointCheckerView, ProgressBarView, IFileDialogService). The app registers EITHER this root
 /// OR <c>DizUiAvaloniaCompositionRoot</c> via an explicit if/else branch in
 /// DizWinformsRegisterServices -- never both (new-ui plan step 6, replacing the old
 /// last-registration-wins ordering trick). Non-selectable WinForms views stay in
@@ -46,6 +46,12 @@ namespace Diz.Ui.Winforms;
 
         // the harsh-auto-step window, same per-invocation lifetime.
         serviceRegistry.Register<IHarshAutoStepView, WinformsHarshAutoStepView>("HarshAutoStepView");
+
+        // the misaligned-flags window, same per-invocation lifetime.
+        serviceRegistry.Register<IMisalignmentCheckerView, WinformsMisalignmentCheckerView>("MisalignmentCheckerView");
+
+        // the in/out-point rescan confirmation, same per-invocation lifetime.
+        serviceRegistry.Register<IInOutPointCheckerView, WinformsInOutPointCheckerView>("InOutPointCheckerView");
 
         // the file-dialog seam (new-ui plan step 4): each UI toolkit registers its own.
         // singleton: the service is stateless (a fresh dialog per call).

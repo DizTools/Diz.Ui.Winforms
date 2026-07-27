@@ -357,9 +357,12 @@ public partial class MainWindow
         };
     }
     
-    private void UiFixMisalignedInstructions()
+    // async because the misaligned-flags window is a per-toolkit view service and not every
+    // toolkit can offer a blocking modal call. The WinForms one does, so on that backend this
+    // method still runs start to finish without ever yielding to the message loop.
+    private async Task UiFixMisalignedInstructions()
     {
-        if (!PromptForMisalignmentCheck())
+        if (!await PromptForMisalignmentCheck())
             return;
 
         var countModified = ProjectController.FixMisalignedFlags();
@@ -368,9 +371,12 @@ public partial class MainWindow
         ShowInfo($"Modified {countModified} flags!", "Done!");
     }
 
-    private void UiRescanForInOut()
+    // async because the rescan confirmation is a per-toolkit view service and not every toolkit
+    // can offer a blocking modal call. The WinForms one does, so on that backend this method
+    // still runs start to finish without ever yielding to the message loop.
+    private async Task UiRescanForInOut()
     {
-        if (!PromptForInOutChecking())
+        if (!await PromptForInOutChecking())
             return;
 
         if (!ProjectController.RescanForInOut()) 

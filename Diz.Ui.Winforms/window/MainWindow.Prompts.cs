@@ -6,6 +6,7 @@ using Diz.LogWriter;
 using Diz.Ui.ViewModels.Goto;
 using Diz.Ui.ViewModels.HarshAutoStep;
 using Diz.Ui.ViewModels.MarkMany;
+using Diz.Ui.ViewModels.MisalignmentChecker;
 using Diz.Ui.Winforms.dialogs;
 using Diz.Ui.Winforms.util;
 
@@ -199,12 +200,35 @@ public partial class MainWindow
         return viewModel.BuildMarkCommand();
     }
 
-    private bool PromptForMisalignmentCheck()
+    /// <summary>
+    /// Offer the misaligned-flags report and ask whether to repair what it lists. Returns true
+    /// when the user asked for the repair; applying it is the caller's job.
+    ///
+    /// Async because the misaligned-flags window is a per-toolkit view service and not every
+    /// toolkit can offer a blocking modal call. The WinForms one does, so on that backend this
+    /// method still runs start to finish without ever yielding to the message loop.
+    /// </summary>
+    private async Task<bool> PromptForMisalignmentCheck()
     {
         if (!RomDataPresent())
             return false;
 
-        return new MisalignmentChecker(Project.Data).ShowDialog() == DialogResult.OK;
+        // the sweep lives in Diz.Cpu.65816, which the ViewModel assembly may not reference, so
+        // it is handed in as a delegate. A project with no SNES api attached has nothing to
+        // sweep: the legacy window silently showed an empty report rather than throwing, and
+        // this keeps that.
+        // no notification marshaller: this ViewModel does no background work, so every
+        // notification it raises is a direct consequence of a widget event already on the UI
+        // thread.
+        var viewModel = new MisalignmentCheckerViewModel(
+            () => Project.Data.GetSnesApi() is { } snesApi
+                ? snesApi.GenerateMisalignmentReport()
+                : (0, ""));
+
+        // which window shows up is a per-toolkit registration; the ViewModel is the whole
+        // contract. Awaiting the WinForms implementation continues synchronously, because its
+        // modal call has already finished by the time it returns a task.
+        return await viewFactory.GetMisalignmentCheckerView().RunAsync(viewModel);
     }
 
     private static void ShowInfo(string s, string caption)
@@ -212,12 +236,23 @@ public partial class MainWindow
         PromptDialog.Show(s, caption, MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
-    private bool PromptForInOutChecking()
+    /// <summary>
+    /// Ask whether to rescan every instruction for in/out/end/read points. Returns true when the
+    /// user said yes; running the rescan is the caller's job.
+    ///
+    /// Async because the rescan confirmation is a per-toolkit view service and not every toolkit
+    /// can offer a blocking modal call. The WinForms one does, so on that backend this method
+    /// still runs start to finish without ever yielding to the message loop.
+    /// </summary>
+    private async Task<bool> PromptForInOutChecking()
     {
         if (!RomDataPresent())
             return false;
 
-        return new InOutPointChecker().ShowDialog() == DialogResult.OK;
+        // no ViewModel: this window has no state and no inputs, so the seam is the whole
+        // contract. Awaiting the WinForms implementation continues synchronously, because its
+        // modal call has already finished by the time it returns a task.
+        return await viewFactory.GetInOutPointCheckerView().ConfirmAsync();
     }
 
     public string AskToSelectNewRomFilename(string promptSubject, string promptText)

@@ -1,6 +1,6 @@
-﻿namespace Diz.Ui.Winforms.dialogs
+namespace Diz.Ui.Winforms.dialogs
 {
-    partial class MisalignmentChecker
+    partial class MisalignmentCheckerDialog
     {
         /// <summary>
         /// Required designer variable.
@@ -28,17 +28,18 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MisalignmentChecker));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MisalignmentCheckerDialog));
             this.buttonScan = new System.Windows.Forms.Button();
             this.buttonFix = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.cancel = new System.Windows.Forms.Button();
             this.textLog = new System.Windows.Forms.TextBox();
+            this.labelStatus = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // buttonScan
             // 
-            this.buttonScan.Location = new System.Drawing.Point(93, 279);
+            this.buttonScan.Location = new System.Drawing.Point(93, 306);
             this.buttonScan.Name = "buttonScan";
             this.buttonScan.Size = new System.Drawing.Size(75, 23);
             this.buttonScan.TabIndex = 2;
@@ -48,7 +49,7 @@
             // 
             // buttonFix
             // 
-            this.buttonFix.Location = new System.Drawing.Point(174, 279);
+            this.buttonFix.Location = new System.Drawing.Point(174, 306);
             this.buttonFix.Name = "buttonFix";
             this.buttonFix.Size = new System.Drawing.Size(75, 23);
             this.buttonFix.TabIndex = 3;
@@ -68,7 +69,7 @@
             // cancel
             // 
             this.cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancel.Location = new System.Drawing.Point(12, 279);
+            this.cancel.Location = new System.Drawing.Point(12, 306);
             this.cancel.Name = "cancel";
             this.cancel.Size = new System.Drawing.Size(75, 23);
             this.cancel.TabIndex = 4;
@@ -87,19 +88,29 @@
             this.textLog.TabIndex = 1;
             this.textLog.TabStop = false;
             // 
-            // MisalignmentChecker
+            // labelStatus
+            // 
+            this.labelStatus.AutoSize = false;
+            this.labelStatus.Location = new System.Drawing.Point(12, 274);
+            this.labelStatus.Name = "labelStatus";
+            this.labelStatus.Size = new System.Drawing.Size(237, 26);
+            this.labelStatus.TabIndex = 5;
+            this.labelStatus.Text = "";
+            // 
+            // MisalignmentCheckerDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancel;
-            this.ClientSize = new System.Drawing.Size(261, 313);
+            this.ClientSize = new System.Drawing.Size(261, 340);
+            this.Controls.Add(this.labelStatus);
             this.Controls.Add(this.textLog);
             this.Controls.Add(this.cancel);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.buttonFix);
             this.Controls.Add(this.buttonScan);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
-            this.Name = "MisalignmentChecker";
+            this.Name = "MisalignmentCheckerDialog";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Misaligned Flags";
@@ -115,5 +126,10 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button cancel;
         private System.Windows.Forms.TextBox textLog;
+
+        // the count the scan found, in words. The legacy window threw this number away and
+        // showed only the report body, so a clean ROM and a ROM nobody had scanned yet looked
+        // identical.
+        private System.Windows.Forms.Label labelStatus;
     }
 }

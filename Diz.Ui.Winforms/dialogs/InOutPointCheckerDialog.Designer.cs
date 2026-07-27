@@ -1,6 +1,6 @@
 ﻿namespace Diz.Ui.Winforms.dialogs
 {
-    partial class InOutPointChecker
+    partial class InOutPointCheckerDialog
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(InOutPointChecker));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(InOutPointCheckerDialog));
             this.label1 = new System.Windows.Forms.Label();
             this.cancel = new System.Windows.Forms.Button();
             this.rescan = new System.Windows.Forms.Button();
@@ -64,7 +64,7 @@
             this.rescan.UseVisualStyleBackColor = true;
             this.rescan.Click += new System.EventHandler(this.rescan_Click);
             // 
-            // InOutPointChecker
+            // InOutPointCheckerDialog
             // 
             this.AcceptButton = this.rescan;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -75,7 +75,7 @@
             this.Controls.Add(this.cancel);
             this.Controls.Add(this.label1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
-            this.Name = "InOutPointChecker";
+            this.Name = "InOutPointCheckerDialog";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Rescan for In/Out/End/Read Points";

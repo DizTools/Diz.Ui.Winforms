@@ -27,7 +27,7 @@
           <DependentUpon>Resources.resx</DependentUpon>
           <DesignTime>True</DesignTime>
         </Compile>
-        <Compile Update="dialogs\MisalignmentChecker.cs">
+        <Compile Update="dialogs\MisalignmentCheckerDialog.cs">
           <SubType>Form</SubType>
         </Compile>
         <Compile Update="dialogs\ExportDisassembly.cs">
@@ -48,7 +48,7 @@
         <Compile Update="dialogs\MarkManyDialog.cs">
           <SubType>Form</SubType>
         </Compile>
-        <Compile Update="dialogs\InOutPointChecker.cs">
+        <Compile Update="dialogs\InOutPointCheckerDialog.cs">
           <SubType>Form</SubType>
         </Compile>
         <Compile Update="dialogs\ImportROMDialog.cs">

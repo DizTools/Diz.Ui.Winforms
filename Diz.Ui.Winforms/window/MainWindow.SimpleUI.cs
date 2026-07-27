@@ -205,8 +205,10 @@ public partial class MainWindow
 
     private void textToolStripMenuItem_Click(object sender, EventArgs e) => SetMarkerLabel(FlagType.Text);
 
-    private void fixMisalignedInstructionsToolStripMenuItem_Click(object sender, EventArgs e) =>
-        UiFixMisalignedInstructions();
+    // async void: this is an event handler, and UiFixMisalignedInstructions awaits a view
+    // service whose window may not be able to block (see PromptForMisalignmentCheck).
+    private async void fixMisalignedInstructionsToolStripMenuItem_Click(object sender, EventArgs e) =>
+        await UiFixMisalignedInstructions();
 
     private void moveWithStepToolStripMenuItem_Click(object sender, EventArgs e) => ToggleMoveWithStep();
 
@@ -237,7 +239,10 @@ public partial class MainWindow
         await OpenLastProject();
     }
 
-    private void rescanForInOutPointsToolStripMenuItem_Click(object sender, EventArgs e) => UiRescanForInOut();
+    // async void: this is an event handler, and UiRescanForInOut awaits a view service whose
+    // window may not be able to block (see PromptForInOutChecking).
+    private async void rescanForInOutPointsToolStripMenuItem_Click(object sender, EventArgs e) =>
+        await UiRescanForInOut();
     private async void importUsageMapToolStripMenuItem_Click_1(object sender, EventArgs e) => await UiImportBsnesUsageMap();
     private void table_MouseWheel(object sender, MouseEventArgs e) => 
         ScrollTableBy(e.Delta != 0 
