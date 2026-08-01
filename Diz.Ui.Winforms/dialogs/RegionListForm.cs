@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Diz.Ui.Winforms.dialogs;
 
 // Plain host window for RegionListViewControl, which is the actual IRegionListView
-// implementation (registered via DizUiWinformsCompositionRoot). This form's only behavior of its
+// implementation (registered via DizUiWinformsBackendCompositionRoot). This form's only behavior of its
 // own: hide instead of close, so reopening the region editor is instant and the grid's sort
 // order, selection and scroll position are kept.
 [SuppressMessage("ReSharper", "UnusedType.Global")]

@@ -11,7 +11,9 @@ namespace Diz.Ui.Winforms.Test.Tests;
 /// <summary>
 /// The region editor is resolved by name through IViewFactory and never constructed by anyone.
 /// Three things have to hold for that to work, none of which the compiler checks: the WinForms
-/// root has to register something; the registration NAME has to match the factory method name
+/// BACKEND root has to register something (the region editor is backend-selectable, so it lives
+/// beside the label editor rather than with the always-WinForms views); the registration NAME
+/// has to match the factory method name
 /// minus "Get", because the auto-factory resolves by that string; and what comes back has to be
 /// the CONTROL already sitting inside its window, because Show() and BringFormToTop() work by
 /// finding the form the control lives in. A control handed out unparented would compile, resolve,
@@ -23,7 +25,7 @@ public class RegionListViewRegistrationTests
     public void TheWinformsRootRegistersTheRegionEditorView()
     {
         using var container = new ServiceContainer();
-        container.RegisterFrom<DizUiWinformsCompositionRoot>();
+        container.RegisterFrom<DizUiWinformsBackendCompositionRoot>();
 
         container.GetInstance<IRegionListView>("RegionEditorView")
             .Should().BeOfType<RegionListViewControl>();
@@ -33,7 +35,7 @@ public class RegionListViewRegistrationTests
     public void TheRegionEditorArrivesAlreadyHostedInItsOwnWindow()
     {
         using var container = new ServiceContainer();
-        container.RegisterFrom<DizUiWinformsCompositionRoot>();
+        container.RegisterFrom<DizUiWinformsBackendCompositionRoot>();
 
         var view = container.GetInstance<IRegionListView>("RegionEditorView");
 
@@ -49,7 +51,7 @@ public class RegionListViewRegistrationTests
         using var container = new ServiceContainer();
         container.EnableAutoFactories();
         container.RegisterAutoFactory<IViewFactory>();
-        container.RegisterFrom<DizUiWinformsCompositionRoot>();
+        container.RegisterFrom<DizUiWinformsBackendCompositionRoot>();
 
         var viewFactory = container.GetInstance<IViewFactory>();
 
@@ -62,7 +64,7 @@ public class RegionListViewRegistrationTests
         // MainWindow keeps one for the application's lifetime, but the registration itself must
         // not hand the same control to two owners -- each would rebind it to its own project.
         using var container = new ServiceContainer();
-        container.RegisterFrom<DizUiWinformsCompositionRoot>();
+        container.RegisterFrom<DizUiWinformsBackendCompositionRoot>();
 
         var first = container.GetInstance<IRegionListView>("RegionEditorView");
         var second = container.GetInstance<IRegionListView>("RegionEditorView");
