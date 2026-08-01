@@ -25,7 +25,12 @@ namespace Diz.Ui.Winforms;
         serviceRegistry.Register<IFormViewer, About>("AboutView");
         serviceRegistry.Register<IImportRomDialogView, ImportRomDialog>("ImportRomView");
         serviceRegistry.Register<ILogCreatorSettingsEditorView, LogCreatorSettingsEditorForm>("ExportDisassemblyView");
-        serviceRegistry.Register<IRegionListView, RegionList>("RegionEditorView");
+        // the interface implementation is the RegionListViewControl hosted inside a RegionListForm
+        // window (the form itself is a plain host). the control's Show()/BringFormToTop() operate
+        // on its host form, so callers see the same behavior as when the form implemented the
+        // interface directly.
+        serviceRegistry.Register<IRegionListView>(
+            _ => new RegionListForm().RegionEditor, "RegionEditorView");
 
         serviceRegistry.RegisterSingleton<IDizAppSettings, DizAppSettingsProvider>(); // TODO: probably move this out of this project into app.common
     }
