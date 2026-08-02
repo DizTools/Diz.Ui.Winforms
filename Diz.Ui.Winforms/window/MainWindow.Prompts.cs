@@ -266,6 +266,14 @@ public partial class MainWindow
     public void OnProjectOpenWarnings(IEnumerable<string> warnings)
     {
         foreach (var warningMsg in warnings) {
+            // --acceptProjectOpenWarnings: OK-only notices with nothing to decide, so an unattended
+            // launch accepts them rather than sitting on a modal box forever. Still recorded.
+            if (StartupPromptOptions.AcceptProjectOpenWarnings)
+            {
+                Diz.Core.util.StartupTrace.Log($"auto-accepted project open warning: {warningMsg}");
+                continue;
+            }
+
             // Use PromptDialog (like every sibling prompt in this file) rather than a raw
             // ownerless MessageBox.Show: PromptDialog's ctor calls BringWinFormToTop(), so it
             // self-tops and can't hide behind the main window (which an ownerless MessageBox does).

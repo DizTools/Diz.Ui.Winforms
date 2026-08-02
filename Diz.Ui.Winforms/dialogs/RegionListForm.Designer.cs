@@ -1,6 +1,6 @@
-﻿namespace Diz.Ui.Winforms.dialogs
+namespace Diz.Ui.Winforms.dialogs
 {
-    partial class RegionList
+    partial class RegionListForm
     {
         /// <summary>
         /// Required designer variable.
@@ -28,32 +28,33 @@
         /// </summary>
         private void InitializeComponent()
         {
-            regionListUserControl1 = new Diz.Ui.Winforms.usercontrols.RegionListUserControl();
+            regionListViewControl1 = new Diz.Ui.Winforms.usercontrols.RegionListViewControl();
             SuspendLayout();
-            // 
-            // regionListUserControl1
-            // 
-            regionListUserControl1.Dock = DockStyle.Fill;
-            regionListUserControl1.Location = new Point(0, 0);
-            regionListUserControl1.Name = "regionListUserControl1";
-            regionListUserControl1.Size = new Size(1000, 450);
-            regionListUserControl1.TabIndex = 0;
             //
-            // RegionList
+            // regionListViewControl1
+            //
+            regionListViewControl1.Dock = DockStyle.Fill;
+            regionListViewControl1.Location = new Point(0, 0);
+            regionListViewControl1.Name = "regionListViewControl1";
+            regionListViewControl1.Size = new Size(1000, 450);
+            regionListViewControl1.TabIndex = 0;
+            //
+            // RegionListForm
             //
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1000, 450);
-            Controls.Add(regionListUserControl1);
+            Controls.Add(regionListViewControl1);
             FormBorderStyle = FormBorderStyle.SizableToolWindow;
             MinimumSize = new Size(500, 250);
-            Name = "RegionList";
+            Name = "RegionListForm";
             Text = "Regions List";
+            FormClosing += RegionListForm_FormClosing;
             ResumeLayout(false);
         }
 
         #endregion
 
-        private usercontrols.RegionListUserControl regionListUserControl1;
+        private usercontrols.RegionListViewControl regionListViewControl1;
     }
 }

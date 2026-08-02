@@ -46,8 +46,18 @@ public partial class MainWindow : Form, IMainGridWindowView
 
         InitializeComponent();
     }
-    
-    
+
+    /// <summary>
+    /// Project file (.diz/.dizraw/.dizdir) named on the command line, set by DizWinformsApp before
+    /// Application.Run; empty when none was passed. Takes precedence over the "open last project
+    /// automatically" setting. The open itself can't happen at the app-startup edge -- it shows
+    /// progress UI and needs a running message pump -- so Init() defers it like the auto-open.
+    /// </summary>
+    [System.ComponentModel.DesignerSerializationVisibility(
+        System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+    public string InitialProjectFileToOpen { get; set; } = "";
+
+
     [AttributeUsage(AttributeTargets.Method)]
     public class MenuItemAttribute(string menu, string name, Keys shortcutKeys = Keys.None, bool visible = true) : Attribute
     {
@@ -146,7 +156,13 @@ public partial class MainWindow : Form, IMainGridWindowView
         UpdateUiFromSettings();
         UpdateWindowTitle(); // show title-bar extras (--extraTitleBar) right away
 
-        if (appSettings.OpenLastFileAutomatically)
+        // Precedence: a project named on the command line always wins. "open last project
+        // automatically" is only the fallback for when nothing was passed in -- otherwise launching
+        // with an explicit project would silently load a different one instead.
+        var startupProject = InitialProjectFileToOpen;
+        var openingFromCommandLine = !string.IsNullOrEmpty(startupProject);
+
+        if (openingFromCommandLine || appSettings.OpenLastFileAutomatically)
         {
             // Defer the auto-open via BeginInvoke so Init() (called from MainWindow_Load, where the
             // handle already exists -- so BeginInvoke is valid) returns and the form finishes
@@ -163,8 +179,17 @@ public partial class MainWindow : Form, IMainGridWindowView
                 // synchronous repaint of the now-visible client area BEFORE the heavy load prefix
                 // blocks the UI thread, so the user sees the real window, not a white void.
                 Update();
-                Diz.Core.util.StartupTrace.Log("MainWindow: deferred first-paint done, firing OpenLastProject");
-                _ = OpenLastProject(); // fire-and-forget at startup; the open shows its own progress UI.
+                Diz.Core.util.StartupTrace.Log(openingFromCommandLine
+                    ? $"MainWindow: deferred first-paint done, opening command-line project {startupProject}"
+                    : "MainWindow: deferred first-paint done, firing OpenLastProject");
+
+                // fire-and-forget at startup; the open shows its own progress UI.
+                // a successful open sets Document.LastProjectFilename via OnProjectOpened, so a
+                // command-line open also becomes the new "last project".
+                if (openingFromCommandLine)
+                    _ = ProjectController.OpenProjectAsync(startupProject);
+                else
+                    _ = OpenLastProject();
             }));
         }
     }
