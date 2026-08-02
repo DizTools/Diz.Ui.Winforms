@@ -54,14 +54,17 @@ public partial class MainWindow : Form, IMainGridWindowView
         navigationHistory.NavigationRequested += (_, request) =>
             SelectOffsetWithOvershoot(request.PcOffset, request.OvershootAmount);
 
-        navigationHistoryForm = new NavigationHistoryForm
-        {
-            ViewModel = navigationHistory,
+        // N3: resolved through the view factory rather than newed, so the history window is a
+        // backend-selectable seam like the label and region editors. Constructing it here is safe
+        // for either backend BECAUSE the seam forbids construction (and these two property
+        // assignments) from touching a UI toolkit: this runs before the message loop, and Avalonia
+        // must not initialize that early. See INavigationHistoryView.
+        navigationHistoryView = viewFactory.GetNavigationHistoryView();
+        navigationHistoryView.ViewModel = navigationHistory;
 
-            // D4: the in-window arrows and the menu commands are the same "go back", so they ask
-            // for the same overshoot. Row clicks stay at NoOvershoot -- see the control.
-            BackForwardOvershoot = standardOvershootAmount,
-        };
+        // D4: the in-window arrows and the menu commands are the same "go back", so they ask for
+        // the same overshoot. Row activation stays at NoOvershoot -- see the view.
+        navigationHistoryView.BackForwardOvershoot = standardOvershootAmount;
 
         InitializeComponent();
     }

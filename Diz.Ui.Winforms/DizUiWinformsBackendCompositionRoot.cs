@@ -10,8 +10,8 @@ namespace Diz.Ui.Winforms;
 
 /// <summary>
 /// The WinForms LABEL-EDITOR BACKEND: exactly the backend-selectable registrations
-/// (LabelEditorView, RegionEditorView, MarkManyView, GotoView, HarshAutoStepView,
-/// MisalignmentCheckerView,
+/// (LabelEditorView, RegionEditorView, NavigationHistoryView, MarkManyView, GotoView,
+/// HarshAutoStepView, MisalignmentCheckerView,
 /// InOutPointCheckerView, ProgressBarView, IFileDialogService). The app registers EITHER this root
 /// OR <c>DizUiAvaloniaCompositionRoot</c> via an explicit if/else branch in
 /// DizWinformsRegisterServices -- never both (new-ui plan step 6, replacing the old
@@ -39,6 +39,7 @@ namespace Diz.Ui.Winforms;
         }, "LabelEditorView");
 
         RegisterRegionEditorView(serviceRegistry);
+        RegisterNavigationHistoryView(serviceRegistry);
 
         // the mark-many window. A fresh instance per resolve: the view is created, used for one
         // edit, and discarded.
@@ -76,4 +77,19 @@ namespace Diz.Ui.Winforms;
     public static void RegisterRegionEditorView(IServiceRegistry serviceRegistry) =>
         serviceRegistry.Register<IRegionListView>(
             _ => new RegionListForm().RegionEditor, "RegionEditorView");
+
+    /// <summary>
+    /// Register the WinForms navigation-history window under the name
+    /// IViewFactory.GetNavigationHistoryView() resolves by. Exposed separately for the same reason
+    /// as the region editor: the TUI backend has no history screen and falls back to this one, and
+    /// the control the registration hands out is internal to this assembly.
+    ///
+    /// What comes back is the NavigationHistoryViewControl already sitting inside its
+    /// NavigationHistoryForm window. Long-lived (MainWindow resolves one and keeps it for the
+    /// application's lifetime, and the window hides rather than closes) but still one per resolve,
+    /// so two owners never share a window -- and never share the ViewModel each one is handed.
+    /// </summary>
+    public static void RegisterNavigationHistoryView(IServiceRegistry serviceRegistry) =>
+        serviceRegistry.Register<INavigationHistoryView>(
+            _ => new NavigationHistoryForm().NavigationHistory, "NavigationHistoryView");
 }

@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System.Threading.Tasks;
+using Diz.Controllers.interfaces;
 using Diz.Core.commands;
 using Diz.Core.Interfaces;
 using Diz.Core.util;
@@ -258,8 +259,11 @@ public partial class MainWindow
     /// </summary>
     private readonly NavigationHistoryViewModel navigationHistory;
 
-    /// <summary>Display-only view onto <see cref="navigationHistory"/>. Hides on close.</summary>
-    private readonly NavigationHistoryForm navigationHistoryForm;
+    /// <summary>
+    /// Display-only view onto <see cref="navigationHistory"/>. Hides on close, and is whichever
+    /// toolkit's history window the backend switch selected -- this window never names one.
+    /// </summary>
+    private readonly INavigationHistoryView navigationHistoryView;
 
     /// <summary>
     /// SNES address -> ROM file offset for whatever project is open RIGHT NOW, or -1 when there is
@@ -283,12 +287,13 @@ public partial class MainWindow
             action();
     }
 
+    // Show-then-raise, unconditionally: the seam has no "is it visible" question to ask (a hidden
+    // Avalonia window is not a WinForms Form), and Show() on an already-visible window is a no-op
+    // in both toolkits. Same two calls the label and region editors make.
     private void showHistoryToolStripMenuItem_Click(object sender, EventArgs e)
     {
-        if (!navigationHistoryForm.Visible)
-            navigationHistoryForm.Show();
-        else
-            navigationHistoryForm.BringToFront();
+        navigationHistoryView.Show();
+        navigationHistoryView.BringFormToTop();
     }
 
     private void goBackToolStripMenuItem_Click(object sender, EventArgs e) => NavigateBackwards();

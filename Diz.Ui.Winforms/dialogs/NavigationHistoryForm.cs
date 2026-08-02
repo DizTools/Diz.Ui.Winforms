@@ -22,6 +22,14 @@ public partial class NavigationHistoryForm : Form
         FormClosing += NavigationHistoryForm_FormClosing;
     }
 
+    /// <summary>
+    /// The control inside, which is the real <c>INavigationHistoryView</c> implementation (the
+    /// composition root hands THIS out, already parented to this form, exactly as it does for the
+    /// region editor -- an unparented control would resolve fine and then silently do nothing,
+    /// because its Show()/BringFormToTop() work by finding the form it lives in).
+    /// </summary>
+    internal usercontrols.NavigationHistoryViewControl NavigationHistory => navigationCtrl;
+
     /// <summary>The history being shown. Forwarded straight to the control; see it for the rules.</summary>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public NavigationHistoryViewModel? ViewModel

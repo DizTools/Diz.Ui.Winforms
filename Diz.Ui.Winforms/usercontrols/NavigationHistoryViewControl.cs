@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Diz.Controllers.interfaces;
 using Diz.Core.model;
 using Diz.Ui.ViewModels.Navigation;
 
@@ -31,8 +32,13 @@ namespace Diz.Ui.Winforms.usercontrols;
 /// events are needed because the ViewModel and the BindingSource watch the same underlying
 /// BindingList and the ViewModel is subscribed first (it is built before any window exists), so
 /// when CurrentIndex moves on an append the grid has no such row yet.
+///
+/// N3: this control is also the WinForms backend's <see cref="INavigationHistoryView"/> -- the
+/// seam MainWindow resolves through IViewFactory. Same shape as the region editor: the CONTROL
+/// implements the interface and the registration hands it out already sitting inside its host
+/// form, so Show()/BringFormToTop() have a window to operate on.
 /// </summary>
-public partial class NavigationHistoryViewControl : UserControl
+public partial class NavigationHistoryViewControl : UserControl, INavigationHistoryView
 {
     private NavigationHistoryViewModel? viewModel;
 
@@ -90,6 +96,17 @@ public partial class NavigationHistoryViewControl : UserControl
     /// </summary>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int BackForwardOvershoot { get; set; } = NavigationHistoryViewModel.NoOvershoot;
+
+    // ------------------------------------------------------------------ INavigationHistoryView
+
+    // declared, never raised: the host form hides on close, so from a caller's point of view this
+    // "form" never closes. Identical to the region editor.
+    public event EventHandler? OnFormClosed;
+
+    // hides Control.Show(): callers of INavigationHistoryView.Show() expect the WINDOW to appear.
+    public new void Show() => FindForm()?.Show();
+
+    public void BringFormToTop() => FindForm()?.Focus();
 
     // ------------------------------------------------------------------ input
 
