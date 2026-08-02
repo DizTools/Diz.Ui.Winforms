@@ -56,6 +56,7 @@ namespace Diz.Ui.Winforms.dialogs
             btnBrowseOutputPath = new Button();
             label8 = new Label();
             chkGeneratePlusMinusLabels = new CheckBox();
+            chkGenerateAssetLabels = new CheckBox();
             lblExcludeLabelAuthors = new Label();
             txtExcludeLabelAuthors = new TextBox();
             ((ISupportInitialize)numData).BeginInit();
@@ -326,6 +327,20 @@ namespace Diz.Ui.Winforms.dialogs
             chkGeneratePlusMinusLabels.UseVisualStyleBackColor = true;
             chkGeneratePlusMinusLabels.CheckedChanged += chkGeneratePlusMinusLabels_CheckedChanged;
             //
+            // chkGenerateAssetLabels
+            //
+            chkGenerateAssetLabels.AutoSize = true;
+            chkGenerateAssetLabels.Checked = true;
+            chkGenerateAssetLabels.CheckState = CheckState.Checked;
+            chkGenerateAssetLabels.Location = new Point(200, 114);
+            chkGenerateAssetLabels.Margin = new Padding(4, 3, 4, 3);
+            chkGenerateAssetLabels.Name = "chkGenerateAssetLabels";
+            chkGenerateAssetLabels.Size = new Size(215, 19);
+            chkGenerateAssetLabels.TabIndex = 25;
+            chkGenerateAssetLabels.Text = "Generate labels for asset regions";
+            chkGenerateAssetLabels.UseVisualStyleBackColor = true;
+            chkGenerateAssetLabels.CheckedChanged += chkGenerateAssetLabels_CheckedChanged;
+            //
             // lblExcludeLabelAuthors
             //
             lblExcludeLabelAuthors.AutoSize = true;
@@ -353,6 +368,7 @@ namespace Diz.Ui.Winforms.dialogs
             CancelButton = cancel;
             ClientSize = new Size(907, 687);
             Controls.Add(chkGeneratePlusMinusLabels);
+            Controls.Add(chkGenerateAssetLabels);
             Controls.Add(lblExcludeLabelAuthors);
             Controls.Add(txtExcludeLabelAuthors);
             Controls.Add(label8);
@@ -417,6 +433,7 @@ namespace Diz.Ui.Winforms.dialogs
         private Button btnBrowseOutputPath;
         private Label label8;
         private CheckBox chkGeneratePlusMinusLabels;
+        private CheckBox chkGenerateAssetLabels;
         private Label lblExcludeLabelAuthors;
         private TextBox txtExcludeLabelAuthors;
     }

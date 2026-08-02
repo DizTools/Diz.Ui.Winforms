@@ -183,6 +183,10 @@ public partial class RegionListViewControl : UserControl, IRegionListView
         regionGridView.AllowUserToDeleteRows = false;
         regionGridView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
 
+        // FullRowSelect makes the built-in Ctrl+C copy the whole row; we want just the focused
+        // cell, so disable the built-in copy and handle Ctrl+C ourselves (see Grid_KeyDown).
+        regionGridView.ClipboardCopyMode = DataGridViewClipboardCopyMode.Disable;
+
         // the row header carries the per-row error marker (see RowErrorTextNeeded)
         regionGridView.RowHeadersVisible = true;
         regionGridView.ShowRowErrors = true;
@@ -360,6 +364,12 @@ public partial class RegionListViewControl : UserControl, IRegionListView
 
     private void Grid_KeyDown(object? sender, KeyEventArgs e)
     {
+        if (e.Control && e.KeyCode == Keys.C)
+        {
+            CopyFocusedCell(e);
+            return;
+        }
+
         if (e.KeyCode != Keys.Delete || regionGridView.IsCurrentCellInEditMode)
             return;
 
@@ -369,6 +379,27 @@ public partial class RegionListViewControl : UserControl, IRegionListView
 
         e.Handled = true;
         DeleteWithConfirmation(rows);
+    }
+
+    // Copy ONLY the focused cell. The grid's own copy is disabled (ClipboardCopyMode.Disable in
+    // SetupGrid) because FullRowSelect would otherwise copy the entire row.
+    private void CopyFocusedCell(KeyEventArgs e)
+    {
+        e.Handled = true;
+        e.SuppressKeyPress = true;
+
+        var text = regionGridView.CurrentCell?.Value?.ToString() ?? "";
+        try
+        {
+            if (string.IsNullOrEmpty(text))
+                Clipboard.Clear();
+            else
+                Clipboard.SetText(text);
+        }
+        catch (System.Runtime.InteropServices.ExternalException)
+        {
+            // clipboard momentarily locked by another process -- ignore rather than crash the editor.
+        }
     }
 
     /// <summary>
