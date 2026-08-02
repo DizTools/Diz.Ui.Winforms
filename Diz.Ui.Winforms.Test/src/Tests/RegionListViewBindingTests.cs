@@ -522,42 +522,37 @@ public class RegionListViewBindingTests
     // --------------------------------------- closed-value columns (checkbox / combo) snap back
 
     [Fact]
-    public void RetryingATickedCheckboxAfterFixingTheRowActuallyCommits()
+    public void TickingTheCheckboxOnARegionThatSpansTwoBanksCommits()
     {
-        // The checkbox and the combo show the COMMITTED value, so a refused edit to one leaves
-        // them displaying what the model holds. If "has this changed?" were asked against the
-        // refused text the row is remembering rather than against what is on screen, the user's
-        // second attempt at the very value that was just rejected would be silently swallowed --
-        // the retry being the single most likely next thing they do.
+        // The checkbox column's commit path, on the shape that used to be refused: a region that
+        // emits its own .asm file and straddles a bank boundary. Nothing about banks constrains a
+        // file-producing region -- the emitted assembly re-origins at the seam -- so the tick has
+        // to reach the model and leave the row clean.
         using var fixture = MakeControl(NewRegion("crosses banks", 0xC00000, 0xC1000F));
 
-        // a region that emits its own .asm file cannot straddle a bank boundary
-        Type(fixture, 0, "ExportSeparateFile", true);
-        RegionNamed(fixture, "crosses banks").ExportSeparateFile.Should().BeFalse();
-        fixture.StatusText.Should().Contain("same bank");
-
-        // fix the reason it was refused ...
-        Type(fixture, 0, "EndSnesAddress", "C0000F");
-        // ... and tick it again
         Type(fixture, 0, "ExportSeparateFile", true);
 
         RegionNamed(fixture, "crosses banks").ExportSeparateFile.Should().BeTrue();
+        fixture.Grid.Rows[0].Cells["ExportSeparateFile"].Value.Should().Be(true);
+        fixture.Grid.Rows[0].ErrorText.Should().BeEmpty();
         fixture.StatusText.Should().BeEmpty();
     }
 
     [Fact]
-    public void ARefusedCheckboxLeavesNoStaleMarkerOnTheRow()
+    public void ARefusedComboValueLeavesNoStaleMarkerOnTheRow()
     {
-        // nothing the model refused is on screen afterwards -- the checkbox is showing the stored
+        // nothing the model refused is on screen afterwards -- the combo is showing the stored
         // value again -- so marking the row would be marking it over nothing.
-        using var fixture = MakeControl(NewRegion("crosses banks", 0xC00000, 0xC1000F));
+        // 0x47 bytes is not a whole number of 9-byte BRR blocks.
+        using var fixture = MakeControl(
+            NewRegion("art", 0xC00000, 0xC00046, assetType: "audio.snes.brr"));
 
-        Type(fixture, 0, "ExportSeparateFile", true);
+        Type(fixture, 0, "ExportType", RegionExportType.Asset);
 
         fixture.Grid.Rows[0].ErrorText.Should().BeEmpty();
-        fixture.Grid.Rows[0].Cells["ExportSeparateFile"].Value.Should().Be(false);
+        fixture.Grid.Rows[0].Cells["ExportType"].Value.Should().Be(RegionExportType.Assembly);
         // the reason is still told, on the status line
-        fixture.StatusText.Should().Contain("same bank");
+        fixture.StatusText.Should().Contain("whole multiple of 9 bytes");
     }
 
     [Fact]
