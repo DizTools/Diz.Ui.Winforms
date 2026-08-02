@@ -4,7 +4,9 @@ using Diz.Controllers.controllers;
 using Diz.Controllers.interfaces;
 using Diz.Controllers.util;
 using Diz.Core.Interfaces;
+using Diz.Core.model;
 using Diz.LogWriter;
+using Diz.Ui.ViewModels.Navigation;
 using Diz.Ui.Winforms.dialogs;
 using Diz.Ui.Winforms.util;
 
@@ -38,10 +40,27 @@ public partial class MainWindow : Form, IMainGridWindowView
         ProjectController.ProjectChanged += ProjectController_ProjectChanged;
         Closed += (sender, args) => OnFormClosed?.Invoke(sender, args);
 
-        NavigationForm = new NavigationForm
+        // The navigation history lives HERE, not in the history window: back and forward are menu
+        // commands that must work whether or not that window has ever been opened, and the place
+        // in the history has to survive it being closed. The window, when it exists, is a view
+        // onto this same ViewModel.
+        navigationHistory = new NavigationHistoryViewModel(
+            Document.NavigationHistory,
+            ConvertSnesToPcInCurrentProject,
+            RunOnUiThread);
+
+        // the ViewModel works out WHERE; performing the move is ours (it cannot reference
+        // ISnesNavigation, and this window is the ISnesNavigation implementation).
+        navigationHistory.NavigationRequested += (_, request) =>
+            SelectOffsetWithOvershoot(request.PcOffset, request.OvershootAmount);
+
+        navigationHistoryForm = new NavigationHistoryForm
         {
-            Document = Document,
-            SnesNavigation = this,
+            ViewModel = navigationHistory,
+
+            // D4: the in-window arrows and the menu commands are the same "go back", so they ask
+            // for the same overshoot. Row clicks stay at NoOvershoot -- see the control.
+            BackForwardOvershoot = standardOvershootAmount,
         };
 
         InitializeComponent();
@@ -281,10 +300,13 @@ public partial class MainWindow : Form, IMainGridWindowView
         if (history.Count > 0 && history[history.Count-1].SnesOffset == snesAddress)
             return;
 
+        // only these two fields of historyArgs were ever recorded; NavigationEntry is a Diz.Core
+        // model type and does not know about the Diz.Controllers args object.
         history.Add(
             new NavigationEntry(
-                snesAddress, 
-                historyArgs,
+                snesAddress,
+                historyArgs?.Description,
+                historyArgs?.Position,
                 Project.Data
             )
         );

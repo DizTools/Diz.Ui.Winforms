@@ -1,10 +1,10 @@
 ﻿
-using Diz.Controllers.controllers;
+using Diz.Core.model;
 
 #pragma warning disable 169
 namespace Diz.Ui.Winforms.usercontrols
 {
-    partial class NavigationUserControl
+    partial class NavigationHistoryViewControl
     {
         /// <summary> 
         /// Required designer variable.
@@ -36,7 +36,7 @@ namespace Diz.Ui.Winforms.usercontrols
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(NavigationUserControl));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(NavigationHistoryViewControl));
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.btnBack = new System.Windows.Forms.ToolStripButton();
             this.btnForward = new System.Windows.Forms.ToolStripButton();
@@ -153,7 +153,8 @@ namespace Diz.Ui.Winforms.usercontrols
             // navigationEntryBindingSource
             // 
             this.navigationEntryBindingSource.DataSource = typeof(NavigationEntry);
-            this.navigationEntryBindingSource.CurrentChanged += new System.EventHandler(this.navigationEntryBindingSource_CurrentChanged);
+            // NOTE: CurrentChanged is deliberately NOT wired to anything. It used to navigate,
+            // which meant recording a history point re-navigated to it; see the class doc.
             // 
             // btnClearHistory
             // 
@@ -165,13 +166,13 @@ namespace Diz.Ui.Winforms.usercontrols
             this.btnClearHistory.Text = "Clear History";
             this.btnClearHistory.Click += new System.EventHandler(this.btnClearHistory_Click);
             // 
-            // NavigationUserControl
+            // NavigationHistoryViewControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.toolStrip1);
-            this.Name = "NavigationUserControl";
+            this.Name = "NavigationHistoryViewControl";
             this.Size = new System.Drawing.Size(547, 434);
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();

@@ -57,7 +57,7 @@
         <Compile Update="dialogsabeleditorform.cs">
           <SubType>Form</SubType>
         </Compile>
-        <Compile Update="dialogs\NavigationForm.cs">
+        <Compile Update="dialogs\NavigationHistoryForm.cs">
           <SubType>Form</SubType>
         </Compile>
         <Compile Update="dialogs\VisualizerForm.cs">

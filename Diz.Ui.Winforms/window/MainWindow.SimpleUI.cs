@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Diz.Core.commands;
 using Diz.Core.Interfaces;
 using Diz.Core.util;
+using Diz.Ui.ViewModels.Navigation;
 using Diz.Ui.Winforms.dialogs;
 
 namespace Diz.Ui.Winforms.window;
@@ -250,21 +251,53 @@ public partial class MainWindow
             : 0
         );
 
-    public NavigationForm NavigationForm { get; }
+    /// <summary>
+    /// The back/forward stack. Built in the constructor and owned here for the whole life of the
+    /// window, because <see cref="NavigateBackwards"/> and <see cref="NavigateForwards"/> are menu
+    /// commands and must work with the history window closed -- or never opened.
+    /// </summary>
+    private readonly NavigationHistoryViewModel navigationHistory;
+
+    /// <summary>Display-only view onto <see cref="navigationHistory"/>. Hides on close.</summary>
+    private readonly NavigationHistoryForm navigationHistoryForm;
+
+    /// <summary>
+    /// SNES address -> ROM file offset for whatever project is open RIGHT NOW, or -1 when there is
+    /// none or the address is not in this ROM. Handed to the ViewModel as a delegate rather than a
+    /// converter instance on purpose: the ViewModel is built before any project is open and
+    /// outlives every project opened after, so a captured instance would go stale on the next
+    /// open. This is what the old control did by reading Document.Project.Data at navigate time.
+    /// </summary>
+    private int ConvertSnesToPcInCurrentProject(int snesAddress) =>
+        Project?.Data?.ConvertSnesToPc(snesAddress) ?? -1;
+
+    /// <summary>
+    /// ViewModel notification marshaller. History points can be recorded from work that is not on
+    /// the UI thread, and the contract requires this to run inline when it already is.
+    /// </summary>
+    private void RunOnUiThread(Action action)
+    {
+        if (IsHandleCreated && InvokeRequired)
+            Invoke(action);
+        else
+            action();
+    }
 
     private void showHistoryToolStripMenuItem_Click(object sender, EventArgs e)
     {
-        if (!NavigationForm.Visible)
-            NavigationForm.Show();
+        if (!navigationHistoryForm.Visible)
+            navigationHistoryForm.Show();
         else
-            NavigationForm.BringToFront();
+            navigationHistoryForm.BringToFront();
     }
 
     private void goBackToolStripMenuItem_Click(object sender, EventArgs e) => NavigateBackwards();
     private void goForwardToolStripMenuItem_Click(object sender, EventArgs e) => NavigateForwards();
-    
-    private void NavigateBackwards() => NavigationForm.Navigate(forwardDirection: false, overshootAmount: standardOvershootAmount);
-    private void NavigateForwards() => NavigationForm.Navigate(forwardDirection: true, overshootAmount: standardOvershootAmount);
+
+    // straight to the ViewModel: these must not depend on a window existing, and the window is not
+    // where the current place in the history lives any more.
+    private void NavigateBackwards() => navigationHistory.MoveBack(standardOvershootAmount);
+    private void NavigateForwards() => navigationHistory.MoveForward(standardOvershootAmount);
 
     private void LabelsOnOnLabelChanged(object? sender, EventArgs e)
     {
