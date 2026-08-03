@@ -54,7 +54,7 @@ public partial class MainWindow
         if (romFilename == "")
             return;
 
-        ProjectController.ImportRomAndCreateNewProject(openFileDialog.FileName);
+        await ProjectController.ImportRomAndCreateNewProjectAsync(openFileDialog.FileName);
     }
 
     private void OpenExportDirectory()

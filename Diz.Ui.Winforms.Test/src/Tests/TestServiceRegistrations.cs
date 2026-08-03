@@ -1,4 +1,4 @@
-using Diz.Controllers.interfaces;
+﻿using Diz.Controllers.interfaces;
 using Diz.Ui.Winforms.Test.Utils;
 using FluentAssertions;
 using Xunit;
@@ -23,7 +23,7 @@ public class TestServiceRegistrations : ContainerWinformsFixture
 
         viewFactory.GetAboutView().Should().NotBeNull();
         viewFactory.GetExportDisassemblyView().Should().NotBeNull();
-        viewFactory.GetImportRomView().Should().NotBeNull();
+        viewFactory.GetSnesImportRomView().Should().NotBeNull();
         viewFactory.GetLabelEditorView().Should().NotBeNull();
         viewFactory.GetProgressBarView().Should().NotBeNull();
         viewFactory.GetMainGridWindowView().Should().NotBeNull();

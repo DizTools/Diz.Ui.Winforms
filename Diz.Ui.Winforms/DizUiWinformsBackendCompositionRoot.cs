@@ -1,4 +1,4 @@
-using Diz.Controllers.controllers;
+﻿using Diz.Controllers.controllers;
 using Diz.Controllers.interfaces;
 using Diz.Ui.Winforms.dialogs;
 using Diz.Ui.Winforms.util;
@@ -11,7 +11,7 @@ namespace Diz.Ui.Winforms;
 /// <summary>
 /// The WinForms LABEL-EDITOR BACKEND: exactly the backend-selectable registrations
 /// (LabelEditorView, RegionEditorView, NavigationHistoryView, MarkManyView, GotoView,
-/// HarshAutoStepView, MisalignmentCheckerView,
+/// HarshAutoStepView, SnesImportRomView, MisalignmentCheckerView,
 /// InOutPointCheckerView, ProgressBarView, IFileDialogService). The app registers EITHER this root
 /// OR <c>DizUiAvaloniaCompositionRoot</c> via an explicit if/else branch in
 /// DizWinformsRegisterServices -- never both (new-ui plan step 6, replacing the old
@@ -50,6 +50,9 @@ namespace Diz.Ui.Winforms;
 
         // the harsh-auto-step window, same per-invocation lifetime.
         serviceRegistry.Register<IHarshAutoStepView, WinformsHarshAutoStepView>("HarshAutoStepView");
+
+        // the new-project-from-a-ROM window, same per-invocation lifetime.
+        serviceRegistry.Register<ISnesImportRomView, WinformsSnesImportRomView>("SnesImportRomView");
 
         // the misaligned-flags window, same per-invocation lifetime.
         serviceRegistry.Register<IMisalignmentCheckerView, WinformsMisalignmentCheckerView>("MisalignmentCheckerView");

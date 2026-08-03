@@ -1,6 +1,6 @@
 ﻿namespace Diz.Ui.Winforms.dialogs
 {
-    partial class ImportRomDialog
+    partial class SnesImportRomDialog
     {
         /// <summary>
         /// Required designer variable.
@@ -70,6 +70,8 @@
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.checkHeader = new System.Windows.Forms.CheckBox();
+            this.checkBankRegions = new System.Windows.Forms.CheckBox();
+            this.statusMessage = new System.Windows.Forms.Label();
             this.label14 = new System.Windows.Forms.Label();
             this.romspeed = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
@@ -117,7 +119,7 @@
             // cancel
             // 
             this.cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancel.Location = new System.Drawing.Point(14, 455);
+            this.cancel.Location = new System.Drawing.Point(14, 509);
             this.cancel.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.cancel.Name = "cancel";
             this.cancel.Size = new System.Drawing.Size(88, 27);
@@ -129,7 +131,7 @@
             // 
             // okay
             // 
-            this.okay.Location = new System.Drawing.Point(201, 455);
+            this.okay.Location = new System.Drawing.Point(201, 509);
             this.okay.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.okay.Name = "okay";
             this.okay.Size = new System.Drawing.Size(88, 27);
@@ -583,6 +585,30 @@
             this.checkHeader.UseVisualStyleBackColor = true;
             this.checkHeader.CheckedChanged += new System.EventHandler(this.checkHeader_CheckedChanged);
             // 
+            // checkBankRegions
+            // 
+            this.checkBankRegions.AutoSize = true;
+            this.checkBankRegions.Checked = true;
+            this.checkBankRegions.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBankRegions.Location = new System.Drawing.Point(14, 450);
+            this.checkBankRegions.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.checkBankRegions.Name = "checkBankRegions";
+            this.checkBankRegions.Size = new System.Drawing.Size(261, 19);
+            this.checkBankRegions.TabIndex = 10;
+            this.checkBankRegions.Text = "Generate bank regions";
+            this.checkBankRegions.UseVisualStyleBackColor = true;
+            this.checkBankRegions.CheckedChanged += new System.EventHandler(this.checkBankRegions_CheckedChanged);
+            // 
+            // statusMessage
+            // 
+            this.statusMessage.AutoSize = false;
+            this.statusMessage.Location = new System.Drawing.Point(14, 473);
+            this.statusMessage.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.statusMessage.Name = "statusMessage";
+            this.statusMessage.Size = new System.Drawing.Size(289, 32);
+            this.statusMessage.TabIndex = 11;
+            this.statusMessage.Text = "";
+            // 
             // label14
             // 
             this.label14.AutoSize = true;
@@ -641,6 +667,7 @@
             this.cmbRomMapMode.Name = "cmbRomMapMode";
             this.cmbRomMapMode.Size = new System.Drawing.Size(165, 23);
             this.cmbRomMapMode.TabIndex = 6;
+            this.cmbRomMapMode.SelectedIndexChanged += new System.EventHandler(this.cmbRomMapMode_SelectedIndexChanged);
             // 
             // groupBox1
             // 
@@ -659,15 +686,17 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "ROM Information";
             // 
-            // ImportRomDialog
+            // SnesImportRomDialog
             // 
             this.AcceptButton = this.okay;
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancel;
-            this.ClientSize = new System.Drawing.Size(317, 489);
+            this.ClientSize = new System.Drawing.Size(317, 543);
             this.Controls.Add(this.label14);
             this.Controls.Add(this.checkHeader);
+            this.Controls.Add(this.checkBankRegions);
+            this.Controls.Add(this.statusMessage);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.label6);
@@ -678,13 +707,11 @@
             this.Controls.Add(this.detectMessage);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.Name = "ImportRomDialog";
+            this.Name = "SnesImportRomDialog";
             this.ShowIcon = true;
             this.ShowInTaskbar = true;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "New Project";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ImportRomDialog_FormClosing);
-            this.Load += new System.EventHandler(this.ImportROMDialog_Load);
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.groupBox1.ResumeLayout(false);
@@ -737,6 +764,8 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.CheckBox checkHeader;
+        private System.Windows.Forms.CheckBox checkBankRegions;
+        private System.Windows.Forms.Label statusMessage;
         private System.Windows.Forms.Label label14;
         private System.Windows.Forms.Label romspeed;
         private System.Windows.Forms.Label label5;

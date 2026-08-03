@@ -1,4 +1,4 @@
-using Diz.Controllers.controllers;
+﻿using Diz.Controllers.controllers;
 using Diz.Controllers.interfaces;
 using Diz.Ui.Winforms.dialogs;
 using Diz.Ui.Winforms.util;
@@ -24,7 +24,6 @@ namespace Diz.Ui.Winforms;
         // ordering trick).
         serviceRegistry.Register<IMainGridWindowView, MainWindow>("MainGridWindowView");
         serviceRegistry.Register<IFormViewer, About>("AboutView");
-        serviceRegistry.Register<IImportRomDialogView, ImportRomDialog>("ImportRomView");
         serviceRegistry.Register<ILogCreatorSettingsEditorView, LogCreatorSettingsEditorForm>("ExportDisassemblyView");
 
         serviceRegistry.RegisterSingleton<IDizAppSettings, DizAppSettingsProvider>(); // TODO: probably move this out of this project into app.common
