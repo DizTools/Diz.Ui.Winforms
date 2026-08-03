@@ -68,11 +68,19 @@ public partial class SnesImportRomDialog : Form
 
         // the picker holds raw enum values but must SHOW the friendly text ("SA - 1 ROM", not
         // "Sa1Rom"): the ViewModel deliberately carries no display strings.
+        //
+        // Filling it counts as writing to a widget, not as the user picking something. Handing a
+        // combo box a list selects the first entry immediately, and that raises the same event a
+        // real click does -- which would push the FIRST mapping in the list into the ViewModel and
+        // overwrite the detected one before the user has seen the window. The mapping drives the
+        // vector table and the cartridge title, so the whole screen would then describe the ROM
+        // read the wrong way.
         cmbRomMapMode.DisplayMember = nameof(MapModeChoice.Description);
         cmbRomMapMode.ValueMember = nameof(MapModeChoice.Value);
-        cmbRomMapMode.DataSource = viewModel.RomMapModeChoices
-            .Select(mode => new MapModeChoice(mode, Util.GetEnumDescription(mode)))
-            .ToList();
+        WriteWidgets(() =>
+            cmbRomMapMode.DataSource = viewModel.RomMapModeChoices
+                .Select(mode => new MapModeChoice(mode, Util.GetEnumDescription(mode)))
+                .ToList());
 
         viewModel.PropertyChanged += ViewModel_PropertyChanged;
         foreach (var row in viewModel.Vectors)

@@ -60,16 +60,20 @@ public class SnesImportRomDialogBindingTests
     {
         // reading the ROM at HiROM produces different values and a different title, so a map-mode
         // change is visible in every widget that depends on it.
+        SnesVectorSnapshot SnapshotFor(RomMapMode mode) => mode == RomMapMode.HiRom
+            ? Snapshot(HiRomTitle, "9ABC", readable: true)
+            : Snapshot("SAMPLE TITLE", "8123", readable: true);
+
         var viewModel = new SnesImportRomViewModel(
-            initialSnapshot: Snapshot("SAMPLE TITLE", "8123", readable: true),
+            // seeded at the DETECTED mapping, which is what the importer hands over: the opening
+            // screen shows the ROM read the way analysis read it.
+            initialSnapshot: SnapshotFor(detected),
             detectedRomMapMode: detected,
             detectionSucceeded: detectionSucceeded,
             romSpeedText: "SlowROM",
             alwaysEnabledVectorNames: AlwaysEnabled,
             initiallyEnabledVectorNames: AllNames,
-            recomputeForMapMode: mode => mode == RomMapMode.HiRom
-                ? Snapshot(HiRomTitle, "9ABC", readable: true)
-                : Snapshot("SAMPLE TITLE", "8123", readable: true));
+            recomputeForMapMode: SnapshotFor);
 
         return (new SnesImportRomDialog(viewModel), viewModel);
     }
@@ -91,6 +95,34 @@ public class SnesImportRomDialogBindingTests
         Widget<TextBox>(dialog, "textNativeNMI").Text.Should().Be("8123");
         Widget<CheckBox>(dialog, "checkboxNativeNMI").Checked.Should().BeTrue();
         Widget<CheckBox>(dialog, "checkboxNativeNMI").Enabled.Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Filling the map-mode picker must not count as the user choosing something.
+    ///
+    /// Handing a combo box its list selects the first entry straight away and raises the same
+    /// event a click does. Unsuppressed, that pushes the FIRST mapping into the ViewModel and
+    /// overwrites the detected one during construction, so the window opens describing the ROM
+    /// read the wrong way: wrong mapping selected, and with it the wrong cartridge title and
+    /// vector words.
+    ///
+    /// The detected mapping here is deliberately NOT the first one in the enum. Every other test
+    /// in this file detects LoROM, which is first, so the overwrite wrote back the value that was
+    /// already there and left no trace.
+    /// </summary>
+    [Fact]
+    public void FillingTheMapModePickerDoesNotOverwriteTheDetectedMapMode()
+    {
+        var (dialog, viewModel) = MakeDialog(detected: RomMapMode.HiRom);
+        using var _ = dialog;
+
+        viewModel.SelectedRomMapMode.Should().Be(RomMapMode.HiRom,
+            "constructing the window must not move the ViewModel off what was detected");
+        Widget<ComboBox>(dialog, "cmbRomMapMode").SelectedValue.Should().Be(RomMapMode.HiRom);
+
+        // the knock-on effect that made this visible: everything read at the mapping follows it.
+        Widget<WinFormsLabel>(dialog, "romtitle").Text.Should().Be(HiRomTitle);
+        Widget<TextBox>(dialog, "textNativeNMI").Text.Should().Be("9ABC");
     }
 
     [Fact]
