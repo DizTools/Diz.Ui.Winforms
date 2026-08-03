@@ -59,9 +59,12 @@ public partial class MainWindow
         if (!await EnsureProjectFileExistsOnDisk())
             return;
 
-        await RunOperationWithUiHidden(() =>
-            ProjectController.ExportAssemblyWithCurrentSettingsAsync()
-        );
+        if (await RunOperationWithUiHidden(() =>
+                ProjectController.WriteAssemblyOutputIfSettingsValidAsync()))
+            return;
+
+        // the stored settings can't be exported with -- fall through to editing them first.
+        await EditExportSettingsThenExport();
     }
 
     private async void toolStrip_exportDisassemblyEditSettingsFirst_Click(object sender, EventArgs e)
@@ -69,9 +72,23 @@ public partial class MainWindow
         if (!await EnsureProjectFileExistsOnDisk())
             return;
 
+        await EditExportSettingsThenExport();
+    }
+
+    /// <summary>
+    /// Let the user shape the export with this window still on screen, then hide it for the export
+    /// itself. Only the export needs this window out of the way; a settings window does not touch
+    /// the data, and hiding its owner while it is up leaves it centred on the screen instead of on
+    /// the window it belongs to.
+    /// </summary>
+    private async Task EditExportSettingsThenExport()
+    {
+        var settings = await ProjectController.ShowSettingsEditorUntilValidAsync();
+        if (settings == null)
+            return;
+
         await RunOperationWithUiHidden(() =>
-            ProjectController.ConfirmSettingsThenExportAssemblyAsync()
-        );
+            ProjectController.WriteAssemblyOutputIfSettingsValidAsync(settings));
     }
 
     private async Task<bool> RunOperationWithUiHidden(Func<Task<bool>> action)

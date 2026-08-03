@@ -22,7 +22,7 @@ public class TestServiceRegistrations : ContainerWinformsFixture
         var viewFactory = GetInstance<IViewFactory>();
 
         viewFactory.GetAboutView().Should().NotBeNull();
-        viewFactory.GetExportDisassemblyView().Should().NotBeNull();
+        viewFactory.GetExportSettingsView().Should().NotBeNull();
         viewFactory.GetSnesImportRomView().Should().NotBeNull();
         viewFactory.GetLabelEditorView().Should().NotBeNull();
         viewFactory.GetProgressBarView().Should().NotBeNull();

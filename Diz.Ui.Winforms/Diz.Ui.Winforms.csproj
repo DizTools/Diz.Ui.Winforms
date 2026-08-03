@@ -30,7 +30,7 @@
         <Compile Update="dialogs\MisalignmentCheckerDialog.cs">
           <SubType>Form</SubType>
         </Compile>
-        <Compile Update="dialogs\ExportDisassembly.cs">
+        <Compile Update="dialogs\ExportSettingsDialog.cs">
           <SubType>Form</SubType>
         </Compile>
         <Compile Update="dialogs\GotoDialog.cs">

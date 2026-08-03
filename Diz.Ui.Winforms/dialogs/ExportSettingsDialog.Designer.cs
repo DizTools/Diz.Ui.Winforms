@@ -2,7 +2,7 @@
 
 namespace Diz.Ui.Winforms.dialogs
 {
-    partial class LogCreatorSettingsEditorForm
+    partial class ExportSettingsDialog
     {
         /// <summary>
         /// Required designer variable.
@@ -30,7 +30,7 @@ namespace Diz.Ui.Winforms.dialogs
         /// </summary>
         private void InitializeComponent()
         {
-            ComponentResourceManager resources = new ComponentResourceManager(typeof(LogCreatorSettingsEditorForm));
+            ComponentResourceManager resources = new ComponentResourceManager(typeof(ExportSettingsDialog));
             cancel = new Button();
             disassembleButton = new Button();
             textFormat = new TextBox();
@@ -49,8 +49,6 @@ namespace Diz.Ui.Winforms.dialogs
             chkGenerateFullLine = new CheckBox();
             chkPrintLabelSpecificComments = new CheckBox();
             chkIncludeUnusedLabels = new CheckBox();
-            saveLogSingleFile = new SaveFileDialog();
-            chooseLogFolder = new FolderBrowserDialog();
             label7 = new Label();
             txtExportPath = new TextBox();
             btnBrowseOutputPath = new Button();
@@ -59,13 +57,15 @@ namespace Diz.Ui.Winforms.dialogs
             chkGenerateAssetLabels = new CheckBox();
             lblExcludeLabelAuthors = new Label();
             txtExcludeLabelAuthors = new TextBox();
+            lblStructureWarning = new Label();
+            lblProblems = new Label();
             ((ISupportInitialize)numData).BeginInit();
             SuspendLayout();
             // 
             // cancel
             // 
             cancel.DialogResult = DialogResult.Cancel;
-            cancel.Location = new Point(14, 648);
+            cancel.Location = new Point(14, 733);
             cancel.Margin = new Padding(4, 3, 4, 3);
             cancel.Name = "cancel";
             cancel.Size = new Size(88, 27);
@@ -77,7 +77,7 @@ namespace Diz.Ui.Winforms.dialogs
             // 
             // disassembleButton
             // 
-            disassembleButton.Location = new Point(762, 648);
+            disassembleButton.Location = new Point(762, 733);
             disassembleButton.Margin = new Padding(4, 3, 4, 3);
             disassembleButton.Name = "disassembleButton";
             disassembleButton.Size = new Size(132, 27);
@@ -219,8 +219,6 @@ namespace Diz.Ui.Winforms.dialogs
             // chkOutputExtraWhitespace
             // 
             chkOutputExtraWhitespace.AutoSize = true;
-            chkOutputExtraWhitespace.Checked = true;
-            chkOutputExtraWhitespace.CheckState = CheckState.Checked;
             chkOutputExtraWhitespace.Location = new Point(281, 97);
             chkOutputExtraWhitespace.Margin = new Padding(4, 3, 4, 3);
             chkOutputExtraWhitespace.Name = "chkOutputExtraWhitespace";
@@ -233,8 +231,6 @@ namespace Diz.Ui.Winforms.dialogs
             // chkGenerateFullLine
             // 
             chkGenerateFullLine.AutoSize = true;
-            chkGenerateFullLine.Checked = true;
-            chkGenerateFullLine.CheckState = CheckState.Checked;
             chkGenerateFullLine.Location = new Point(281, 114);
             chkGenerateFullLine.Margin = new Padding(4, 3, 4, 3);
             chkGenerateFullLine.Name = "chkGenerateFullLine";
@@ -247,8 +243,6 @@ namespace Diz.Ui.Winforms.dialogs
             // chkPrintLabelSpecificComments
             // 
             chkPrintLabelSpecificComments.AutoSize = true;
-            chkPrintLabelSpecificComments.Checked = true;
-            chkPrintLabelSpecificComments.CheckState = CheckState.Checked;
             chkPrintLabelSpecificComments.Location = new Point(577, 97);
             chkPrintLabelSpecificComments.Margin = new Padding(4, 3, 4, 3);
             chkPrintLabelSpecificComments.Name = "chkPrintLabelSpecificComments";
@@ -270,10 +264,6 @@ namespace Diz.Ui.Winforms.dialogs
             chkIncludeUnusedLabels.UseVisualStyleBackColor = true;
             chkIncludeUnusedLabels.CheckedChanged += chkIncludeUnusedLabels_CheckedChanged;
             // 
-            // saveLogSingleFile
-            // 
-            saveLogSingleFile.Filter = "Assembly Files|*.asm|All Files|*.*";
-            // 
             // label7
             // 
             label7.AutoSize = true;
@@ -292,6 +282,7 @@ namespace Diz.Ui.Winforms.dialogs
             txtExportPath.Size = new Size(717, 23);
             txtExportPath.TabIndex = 13;
             txtExportPath.TextChanged += txtExportPath_TextChanged;
+            txtExportPath.Leave += txtExportPath_Leave;
             // 
             // btnBrowseOutputPath
             // 
@@ -316,8 +307,6 @@ namespace Diz.Ui.Winforms.dialogs
             // chkGeneratePlusMinusLabels
             // 
             chkGeneratePlusMinusLabels.AutoSize = true;
-            chkGeneratePlusMinusLabels.Checked = true;
-            chkGeneratePlusMinusLabels.CheckState = CheckState.Checked;
             chkGeneratePlusMinusLabels.Location = new Point(25, 114);
             chkGeneratePlusMinusLabels.Margin = new Padding(4, 3, 4, 3);
             chkGeneratePlusMinusLabels.Name = "chkGeneratePlusMinusLabels";
@@ -330,8 +319,6 @@ namespace Diz.Ui.Winforms.dialogs
             // chkGenerateAssetLabels
             //
             chkGenerateAssetLabels.AutoSize = true;
-            chkGenerateAssetLabels.Checked = true;
-            chkGenerateAssetLabels.CheckState = CheckState.Checked;
             chkGenerateAssetLabels.Location = new Point(200, 114);
             chkGenerateAssetLabels.Margin = new Padding(4, 3, 4, 3);
             chkGenerateAssetLabels.Name = "chkGenerateAssetLabels";
@@ -360,13 +347,33 @@ namespace Diz.Ui.Winforms.dialogs
             txtExcludeLabelAuthors.TabIndex = 24;
             txtExcludeLabelAuthors.TextChanged += txtExcludeLabelAuthors_TextChanged;
             //
-            // LogCreatorSettingsEditorForm
+            // lblStructureWarning
+            //
+            lblStructureWarning.ForeColor = Color.Firebrick;
+            lblStructureWarning.Location = new Point(14, 646);
+            lblStructureWarning.Margin = new Padding(4, 0, 4, 0);
+            lblStructureWarning.Name = "lblStructureWarning";
+            lblStructureWarning.Size = new Size(881, 34);
+            lblStructureWarning.TabIndex = 26;
+            //
+            // lblProblems
+            //
+            lblProblems.ForeColor = Color.Firebrick;
+            lblProblems.Location = new Point(14, 684);
+            lblProblems.Margin = new Padding(4, 0, 4, 0);
+            lblProblems.Name = "lblProblems";
+            lblProblems.Size = new Size(740, 45);
+            lblProblems.TabIndex = 27;
+            //
+            // ExportSettingsDialog
             //
             AcceptButton = disassembleButton;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CancelButton = cancel;
-            ClientSize = new Size(907, 687);
+            ClientSize = new Size(907, 770);
+            Controls.Add(lblStructureWarning);
+            Controls.Add(lblProblems);
             Controls.Add(chkGeneratePlusMinusLabels);
             Controls.Add(chkGenerateAssetLabels);
             Controls.Add(lblExcludeLabelAuthors);
@@ -396,7 +403,7 @@ namespace Diz.Ui.Winforms.dialogs
             FormBorderStyle = FormBorderStyle.FixedToolWindow;
             Icon = (Icon)resources.GetObject("$this.Icon");
             Margin = new Padding(4, 3, 4, 3);
-            Name = "LogCreatorSettingsEditorForm";
+            Name = "ExportSettingsDialog";
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Export Disassembly";
@@ -426,8 +433,6 @@ namespace Diz.Ui.Winforms.dialogs
         private CheckBox chkGenerateFullLine;
         private CheckBox chkPrintLabelSpecificComments;
         private CheckBox chkIncludeUnusedLabels;
-        private SaveFileDialog saveLogSingleFile;
-        private FolderBrowserDialog chooseLogFolder;
         private Label label7;
         private TextBox txtExportPath;
         private Button btnBrowseOutputPath;
@@ -436,5 +441,7 @@ namespace Diz.Ui.Winforms.dialogs
         private CheckBox chkGenerateAssetLabels;
         private Label lblExcludeLabelAuthors;
         private TextBox txtExcludeLabelAuthors;
+        private Label lblStructureWarning;
+        private Label lblProblems;
     }
 }
