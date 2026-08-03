@@ -12,7 +12,7 @@ namespace Diz.Ui.Winforms;
 /// The WinForms LABEL-EDITOR BACKEND: exactly the backend-selectable registrations
 /// (LabelEditorView, RegionEditorView, NavigationHistoryView, MarkManyView, GotoView,
 /// HarshAutoStepView, SnesImportRomView, MisalignmentCheckerView,
-/// InOutPointCheckerView, ExportSettingsView, ProgressBarView, IFileDialogService). The app registers EITHER this root
+/// InOutPointCheckerView, ExportSettingsView, AboutView, ProgressBarView, IFileDialogService). The app registers EITHER this root
 /// OR <c>DizUiAvaloniaCompositionRoot</c> via an explicit if/else branch in
 /// DizWinformsRegisterServices -- never both (new-ui plan step 6, replacing the old
 /// last-registration-wins ordering trick). Non-selectable WinForms views stay in
@@ -62,6 +62,11 @@ namespace Diz.Ui.Winforms;
 
         // the export-settings window, same per-invocation lifetime.
         serviceRegistry.Register<IExportSettingsView, WinformsExportSettingsView>("ExportSettingsView");
+
+        // the About window. SINGLETON, unlike the per-invocation dialogs above: it hides rather
+        // than closes and the service keeps it, so picking Help -> About repeatedly brings the
+        // same window forward instead of stacking a new one behind the last.
+        serviceRegistry.RegisterSingleton<IAboutView, WinformsAboutView>("AboutView");
 
         // the file-dialog seam (new-ui plan step 4): each UI toolkit registers its own.
         // singleton: the service is stateless (a fresh dialog per call).
