@@ -29,9 +29,19 @@ public partial class MainWindow
         return result != DialogResult.Cancel;
     }
 
-    private string PromptForOpenFilename()
+    /// <summary>
+    /// Ask for the ROM file to start a new project from. Empty string means the user cancelled.
+    /// </summary>
+    private string PromptForOpenRomFilename()
     {
         // TODO: combine with another function here that does similar
+
+        // built from the registered importers rather than written into the designer, so teaching
+        // Diz another console widens this picker with no change here. Set per-showing because the
+        // dialog object outlives the call and a stale filter would be a lie about what is
+        // registered.
+        openFileDialog.Filter = romImporterRegistryCreate().BuildFileDialogFilter();
+
         openFileDialog.InitialDirectory = Project?.ProjectFileName ?? "";
         return openFileDialog.ShowDialog() == DialogResult.OK ? openFileDialog.FileName : "";
     }

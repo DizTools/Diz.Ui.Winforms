@@ -50,11 +50,11 @@ public partial class MainWindow
         if (!await PromptContinueEvenIfUnsavedChanges())
             return;
 
-        var romFilename = PromptForOpenFilename();
+        var romFilename = PromptForOpenRomFilename();
         if (romFilename == "")
             return;
 
-        await ProjectController.ImportRomAndCreateNewProjectAsync(openFileDialog.FileName);
+        await ProjectController.ImportRomAndCreateNewProjectAsync(romFilename);
     }
 
     private void OpenExportDirectory()

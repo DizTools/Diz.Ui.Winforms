@@ -1137,10 +1137,6 @@ partial class MainWindow
         this.currentMarker.Size = new System.Drawing.Size(110, 17);
         this.currentMarker.Text = "Marker: Data (8-bit)";
         // 
-        // openFileDialog
-        // 
-        this.openFileDialog.Filter = "SNES ROM Images|*.smc;*.sfc|All files|*.*";
-        // 
         // openProjectFile
         // 
         this.openProjectFile.Filter = "DiztinGUIsh Project Files|*.diz;*.dizraw;*.dizdir|All Files|*.*";

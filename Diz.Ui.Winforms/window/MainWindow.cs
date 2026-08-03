@@ -1,6 +1,7 @@
 ﻿using System.Configuration;
 using System.Reflection;
 using Diz.Controllers.controllers;
+using Diz.Controllers.importers;
 using Diz.Controllers.interfaces;
 using Diz.Controllers.util;
 using Diz.Core.Interfaces;
@@ -16,16 +17,22 @@ public partial class MainWindow : Form, IMainGridWindowView
 {
     private readonly IViewFactory viewFactory;
 
+    // resolved fresh each time it is used rather than held: it carries the live set of registered
+    // ROM importers, which is what the new-project file picker's filter is built from.
+    private readonly Func<RomImporterRegistry> romImporterRegistryCreate;
+
     public MainWindow(
         IProjectController projectController,
-        IDizAppSettings appSettings, 
+        IDizAppSettings appSettings,
         IDizDocument document,
         IViewFactory viewFactory,
-        IAppVersionInfo appVersionInfo)
+        IAppVersionInfo appVersionInfo,
+        Func<RomImporterRegistry> romImporterRegistryCreate)
     {
         Document = document;
         this.appSettings = appSettings;
         this.viewFactory = viewFactory;
+        this.romImporterRegistryCreate = romImporterRegistryCreate;
         ProjectController = projectController;
         ProjectController.ProjectView = this;
         this.appVersionInfo = appVersionInfo;
